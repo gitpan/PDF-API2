@@ -7,11 +7,14 @@ use strict;
 use PDF::API2::PDF::Dict;
 use PDF::API2::PDF::Utils;
 use PDF::API2::PDF::Image;
+use IO::File;
+use PDF::API2::IOString;
+
 use vars qw(@ISA $VERSION );
 
 @ISA = qw(PDF::API2::PDF::Image);
 
-( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head2 PDF::API2::PDF::ImageJPEG
 
@@ -24,28 +27,55 @@ Returns a new image object.
 sub new {
 	my ($class,$pdf,$name,$file)=@_;
 	my $self = $class->SUPER::new($pdf,$name);
-	$self->readjpeg($pdf,$file);
+	my $fh = IO::File->new;
+	$fh->open("< $file");
+	$self->readjpeg($pdf,$fh);
+	$fh->close;
+	$self->{' streamfile'}=$file;
+	$self->{Length}=PDFNum(-s $file);
+	return($self);
+}
+
+sub new_stream {
+	my ($class,$pdf,$name,$file)=@_;
+	my $self = $class->SUPER::new($pdf,$name);
+	my $fh = PDF::API2::IOString->new($file);
+	$self->readjpeg($pdf,$fh);
+	$self->{' stream'}=$fh->{buf};
+	$self->{Length}=PDFNum(length $self->{' stream'});
+	return($self);
+}
+
+sub new_fh {
+	my ($class,$pdf,$name,$fh)=@_;
+	my $self = $class->SUPER::new($pdf,$name);
+	$self->readjpeg($pdf,$fh);
+	if(ref($fh) eq 'PDF::API2::IOString') {
+		$self->{' stream'}=$fh->{buf};
+		$self->{Length}=PDFNum(length $self->{' stream'});
+	} else {
+	}
 	return($self);
 }
 
 sub readjpeg {
 	my $self = shift @_;
 	my $pdf = shift @_;
-	my $file = shift @_;
+	my $fh = shift @_;
 
 	my ($buf, $p, $h, $w, $c, $ff, $mark, $len);
 
-	open(JF,$file);
-	binmode(JF);
-	read(JF,$buf,2);
+	$fh->binmode;
+	$fh->seek(0,0);
+	$fh->read($buf,2);
 	while (1) {
-		read(JF,$buf,4);
+		$fh->read($buf,4);
 		my($ff, $mark, $len) = unpack("CCn", $buf);
 		last if( $ff != 0xFF);
 		last if( $mark == 0xDA || $mark == 0xD9);  # SOS/EOI
 		last if( $len < 2);
-		last if( eof(JF));
-		read(JF,$buf,$len-2);
+		last if( $fh->eof);
+		$fh->read($buf,$len-2);
 		next if ($mark == 0xFE);
 		next if ($mark >= 0xE0 && $mark <= 0xEF);
 		if (($mark >= 0xC0) && ($mark <= 0xCF)) {
@@ -53,7 +83,6 @@ sub readjpeg {
 			last;
 		}
 	}
-	close(JF);
 
 	$self->width($w);
 	$self->height($h);
@@ -70,9 +99,6 @@ sub readjpeg {
 	} elsif($c==1) {
 	        $self->colorspace('DeviceGray');
 	}
-
-	$self->{' streamfile'}=$file;
-	$self->{Length}=PDFNum(-s $file);
 
 	return($self);
 }

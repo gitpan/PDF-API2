@@ -20,7 +20,7 @@ use strict;
 use PDF::API2::Util;
 use PDF::API2::PDF::Utils;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::ImageGD;
 use PDF::API2::PDF::ImageJPEG;
@@ -35,7 +35,7 @@ Returns a new image object (called from $pdf->image).
 =cut
 
 sub new {
-	my ($class,$pdf,$file,$tt)=@_;
+	my ($class,$pdf,$file,$tt,%opts)=@_;
 	my ($obj,$buf);
 	if(ref $file) {
 		if(UNIVERSAL::isa($file,'GD::Image')) {
@@ -44,6 +44,12 @@ sub new {
 	#	} elsif(UNIVERSAL::isa($file,'Image::Base')) {
 	#		$obj=PDF::API2::PDF::ImageIMAGE->new($pdf,'IMGxIMAGEx'.pdfkey($file),$file);
 	#		$obj->{' apiname'}='IMGxIMAGEx'.pdfkey($file);
+		} elsif( (ref($file) eq 'PDF::API2::IOString') && $opts{-jpeg} ) {
+			$obj=PDF::API2::PDF::ImageJPEG->new_fh($pdf,'IMGxJPEGx'.pdfkey($tt),$file);
+			$obj->{' apiname'}='IMGxJPEGx'.pdfkey($tt);
+		} elsif((ref($file) eq 'SCALAR') && $opts{-jpeg}) {
+			$obj=PDF::API2::PDF::ImageJPEG->new_stream($pdf,'IMGxJPEGx'.pdfkey($tt),$file);
+			$obj->{' apiname'}='IMGxJPEGx'.pdfkey($tt);
 		} else {
 			die "Unknown Object '$file'";
 		}

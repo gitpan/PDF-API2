@@ -35,4 +35,10 @@ Converts a number to PDF format
 sub as_pdf
 { $_[0]->{'val'}; }
 
+sub outxmldeep
+{
+    my ($self, $fh, $pdf, %opts) = @_;
+
+    $opts{-xmlfh}->print("<Number>".$self->val."</Number>\n");
+}
 

@@ -103,3 +103,9 @@ sub name_to_string ($;$)
     return $str;
 }
 
+sub outxmldeep
+{
+    my ($self, $fh, $pdf, %opts) = @_;
+
+    $opts{-xmlfh}->print("<Name>".$self->val."</Name>\n");
+}

@@ -61,6 +61,19 @@ sub outobjdeep
     $fh->print("]");
 }
 
+sub outxmldeep
+{
+    my ($self, $fh, $pdf, %opts) = @_;
+    my ($obj);
+
+    $opts{-xmlfh}->print("<Array>\n");
+    foreach $obj (@{$self->{' val'}})
+    {
+        $obj->outxml($fh, $pdf, %opts);
+    }
+    $opts{-xmlfh}->print("</Array>\n");
+
+}
 
 =head2 $a->removeobj($elem)
 

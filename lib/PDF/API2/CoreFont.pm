@@ -19,7 +19,7 @@ package PDF::API2::CoreFont;
 
 BEGIN {
 	use vars qw( @ISA $fonts $alias $subs @latin1 @macroman @winansi @adobestd $VERSION );
-	( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 use strict;
@@ -228,12 +228,16 @@ sub text {
 			$newtext.=pack("C",vec($text,$x,16) & 0xff);
 		}
 	} else {
-		foreach my $g (0..length($text)-1) {
-			$newtext.=
-				(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
-				? sprintf('\%03lo',vec($text,$g,8))
-				: substr($text,$g,1) ;
-		}
+	#	foreach my $g (0..length($text)-1) {
+	#		$newtext.=
+	#			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
+	#			? sprintf('\%03lo',vec($text,$g,8))
+	#			: substr($text,$g,1) ;
+	#	}
+		$newtext=$text;
+		$newtext=~s/\\/\\\\/go;
+		$newtext=~s/([\x00-\x1f])/sprintf('\%03lo',ord($1))/ge;
+		$newtext=~s/([\{\}\[\]\(\)])/\\$1/g
 	}
 	return("($newtext)");
 }
@@ -397,7 +401,7 @@ sub encode {
 	}
 
 	my @w = map { 
-		PDFNum($self->{' data'}->{'wx'}{$_ || '.notdef'} || 300) 
+		PDFNum($self->{' data'}->{'wx'}{$_ || '.notdef'} || $self->{' data'}->{missingwidth} || 300) 
 	} map {
 		$self->{' data'}->{'char'}[$_]	
 	} ($firstChar..$lastChar);
@@ -476,16 +480,16 @@ BEGIN {
 	$alias = {
 		## Windows Fonts with Type1 equivalence
 	
+		'arialbolditalic'		=> 'helveticaboldoblique',
+		'arialbold'			=> 'helveticabold',
+		'arialitalic'			=> 'helveticaoblique',
+		'arial'				=> 'helvetica',
+
 		'times'				=> 'timesroman',
 		'timesnewromanbolditalic'	=> 'timesbolditalic',
 		'timesnewromanbold'		=> 'timesbold',
 		'timesnewromanitalic'		=> 'timesitalic',
 		'timesnewroman'			=> 'timesroman',
-	
-		'arialbolditalic'		=> 'helveticaboldoblique',
-		'arialbold'			=> 'helveticabold',
-		'arialitalic'			=> 'helveticaoblique',
-		'arial'				=> 'helvetica',
 	
 		'couriernewbolditalic'		=> 'courierboldoblique',
 		'couriernewbold'		=> 'courierbold',
@@ -1608,6 +1612,7 @@ BEGIN {
 			'iscore' => 1,
 			'isfixedpitch' => 0,
 			'italicangle' => '0',
+			'missingwidth' => '278',
 			'stdhw' => '118',
 			'stdvw' => '140',
 			'type' => 'Type1',
@@ -1627,6 +1632,7 @@ BEGIN {
 			'iscore' => 1,
 			'isfixedpitch' => 0,
 			'italicangle' => '0',
+			'missingwidth' => '278',
 			'stdhw' => '76',
 			'stdvw' => '88',
 			'type' => 'Type1',
@@ -1646,6 +1652,7 @@ BEGIN {
 			'iscore' => 1,
 			'isfixedpitch' => 0,
 			'italicangle' => '0',
+			'missingwidth' => '250',
 			'stdhw' => '44',
 			'stdvw' => '139',
 			'type' => 'Type1',
@@ -1665,6 +1672,7 @@ BEGIN {
 			'iscore' => 1,
 			'isfixedpitch' => 0,
 			'italicangle' => '0',
+			'missingwidth' => '250',
 			'stdhw' => '28',
 			'stdvw' => '84',
 			'type' => 'Type1',
@@ -1685,6 +1693,7 @@ BEGIN {
 			'isfixedpitch' => 'false',
 			'issymbol' => 1,
 			'italicangle' => '0',
+			'missingwidth' => '278',
 			'stdhw' => '28',
 			'stdvw' => '90',
 			'type' => 'Type1',

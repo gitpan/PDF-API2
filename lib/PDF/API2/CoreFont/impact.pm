@@ -187,7 +187,7 @@ $fonts->{'impact'} = {
 		'bullet',		# 0x9D, 0o235, 157 
 		'zcaron',		# 0x9E, 0o236, 158 
 		'Ydieresis',		# 0x9F, 0o237, 159 
-		'nbspace',		# 0xA0, 0o240, 160 
+		'space',		# 0xA0, 0o240, 160 
 		'exclamdown',		# 0xA1, 0o241, 161 
 		'cent',		# 0xA2, 0o242, 162 
 		'sterling',		# 0xA3, 0o243, 163 

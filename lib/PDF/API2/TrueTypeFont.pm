@@ -1,171 +1,699 @@
-package PDF::API2::UniMap;
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
+#	PDF::API2::TrueTypeFont
+#
+#=======================================================================
+package PDF::API2::TrueTypeFont;
 
-require 5.006001;
-use vars qw ($VERSION @EXPORT @EXPORT_OK @EXPORT_TAGS @ISA);
+use PDF::API2::UniMap qw( utf8_to_ucs2 );
+use PDF::API2::Util;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
+use POSIX;
+use vars qw(@ISA $VERSION);
+@ISA = qw( PDF::API2::PDF::Dict );
+( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
-BEGIN {
-	@ISA         = qw(Exporter);
-	@EXPORT      = qw ();
-	@EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
-	@EXPORT_TAGS = qw ();
-	( $VERSION ) = '$Revisioning: 0.3a25 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
-}
+=item $font = PDF::API2::TrueTypeFont->new $pdf, $file, %options
 
-sub utf8_to_ucs2 {
-	my $string=shift @_;
-	return(pack('n*',(unpack('U*',$string))));
-}
+Returns a font object.
 
-sub utf16_to_ucs2 {
-	my $final=shift @_;
-	return($final);
-}
+=cut
 
 sub new {
-	my $class=shift(@_);
-	my $encoding=lc(shift @_) || 'latin1';
-	my $this={};
-	$encoding=~s/[^a-z0-9\-]+//cgi;
-	bless($this,$class);
-	my $buf;
-	my $unimap='';
-	
-	if($encoding=~/^uni(\d+)$/) {
-		my $uct=$1*256;
-		$this->{'enc'} = $encoding;
-		$this->{'u2c'} = {};
-		$this->{'c2u'} = {};
-		$this->{'c2n'} = {};
-		foreach my $ch (0..255) {
-			my $um=$ch+$uct;
-			$this->{'u2c'}->{$um}=$ch;
-			$this->{'c2u'}->{$ch}=$um;
-			$this->{'c2n'}->{$ch}=$u2n{$um} || sprintf('uni%04X',$um);
-		}
-		if(wantarray) {
-			return($this,$encoding);
-		} else {
-			return $this;
+	my ($class,$pdf,$file,@opts) = @_;
+	my $self;
+	my $t0;
+	my %opts=();
+	die "cannot find font '$file' ..." unless(-f $file);
+	%opts=@opts if((scalar @opts)%2 == 0);
+	$class = ref $class if ref $class;
+	$self=$class->SUPER::new();
+
+	my $des=PDF::API2::TrueTypeFont::FontDescriptor->new($pdf,$file,@opts);
+
+	#================================================
+	# creating the type0 pseudo object
+	#================================================
+
+	unless($opts{-nonembed}) {
+		$t0 = PDF::API2::TrueTypeFont0->new($pdf,$des);
+		if($des->issymbol) {
+			return($t0);
 		}
 	} else {
-		map {
-			if(-e "$_/PDF/API2/UniMap/$encoding.map"){
-				$unimap="$_/PDF/API2/UniMap/$encoding.map";
-			}
-		} @INC;
+		$t0=$self;
+	}
 
-		if(! -e $unimap) {
-			die " encoding='$encoding' not supported.";
+	#================================================
+	# creating the default encoded object
+	#	(either latin1 or symbol)
+	#================================================
+	$pdf->new_obj($self);
+	$self->{'Type'} = PDFName('Font');
+	$self->{'Subtype'} = PDFName($des->iscff ? 'Type1' : 'TrueType');
+	$self->{'BaseFont'} = PDFName($des->fontname);
+	$self->{' apiname'} = 'TTx'.pdfkey($des->fontname,%opts);
+	$self->{'Name'} = PDFName($self->{' apiname'});
+	$self->{'FirstChar'} = PDFNum(1);
+	$self->{'LastChar'} = PDFNum(255);
+	$self->{'FontDescriptor'} = $des;
+
+	my @w=();
+
+	$self->{'Encoding'}=PDFDict();
+	$self->{'Encoding'}->{'Type'}=PDFName('Encoding');
+	$self->{'Encoding'}->{'BaseEncoding'}=PDFName('WinAnsiEncoding');
+	my $notdefbefore=1;
+	foreach my $w (1..255) {
+		if(!defined($des->charset->[$w]) ||($des->charset->[$w] eq '.notdef')) {
+			$notdefbefore=1;
+			next;
 		} else {
-			$this->{'enc'} = $encoding;
-			$this->{'u2c'} = {};
-			$this->{'c2u'} = {};
-			$this->{'c2n'} = {};
-			open(INF,"$unimap");
-			binmode(INF);
-			read(INF,$buf,4);
-			while(!eof(INF)) {
-				read(INF,$buf,4);
-				my ($ch,$um)=unpack('nn',$buf);
-				$this->{'u2c'}->{$um}=$ch;
-				$this->{'c2u'}->{$ch}=$um;
-				$this->{'c2n'}->{$ch}=$u2n{$um} || sprintf('uni%04X',$um);
+			if($notdefbefore) {
+				push(@w,PDFNum($w))
 			}
-			close(INF);
-			if(wantarray) {
-				return($this,$encoding);
-			} else {
-				return $this;
-			}
+			$notdefbefore=0;
+			push(@w,PDFName($des->charset->[$w]));
 		}
+	}
+	$self->{'Encoding'}->{'Differences'}=PDFArray(@w);
+	@w = map { PDFNum($des->wxe($_)||300) } (1..255);
+	$self->{'Widths'}=PDFArray(@w);
+	$self->{' t0'}=$t0;
+
+	return($self);
+}
+
+=item $font = PDF::API2::TrueTypeFont->new_api $api, $file, %options
+
+Returns a corefont object. This method is different from 'new' that
+it needs an PDF::API2-object rather than a Text::PDF::File-object.
+
+=cut
+
+sub new_api {
+	my ($class,$api,@opts)=@_;
+
+	my $obj=$class->new($api->{pdf},@opts);
+	my $key=$obj->{' apiname'};
+
+	$api->resource('Font',$key,$obj);
+	$api->resource('Font',$obj->{' apiname'},$obj);
+
+	$api->{pdf}->out_obj($api->{pages});
+	return($obj);
+}
+
+sub fontdesc { return( $_[0]->{FontDescriptor} ); }
+
+=item $pdfstring = $font->text $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF.
+
+=cut
+
+sub text {
+	my ($self,$text)=@_;
+	my $newtext='';
+	foreach my $g (0..length($text)-1) {
+		$newtext.=
+			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
+			? sprintf('\%03lo',vec($text,$g,8))
+			: substr($text,$g,1) ;
+		$self->fontdesc->subsete(vec($text,$g,8));
+	}
+	return("($newtext)");
+}
+
+=item $pdfstring = $font->text_ucs2 $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF but requires $text to be in UCS2.
+
+=cut
+
+sub text_ucs2 {
+	my ($self,$text)=@_;
+	return($self->text( pack('C*',unpack('n*',$text)) ));
+}
+
+=item $pdfstring = $font->text_utf8 $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF but requires $text to be in UTF8.
+
+=cut
+
+sub text_utf8 {
+	my ($self,$text)=@_;
+	return($self->text( pack('C*',unpack('U*',$text)) ));
+}
+
+=item $wd = $font->width $text
+
+Returns the width of $text as if it were at size 1.
+
+=cut
+
+sub width {
+	my ($self,$text,%opts)=@_;
+	my $width=$self->wx($text,%opts);
+	$width/=1000;
+	return($width);
+}
+
+=item $wd = $font->width_ucs2 $text
+
+Returns the width of $text as if it were at size 1,
+but requires $text to be in UCS2.
+
+=cut
+
+sub width_ucs2 {
+	my ($self,$text,%opts)=@_;
+	my $width=$self->wx($text,-ucs2=>1,%opts);
+	$width/=1000;
+	return($width);
+}
+
+=item $wd = $font->width_utf8 $text
+
+Returns the width of $text as if it were at size 1,
+but requires $text to be in UTF8.
+
+=cut
+
+sub width_utf8 {
+	my ($self,$text,%opts)=@_;
+	my $width=$self->wx($text,-utf8=>1,%opts);
+	$width/=1000;
+	return($width);
+}
+
+=item @widths = $font->width_array $text
+
+Returns the widths of the words in $text as if they were at size 1.
+
+=cut
+
+sub width_array {
+	my ($self,$text,%opts)=@_;
+	if($opts{-ucs2}) {
+		my @text=split(/\0x00\0x20/,$text);
+		my @widths=map {$self->width_ucs2($_,%opts)} @text;
+		return(@widths);
+	} elsif($opts{-utf8}) {
+		my @text=split(/\s+/,$text);
+		my @widths=map {$self->width_utf8($_,%opts)} @text;
+		return(@widths);
+	} else {
+		my @text=split(/\s+/,$text);
+		my @widths=map {$self->width($_,%opts)} @text;
+		return(@widths);
 	}
 }
 
-sub end {
-	my $this=shift(@_);
-	undef($this);
+=item ($llx,$lly,$urx,$ury) = $font->bbox $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox {
+	my ($self,$text,%opts)=@_;
+	return(map {$_/1000} $self->bbx($text,%opts));
 }
 
-sub u2c {
-	my $this=shift @_;
-	my $um=shift @_;
-	return($this->{'u2c'}->{$um});
+=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox_ucs2 {
+	my ($self,$text,%opts)=@_;
+	return(map {$_/1000} $self->bbx($text,-ucs2=>1));
 }
 
-sub c2u {
-	my $this=shift @_;
-	my $ch=shift @_;
-	return($this->{'c2u'}->{$ch});
+=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox_utf8 {
+	my ($self,$text,%opts)=@_;
+	return(map {$_/1000} $self->bbx($text,-utf8=>1));
 }
 
-sub c2n {
-	my $this=shift @_;
-	my $ch=shift @_;
-	return($this->{'c2n'}->{$ch});
+
+sub name { return (shift @_)->{' apiname'}; }
+
+sub fontbbox { return( (shift @_)->fontdesc->fontbbox ); }
+sub capheight { return( (shift @_)->fontdesc->capheight ); }
+sub xheight { return( (shift @_)->fontdesc->xheight ); }
+sub underlineposition { return( (shift @_)->fontdesc->underlineposition ); }
+sub underlinethickness { return( (shift @_)->fontdesc->underlinethickness ); }
+sub ascender { return( (shift @_)->fontdesc->ascender ); }
+sub descender { return( (shift @_)->fontdesc->descender ); }
+
+sub issymbol { return( (shift @_)->fontdesc->issymbol ); }
+sub unicode { return( (shift @_)->{' t0'} ); }
+
+sub data { return( (shift @_)->fontdesc->data ); }
+
+sub wxe { return( (shift @_)->fontdesc->wxe(@_) ); }
+sub wxu { return( (shift @_)->fontdesc->wxu(@_) ); }
+sub wxn { return( (shift @_)->fontdesc->wxn(@_) ); }
+sub wxg { return( (shift @_)->fontdesc->wxg(@_) ); }
+sub wx { return( (shift @_)->fontdesc->wx(@_) ); }
+
+sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
+sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
+sub bbxe { return( (shift @_)->fontdesc->bbxe(@_) ); }
+sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
+sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
+
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
+#	PDF::API2::TrueTypeFont0
+#
+#=======================================================================
+package PDF::API2::TrueTypeFont0;
+
+use PDF::API2::Util;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
+use PDF::API2::UniMap qw( utf8_to_ucs2 );
+use POSIX;
+
+use vars qw(@ISA);
+@ISA = qw( PDF::API2::PDF::Dict );
+
+=item $font = PDF::API2::TrueTypeFont0->new $pdf, $des
+
+Returns a font object.
+
+=cut
+
+sub new {
+	my ($class,$pdf,$des,@opts) = @_;
+	my %opts=();
+	%opts=@opts if((scalar @opts)%2 == 0);
+	$class = ref $class if ref $class;
+
+#================================================
+# creating the type0 pseudo object
+#================================================
+	my $self = $class->SUPER::new();
+	$pdf->new_obj($self);
+	$self->{'Type'} = PDFName("Font");
+	$self->{'Subtype'} = PDFName('Type0');
+	$self->{'BaseFont'} = PDFName($des->fontname.'+CID');
+	$self->{' apiname'} = 'T0x'.pdfkey($des->fontname,%opts);
+	$self->{'Name'} = PDFName($self->{' apiname'});
+	$self->{'Encoding'} = PDFName('Identity-H');
+	my $de=PDFDict();
+	$pdf->new_obj($de);
+	$self->{'DescendantFonts'} = PDFArray($de);
+	$self->{' de'} = $de;
+
+#================================================
+# creating the cid encoded object
+#================================================
+	$de->{'Type'} = PDFName('Font');
+	$de->{'FontDescriptor'} = $des;
+	$de->{'Subtype'} = PDFName($self->iscff ? 'CIDFontType0' : 'CIDFontType2');
+	$de->{'BaseFont'} = PDFName($des->fontname.'+CID');
+	$de->{'CIDSystemInfo'} = PDFDict();
+	$de->{'CIDSystemInfo'}->{Registry} = PDFStr('Adobe');
+	$de->{'CIDSystemInfo'}->{Ordering} = PDFStr('Identity');
+	$de->{'CIDSystemInfo'}->{Supplement} = PDFNum(0);
+	$de->{'DW'} = PDFNum($des->missingwidth);
+	$de->{'CIDToGIDMap'} = PDFName('Identity');
+
+	return($self);
 }
 
-sub glyphs {
-	my $this=shift @_;
-	return(map { $this->{'c2n'}->{$_} || '.notdef' } (0..255));
+=item $pdfstring = $font->text $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF.
+
+=cut
+
+sub text {
+	my ($self,$text,%opt)=@_;
+	return($self->text_utf8($text)) if($opt{-utf8});
+	return($self->text_ucs2($text)) if($opt{-ucs2});
+	return($self->text_utf8(pack('U*',unpack('C*',$text))));
 }
 
-sub unimaps {
-	return( 
-		map {	
-			$_=~s/^.*\/([^\/]+)\.map$/$1/cgi; 
-			lc($_); 
-		} (
-			map { 
-				glob("$_/PDF/API2/UniMap/*.map"); 
-			} @INC
-		) 
-	);
+=item $pdfstring = $font->text_ucs2 $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF but requires $text to be in UCS2.
+
+=cut
+
+sub text_ucs2 {
+	my ($self,$text)=@_;
+	my ($newtext);
+	foreach my $x (0..(length($text)>>1)-1) {
+		my $g=$self->fontdesc->uni2glyph( vec($text,$x,16) );
+		$newtext.= sprintf('%04x',$g);
+		$self->fontdesc->subsetg($g);
+	}
+	return("<$newtext>");
 }
 
-sub isMap {
-	my $encoding=lc(shift @_);
-	return(undef) if(!$encoding);
-	$encoding=~s/[^a-z0-9\-]+//cgi;
-	return(scalar grep(/$encoding/,PDF::API2::UniMap::unimaps()));
+=item $pdfstring = $font->text_utf8 $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF but requires $text to be in UTF8.
+
+=cut
+
+sub text_utf8 {
+	my ($self,$text)=@_;
+	$text=utf8_to_ucs2($text);
+	return $self->text_ucs2($text);
 }
 
-1;
+=item $wd = $font->width $text
 
-BEGIN {
+Returns the width of $text as if it were at size 1.
+
+=cut
+
+sub width {
+	my ($self,$text,%opts)=@_;
+	my $width=$self->wx($text,%opts);
+	$width/=1000;
+	return($width);
+}
+
+=item $wd = $font->width_ucs2 $text
+
+Returns the width of $text as if it were at size 1,
+but requires $text to be in UCS2.
+
+=cut
+
+sub width_ucs2 {
+	my ($self,$text,%opts)=@_;
+	my $width=$self->wx($text,-ucs2=>1,%opts);
+	$width/=1000;
+	return($width);
+}
+
+=item $wd = $font->width_utf8 $text
+
+Returns the width of $text as if it were at size 1,
+but requires $text to be in UTF8.
+
+=cut
+
+sub width_utf8 {
+	my ($self,$text,%opts)=@_;
+	my $width=$self->wx($text,-utf8=>1,%opts);
+	$width/=1000;
+	return($width);
+}
+
+=item @widths = $font->width_array $text
+
+Returns the widths of the words in $text as if they were at size 1.
+
+=cut
+
+sub width_array {
+	my ($self,$text,%opts)=@_;
+	if($opts{-ucs2}) {
+		my @text=split(/\0x00\0x20/,$text);
+		my @widths=map {$self->width($_,%opts)} @text;
+		return(@widths);
+	} else {
+		my @text=split(/\s+/,$text);
+		my @widths=map {$self->width($_,%opts)} @text;
+		return(@widths);
+	}
+}
+
+=item ($llx,$lly,$urx,$ury) = $font->bbox $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox {
+	my ($self,$text,%opts)=@_;
+	return(map {$_/1000} $self->bbx($text,%opts));
+}
+
+=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox_ucs2 {
+	my ($self,$text)=@_;
+	return(map {$_/1000} $self->bbx($text,-ucs2=>1));
+}
+
+=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox_utf8 {
+	my ($self,$text)=@_;
+	return(map {$_/1000} $self->bbx($text,-utf8=>1));
+}
+
+
+sub outobjdeep {
+	my ($self, $fh, $pdf, %opts) = @_;
+
+	return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
+
+	my $notdefbefore=1;
+	
+	my $wx=PDFArray();
+	$self->{' de'}->{'W'} = $wx;
+	my $ml;
+	
+	my @w=();
+	foreach my $w (1..$self->fontdesc->glyphs) {
+		if($self->fontdesc->subvec($w) && $notdefbefore==1) {
+			$notdefbefore=0;
+			$ml=PDFArray();
+			$wx->add_elements(PDFNum($w),$ml);
+			$ml->add_elements(PDFNum($self->fontdesc->wxg($w)));
+		} elsif($self->fontdesc->subvec($w) && $notdefbefore==0) {
+			$notdefbefore=0;
+			$ml->add_elements(PDFNum($self->fontdesc->wxg($w)));
+		} else {
+			$notdefbefore=1;
+		}
+	}
+
+	$self->SUPER::outobjdeep($fh, $pdf, %opts);
+}
+
+sub fontdesc { return( $_[0]->{' de'}->{FontDescriptor} ); }
+
+sub fontbbox { return( (shift @_)->fontdesc->fontbbox ); }
+sub capheight { return( (shift @_)->fontdesc->capheight ); }
+sub xheight { return( (shift @_)->fontdesc->xheight ); }
+sub underlineposition { return( (shift @_)->fontdesc->underlineposition ); }
+sub underlinethickness { return( (shift @_)->fontdesc->underlinethickness ); }
+sub ascender { return( (shift @_)->fontdesc->ascender ); }
+sub descender { return( (shift @_)->fontdesc->descender ); }
+
+sub iscff { return( (shift @_)->fontdesc->iscff ); }
+sub issymbol { return( (shift @_)->fontdesc->issymbol ); }
+sub unicode { return(shift @_); }
+
+sub data { return( (shift @_)->fontdesc->data ); }
+
+sub name { return (shift @_)->{' apiname'}; }
+
+sub wxe { return( (shift @_)->fontdesc->wxe(@_) ); }
+sub wxu { return( (shift @_)->fontdesc->wxu(@_) ); }
+sub wxn { return( (shift @_)->fontdesc->wxn(@_) ); }
+sub wxg { return( (shift @_)->fontdesc->wxg(@_) ); }
+sub wx { return( (shift @_)->fontdesc->wx(@_) ); }
+
+sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
+sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
+sub bbxe { return( (shift @_)->fontdesc->bbxe(@_) ); }
+sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
+sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
+
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
+#	PDF::API2::TrueTypeFont::FontDescriptor
+#
+#=======================================================================
+package PDF::API2::TrueTypeFont::FontDescriptor;
+
+use PDF::API2::Util;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
+use POSIX;
+
+use vars qw(@ISA);
+@ISA = qw( PDF::API2::PDF::Dict );
+
+sub new {
+	my ($class,$pdf,$file,@opts) = @_;
+	my $self;
+	my %opts=();
+	die "cannot find font '$file' ..." unless(-f $file);
+	%opts=@opts if((scalar @opts)%2 == 0);
+	$class = ref $class if ref $class;
+	$self=$class->SUPER::new();
+
+	$pdf->new_obj($self);
+
+	$self->{' fontfile'}=PDF::API2::TrueTypeFont::FontFile->new($pdf,$file,@opts);
+	if($self->iscff) {
+		$self->{FontFile3}=$self->{' fontfile'} unless($opts{-nonembed});
+	} else {
+		$self->{FontFile2}=$self->{' fontfile'} unless($opts{-nonembed});
+	}
+	$self->{'Type'}=PDFName('FontDescriptor');
+	$self->{'FontName'}=PDFName($self->fontfile->fontname);
+	$self->{'FontBBox'}=PDFArray(map { PDFNum($_ || 0) } @{$self->fontfile->fontbbox});
+	$self->{'Ascent'}=PDFNum($self->fontfile->ascender);
+	$self->{'Descent'}=PDFNum($self->fontfile->descender);
+	$self->{'ItalicAngle'}=PDFNum($self->fontfile->italicangle);
+	$self->{'CapHeight'}=PDFNum($self->fontfile->capheight);
+	$self->{'StemV'}=PDFNum($self->fontfile->stemv);
+	$self->{'StemH'}=PDFNum($self->fontfile->stemh);
+	$self->{'XHeight'}=PDFNum($self->fontfile->xheight);
+	$self->{'Flags'}=PDFNum($self->fontfile->flags);
+	$self->{'MaxWidth'}=PDFNum($self->fontfile->maxwidth);
+	$self->{'MissingWidth'}=PDFNum($self->fontfile->missingwidth);
+
+	return($self);
+}
+
+sub fontfile { return( $_[0]->{' fontfile'} ); }
+
+sub data { return( $_[0]->fontfile->data ); }
+
+sub fontname { return( $_[0]->fontfile->fontname ); }
+sub altname { return( (shift @_)->fontfile->altname ); }
+sub subname { return( (shift @_)->fontfile->subname ); }
+
+sub charset { return( $_[0]->fontfile->char ); }
+
+sub wxe { return( (shift @_)->fontfile->wxe(@_) ); }
+sub wxu { return( (shift @_)->fontfile->wxu(@_) ); }
+sub wxn { return( (shift @_)->fontfile->wxn(@_) ); }
+sub wxg { return( (shift @_)->fontfile->wxg(@_) ); }
+sub wx { return( (shift @_)->fontfile->wx(@_) ); }
+
+sub bbxg { return( (shift @_)->fontfile->bbxg(@_) ); }
+sub bbxu { return( (shift @_)->fontfile->bbxu(@_) ); }
+sub bbxe { return( (shift @_)->fontfile->bbxe(@_) ); }
+sub bbxn { return( (shift @_)->fontfile->bbxn(@_) ); }
+sub bbx { return( (shift @_)->fontfile->bbx(@_) ); }
+
+sub subsetg { return( (shift @_)->fontfile->subsetg(@_) ); }
+sub subsete { return( (shift @_)->fontfile->subsete(@_) ); }
+sub subsetu { return( (shift @_)->fontfile->subsetu(@_) ); }
+sub subvec { return( (shift @_)->fontfile->subvec(@_) ); }
+
+sub uni2glyph { return( (shift @_)->fontfile->uni2glyph(@_) ); }
+sub enc2glyph { return( (shift @_)->fontfile->enc2glyph(@_) ); }
+sub glyphs { return( (shift @_)->fontfile->glyphs ); }
+
+sub issymbol { return( (shift @_)->fontfile->issymbol ); }
+sub missingwidth { return( (shift @_)->fontfile->missingwidth ); }
+sub fontbbox { return( (shift @_)->fontfile->fontbbox ); }
+sub capheight { return( (shift @_)->fontfile->capheight ); }
+sub xheight { return( (shift @_)->fontfile->xheight ); }
+sub underlineposition { return( (shift @_)->fontfile->underlineposition ); }
+sub underlinethickness { return( (shift @_)->fontfile->underlinethickness ); }
+sub ascender { return( (shift @_)->fontfile->ascender ); }
+sub descender { return( (shift @_)->fontfile->descender ); }
+sub iscff { return( (shift @_)->fontfile->iscff ); }
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
+#	PDF::API2::TrueTypeFont::FontFile
+#
+#=======================================================================
+package PDF::API2::TrueTypeFont::FontFile;
+
+use PDF::API2::Util;
+use PDF::API2::IOString;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
+use POSIX;
+use Font::TTF::Font;
+
+use vars qw(@ISA %u2n);
+@ISA = qw( PDF::API2::PDF::Dict );
 
 %u2n=(
-	'0' => 'grave',				# TeX Substitute
-	'1' => 'acute',				# TeX Substitute
-	'2' => 'circumflex',			# TeX Substitute
-	'3' => 'tilde',				# TeX Substitute
-	'4' => 'dieresis',			# TeX Substitute
-	'5' => 'hungarumlaut',			# TeX Substitute
-	'6' => 'ring',				# TeX Substitute
-	'7' => 'caron',				# TeX Substitute
-	'8' => 'breve',				# TeX Substitute
-	'9' => 'macron',			# TeX Substitute
-	'10' => 'dotaccent',			# TeX Substitute
-	'11' => 'cedilla',			# TeX Substitute
-	'12' => 'ogonek',			# TeX Substitute
-	'13' => 'quotesinglbase',		# TeX Substitute
-	'14' => 'guilsinglleft',		# TeX Substitute
-	'15' => 'guilsinglright',		# TeX Substitute
-	'16' => 'quotedblleft',			# TeX Substitute
-	'17' => 'quotedblright',		# TeX Substitute
-	'18' => 'quotedblbase',			# TeX Substitute
-	'19' => 'guillemotleft',		# TeX Substitute
-	'20' => 'guillemotright',		# TeX Substitute
-	'21' => 'endash',			# TeX Substitute
-	'22' => 'emdash',			# TeX Substitute
-	'23' => 'compwordmark',			# TeX Substitute
-	'24' => 'perthousandzero',		# TeX Substitute
-	'25' => 'dotlessi',			# TeX Substitute
-	'26' => 'dotlessj',			# TeX Substitute
-	'27' => 'ff',				# TeX Substitute
-	'28' => 'fi',				# TeX Substitute
-	'29' => 'fl',				# TeX Substitute
-	'30' => 'ffi',				# TeX Substitute
-	'31' => 'ffl',				# TeX Substitute
 	'32' => 'space',			# U=0020, N=32
 	'33' => 'exclam',			# U=0021, N=33
 	'34' => 'quotedbl',			# U=0022, N=34
@@ -1666,9 +2194,418 @@ BEGIN {
 	'64299' => 'afii57695',			# U=FB2B, N=64299
 	'64309' => 'afii57723',			# U=FB35, N=64309
 	'64331' => 'afii57700',			# U=FB4B, N=64331
-	''=>'.notdef'
 );
 
+sub new {
+	my ($class,$pdf,$file,@opts) = @_;
+	my $self;
+	my %opts=();
+	die "cannot find font '$file' ..." unless(-f $file);
+	my $font=Font::TTF::Font->open($file);
+	## die "Opentype font '$file' not supported -- exiting." if($font->{'CFF '});
+	%opts=@opts if((scalar @opts)%2 == 0);
+	$class = ref $class if ref $class;
+	$self=$class->SUPER::new();
+
+	$pdf->new_obj($self) unless($opts{-nonembed});
+	$self->{Filter}=PDFArray(PDFName('FlateDecode'));
+	$self->{' font'}=$font;
+	$self->{' data'}={};
+
+	$self->{Subtype}=PDFName('Type1C') if($self->iscff);
+
+	$self->data->{fontname}=$self->font->{'name'}->read->find_name(4);
+	$self->data->{fontname}=~s/\s//og;
+	$self->data->{altname}=$self->font->{'name'}->find_name(1);
+	$self->data->{altname}=~s/\s//og;
+	$self->data->{subname}=$self->font->{'name'}->find_name(2);
+	$self->data->{subname}=~s/\s//og;
+
+	$self->data->{issymbol} = ($self->mstable->{'Platform'} == 3 && $self->mstable->{'Encoding'} == 0) || 0;
+
+	$self->data->{upem}=$self->font->{'head'}->read->{'unitsPerEm'};
+
+	$self->data->{fontbbox}=[
+		int($self->font->{'head'}->{'xMin'} * 1000 / $self->upem),
+        	int($self->font->{'head'}->{'yMin'} * 1000 / $self->upem),
+        	int($self->font->{'head'}->{'xMax'} * 1000 / $self->upem),
+        	int($self->font->{'head'}->{'yMax'} * 1000 / $self->upem)
+        ];
+
+	$self->data->{stemv}=0;
+	$self->data->{stemh}=0;
+	
+	$self->data->{missingwidth}=int($self->font->{'hhea'}->read->{'advanceWidthMax'} * 1000 / $self->upem) + 2;
+	$self->data->{maxwidth}=int($self->font->{'hhea'}->{'advanceWidthMax'} * 1000 / $self->upem);
+	$self->data->{ascender}=int($self->font->{'hhea'}->read->{'Ascender'} * 1000 / $self->upem);
+	$self->data->{descender}=int($self->font->{'hhea'}{'Descender'} * 1000 / $self->upem);
+
+	$self->data->{flags} = 0;
+	$self->data->{flags} |= 1 if ($self->font->{'OS/2'}->read->{'bProportion'} == 9);
+	$self->data->{flags} |= 2 unless ($self->font->{'OS/2'}{'bSerifStyle'} > 10 && $self->font->{'OS/2'}{'bSerifStyle'} < 14);
+	$self->data->{flags} |= 8 if ($self->font->{'OS/2'}{'bFamilyType'} == 2);
+	$self->data->{flags} |= 32; # if ($self->font->{'OS/2'}{'bFamilyType'} > 3);
+	$self->data->{flags} |= 64 if ($self->font->{'OS/2'}{'bLetterform'} > 8);;
+
+	$self->data->{capheight}=$self->font->{'OS/2'}->{CapHeight}
+		|| $self->bbxn('H')->[3]
+		|| int($self->fontbbox->[3]*0.8);
+	$self->data->{xheight}=$self->font->{'OS/2'}->{xHeight}
+		|| $self->bbxn('x')->[3]
+		|| int($self->fontbbox->[3]*0.4);
+
+	if($self->issymbol) {
+		$self->data->{eu}=[0xf000 .. 0xf0ff];
+	} else {
+		$self->data->{eu}=[
+			0 .. 127,
+			0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
+			0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008D, 0x017D, 0x008F,
+			0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
+			0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x009D, 0x017E, 0x0178,
+			0xA0 .. 0xFF
+		];
+	}
+	if($self->font->{'post'}->read->{FormatType} == 3) {
+		$self->data->{ng} = {};
+		$self->data->{gn} = [];
+		foreach my $u (sort {$a<=>$b} keys %{$self->mstable->{val}}) {
+			my $n=$u2n{$u} || sprintf('uni%04X',$u);
+			$self->data->{ng}->{$n}=$self->mstable->{val}->{$u};
+			$self->data->{gn}->[$self->mstable->{val}->{$u}]=$n;
+		}
+	}
+	$self->data->{italicangle}=$self->font->{'post'}->{italicAngle};
+	$self->data->{isfixedpitch}=$self->font->{'post'}->{isFixedPitch};
+	$self->data->{underlineposition}=$self->font->{'post'}->{underlinePosition};
+	$self->data->{underlinethickness}=$self->font->{'post'}->{underlineThickness};
+
+	$self->data->{char}=[];
+	if($opts{-encode} && (lc($opts{-encode}) ne 'latin1') && !$self->issymbol) {
+		my $uniMap = PDF::API2::UniMap->new($opts{-encode});
+		@{$self->{' data'}->{char}}=( $uniMap->glyphs() );
+		foreach my $c (0..255) {
+			$self->data->{eu}->[$c]=$uniMap->c2u($c);
+		}
+	} else {
+		foreach my $c (0..255) {
+			$self->data->{char}->[$c]=$self->glyph2name($self->enc2glyph($c));
+		}
+	}
+
+	$self->data->{ug} ||= {};
+	if($self->issymbol) {
+		map { $self->data->{ug}->{$_ & 0xff} = $self->font->{'cmap'}->read->ms_lookup($_) } (0xf000 .. 0xf0ff);
+#	} else {
+#		map { 
+#			$self->data->{ug}->{$_} = $self->enc2glyph($_ & 0xff); 
+#			$self->data->{ug}->{$_ & 0xff} = $self->enc2glyph($_ & 0xff); 
+#		} (0xf000 .. 0xf0ff);
+	}
+	return($self);
 }
 
+sub font { return( $_[0]->{' font'} ); }
+
+sub data { return( $_[0]->{' data'} ); }
+
+sub wxg {
+	my $self=shift @_;
+	my $g=shift @_;
+	my $w;
+
+	if(defined $self->font->{'hmtx'}->read->{'advance'}[$g]) {
+		$w = int($self->font->{'hmtx'}->{'advance'}[$g]*1000/$self->upem);
+	} else {
+		$w = $self->missingwidth;
+	}
+	
+	return($w);
+}
+
+sub wxn {
+	my $self=shift @_;
+	my $n=shift @_;
+	my $g=$self->name2glyph($n);
+	return($self->wxg($g));
+}
+
+sub wxu {
+	my $self=shift @_;
+	my $u=shift @_;
+	my $g=$self->uni2glyph($u);
+	return($self->wxg($g));
+}
+
+sub wxe {
+	my $self=shift @_;
+	my $e=shift @_;
+	my $g=$self->enc2glyph($e);
+	return($self->wxg($g));
+}
+
+sub wx {
+	my ($self,$text,%opts)=@_;
+	my $w=0;
+	
+	if($opts{-utf8}) {
+		map { $w+=$self->wxu($_) } unpack('U*',$text);
+	} elsif($opts{-ucs2}) {
+		map { $w+=$self->wxu($_) } unpack('n*',$text);
+	} elsif($opts{-cid}) {
+		map { $w+=$self->wxg($_) } unpack('n*',$text);
+	} else {
+		map { $w+=$self->wxe($_) } unpack('C*',$text);
+	}
+	return($w);
+}
+
+sub bbxg {
+	my $self=shift @_;
+	my $g=shift @_;
+	my $l=$self->font->{'loca'}->read;
+	my @b;
+
+	if($l->{'glyphs'}[$g]) {
+		my $m = $l->{'glyphs'}[$g]->read;
+		@b=(
+			int($m->{'xMin'} * 1000 / $self->upem),
+			int($m->{'yMin'} * 1000 / $self->upem),
+			int($m->{'xMax'} * 1000 / $self->upem),
+			int($m->{'yMax'} * 1000 / $self->upem)
+		);
+	} else {
+		@b = map { $_*0.6 } @{$self->fontbbox};
+	}
+	
+#	if(wantarray) {
+#		return(@b);
+#	} else {
+		return([@b]);
+#	}
+}
+
+sub bbxn {
+	my $self=shift @_;
+	my $n=shift @_;
+	my $g=$self->name2glyph($n);
+	return($self->bbxg($g));
+}
+
+sub bbxu {
+	my $self=shift @_;
+	my $u=shift @_;
+	my $g=$self->uni2glyph($u);
+	return($self->bbxg($g));
+}
+
+sub bbxe {
+	my $self=shift @_;
+	my $e=shift @_;
+	my $g=$self->enc2glyph($e);
+	return($self->bbxg($g));
+}
+
+sub bbx {
+	my ($self,$text,%opts)=@_;
+	my @g;
+	if($opts{-utf8}) {
+		@g=unpack('U*',$text);
+	} elsif($opts{-ucs2}) {
+		@g=unpack('n*',$text);
+	} elsif($opts{-cid}) {
+		@g=unpack('n*',$text);
+	} else {
+		@g=unpack('C*',$text);
+	}
+	my $l=pop(@g);
+	if(scalar @g > 0) {
+		my ($llx,$lly,$urx,$ury,$t);
+
+		if($opts{-utf8}) {
+			($llx,$lly,$urx,$ury)=$self->bbxu($l);
+			($llx,$lly)=$self->bbxu($g[0]);
+			$urx+=$self->wx(pack('U*',@g),-utf8=>1);
+		} elsif($opts{-ucs2}) {
+			($llx,$lly,$urx,$ury)=$self->bbxu($l);
+			($llx,$lly)=$self->bbxu($g[0]);
+			$urx+=$self->wx(pack('n*',@g),-ucs2=>1);
+		} elsif($opts{-cid}) {
+			($llx,$lly,$urx,$ury)=$self->bbxg($l);
+			($llx,$lly)=$self->bbxg($g[0]);
+			$urx+=$self->wx(pack('n*',@g),-cid=>1);
+		} else {
+			($llx,$lly,$urx,$ury)=$self->bbxe($l);
+			($llx,$lly)=$self->bbxe($g[0]);
+			$urx+=$self->wx(pack('C*',@g));
+		}
+		return($llx,$lly,$urx,$ury);
+	} else {
+		if($opts{-utf8}) {
+			return( $self->bbxu($l) );
+		} elsif($opts{-ucs2}) {
+			return( $self->bbxu($l) );
+		} elsif($opts{-cid}) {
+			return( $self->bbxg($l) );
+		} else {
+			return( $self->bbxe($l) );
+		}
+	}
+}
+
+sub glyph2name {
+	my $self = shift @_;
+	my $g = shift @_;
+	$self->data->{gn} ||= [];
+	if($self->font->{'post'}->read->{FormatType} == 3) {
+		$self->data->{gn}->[$g] ||= '.notdef';
+	} else {
+		$self->data->{gn}->[$g] ||= $self->font->{'post'}->read->{'VAL'}->[$g] || '.notdef';
+	}
+	return($self->data->{gn}->[$g]);
+}
+
+sub name2glyph {
+	my $self = shift @_;
+	my $n = shift @_;
+	$self->data->{ng} ||= {};
+	$self->data->{ng}->{$n} ||= $self->font->{'post'}->read->{'STRINGS'}{$n} || 0;
+	return($self->data->{ng}->{$n});
+}
+
+sub uni2glyph {
+	my $self = shift @_;
+	my $u = shift @_;
+	$self->data->{ug} ||= {};
+	$self->data->{ug}->{$u} ||= $self->font->{'cmap'}->read->ms_lookup($u) || 0;
+	return($self->data->{ug}->{$u});
+}
+
+sub enc2glyph {
+	my $self = shift @_;
+	my $e = (shift @_) & 0xff;
+	$self->data->{eg} ||= {};
+	$self->data->{eg}->{$e} ||= $self->uni2glyph($self->data->{eu}->[$e]) || 0;
+	return($self->data->{eg}->{$e});
+}
+
+sub fontname { return( $_[0]->data->{fontname} ); }
+
+sub altname { return( $_[0]->data->{altname} ); }
+
+sub subname { return( $_[0]->data->{subname} ); }
+
+sub mstable { return( $_[0]->font->{cmap}->read->find_ms ); }
+
+sub issymbol { return( $_[0]->data->{issymbol} ); }
+
+sub char { return( $_[0]->data->{char} ); }
+
+sub upem { return( $_[0]->data->{upem} ); }
+
+sub fontbbox { return( $_[0]->data->{fontbbox} ); }
+
+sub capheight { return( $_[0]->data->{capheight} ); }
+
+sub xheight { return( $_[0]->data->{xheight} ); }
+
+sub missingwidth { return( $_[0]->data->{missingwidth} ); }
+
+sub maxwidth { return( $_[0]->data->{maxwidth} ); }
+
+sub flags { return( $_[0]->data->{flags} ); }
+
+sub stemv { return( $_[0]->data->{stemv} ); }
+
+sub stemh { return( $_[0]->data->{stemh} ); }
+
+sub italicangle { return( $_[0]->data->{italicangle} ); }
+
+sub isfixedpitch { return( $_[0]->data->{isfixedpitch} ); }
+
+sub underlineposition { return( $_[0]->data->{underlineposition} ); }
+
+sub underlinethickness { return( $_[0]->data->{underlinethickness} ); }
+
+sub ascender { return( $_[0]->data->{ascender} ); }
+
+sub descender { return( $_[0]->data->{descender} ); }
+
+sub iscff { return(defined $_[0]->font->{'CFF '}); }
+
+sub subsetg { 
+	my $self = shift @_;
+	return if($self->iscff);
+	my $g = shift @_;
+	$self->{' subset'}=1;
+	vec($self->{' subvec'},$g,1)=1; 
+	if($self->font->{loca}->read->{glyphs}[$g]) {
+		map { vec($self->{' subvec'},$_,1)=1; } $self->font->{loca}->{glyphs}[$g]->get_refs;
+	}
+}
+
+sub subsete { 
+	my $self = shift @_;
+	return if($self->iscff);
+	my $e = shift @_;
+	my $g = $self->enc2glyph($e);
+	$self->subsetg($g);
+}
+
+sub subsetu { 
+	my $self = shift @_;
+	return if($self->iscff);
+	my $u = shift @_;
+	my $g = $self->uni2glyph($u);
+	$self->subsetg($g);
+}
+
+sub subvec { 
+	my $self = shift @_;
+	return if($self->iscff);
+	my $g = shift @_;
+	return(vec($self->{' subvec'},$g,1));
+}
+
+sub glyphs { return ( scalar @{$_[0]->font->{'loca'}{'glyphs'}} ); }
+
+sub outobjdeep {
+	my ($self, $fh, $pdf, %opts) = @_;
+
+	return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
+
+	my $f = $self->font;
+
+	if($self->iscff) {
+		$f->{'CFF '}->read_dat;
+		$self->{' stream'} = $f->{'CFF '}->{' dat'};
+	} else {
+		if ($self->{' subset'}) {
+			$f->{'glyf'}->read;
+
+			for (my $i = 0; $i < $self->glyphs; $i++) {
+				next if($self->subvec($i));
+				$f->{'loca'}{'glyphs'}[$i] = undef;
+			}
+		}
+
+		$self->{' stream'} = "";
+		my $ffh = PDF::API2::IOString->new(\$self->{' stream'});
+		$f->out($ffh, 'cmap', 'cvt ', 'fpgm', 'glyf', 'head', 'hhea', 'hmtx', 'loca', 'maxp', 'prep');
+		$self->{'Length1'}=PDFNum(length($self->{' stream'}));
+	}
+	
+	$self->SUPER::outobjdeep($fh, $pdf, %opts);
+}
+
+
+1;
+
 __END__
+
+=head1 AUTHOR
+
+alfred reibenschuh
+
+=cut
+

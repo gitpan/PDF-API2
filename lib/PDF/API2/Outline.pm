@@ -23,7 +23,7 @@ BEGIN {
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	@ISA = qw(PDF::API2::PDF::Dict);
-	( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 }
 
@@ -95,7 +95,7 @@ sub count {
 	my $self=shift @_;
 	my $cnt=scalar @{$self->{' childs'}||[]};
 	map { $cnt+=$_->count();} @{$self->{' childs'}};
-	$self->{Count}=PDFNum($cnt) if($cnt>0);
+	$self->{Count}=PDFNum($self->{' closed'} ? -$cnt : $cnt) if($cnt>0);
 	return $cnt;
 }
 
@@ -116,6 +116,30 @@ sub title {
 	my ($self,$txt)=@_;
 	$self->{Title}=PDFStr($txt);
 	return($self);
+}
+
+=item $otl->closed
+
+Set the status of the outline to closed.
+
+=cut
+
+sub closed {
+	my $self=shift @_;
+	$self->{' closed'}=1;
+	return $self;
+}
+
+=item $otl->open
+
+Set the status of the outline to open.
+
+=cut
+
+sub open {
+	my $self=shift @_;
+	delete $self->{' closed'};
+	return $self;
 }
 
 =item $sotl=$otl->outline

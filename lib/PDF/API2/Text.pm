@@ -20,7 +20,7 @@ package PDF::API2::Text;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Content);
-( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::Content;
@@ -452,26 +452,28 @@ sub text {
 			if(defined $opt{-indent}) {
 				$self->matrix_update($opt{-indent},0);
 			}
-			my ($x1,$y1)=$self->textpos;
 			my $wd=$self->advancewidth($text,%opt);
-			$self->matrix_update($wd,0);
-			my ($x2,$y2)=$self->textpos;
-			
-			my $x3=$x1+(($y2-$y1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
-			my $y3=$y1+(($x2-$x1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
-			
-			my $x4=$x3+($x2-$x1);
-			my $y4=$y3+($y2-$y1);
-			$self->add('ET');
-			PDF::API2::Content::save($self);
-			PDF::API2::Content::linewidth($self,$opt{-underline});
-			PDF::API2::Content::strokecolor($self,@{$state2{fillcolor}});
-			PDF::API2::Gfx::move($self,$x3,$y3);
-			PDF::API2::Gfx::line($self,$x4,$y4);
-			PDF::API2::Gfx::stroke($self);
-			PDF::API2::Content::restore($self);
-			$self->add('BT');
-			$self->textstate(%state2);
+			if($wd) {
+				my ($x1,$y1)=$self->textpos;
+				$self->matrix_update($wd,0);
+				my ($x2,$y2)=$self->textpos;
+
+				my $x3=$x1+(($y2-$y1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
+				my $y3=$y1+(($x2-$x1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
+
+				my $x4=$x3+($x2-$x1);
+				my $y4=$y3+($y2-$y1);
+				$self->add('ET');
+				PDF::API2::Content::save($self);
+				PDF::API2::Content::linewidth($self,$opt{-underline});
+				PDF::API2::Content::strokecolor($self,@{$state2{fillcolor}});
+				PDF::API2::Gfx::move($self,$x3,$y3);
+				PDF::API2::Gfx::line($self,$x4,$y4);
+				PDF::API2::Gfx::stroke($self);
+				PDF::API2::Content::restore($self);
+				$self->add('BT');
+				$self->textstate(%state2);
+			}
 		}
 	}
 	if(defined $opt{-indent}) {
@@ -602,7 +604,8 @@ sub paragraph {
 	my $y=$opt{-y}||0;
 	my $ht=$opt{-h}||0;
 	my $wd=$opt{-w}||0;
-	my $idt=$opt{-flindent}||0;
+	my $flidt=$opt{-flindent}||0;
+	my $idt=$flidt;
 	my $h=$ht;
 	my $sz=$self->{' fontsize'};
 	my @txt;
@@ -634,7 +637,7 @@ sub paragraph {
 		}
 		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0],%opt)*($self->{' hspace'}/100)*$sz>($wd-$idt) );
 		my $l=$self->{' font'}->width(join($spacer,@line),%opt)*$sz*($self->{' hspace'}/100);
-		$self->wordspace(($wd-$idt-$l)/(scalar @line -1)) if(defined $txt[0] && scalar @line>0);
+		$self->wordspace(($wd-$idt-$l)/(scalar @line )) if(defined $txt[0] && scalar @line>0);
 		$idt=$l+$self->{' font'}->width(' ')*$sz;
 		my $lw=$self->text(join($spacer,@line),%opt);
 		if(defined $txt[0]) { $ht-= $self->lead(); $idt=0; }
@@ -643,7 +646,7 @@ sub paragraph {
 			$self->transform_rel(-translate=>[-$lw,-$self->lead()]);
 		}
 	}
-	return($idt,$y+$ht-$h,@txt);
+	return( (($ht-$h)==0 ? $flidt+$idt: $idt),$y+$ht-$h,@txt);
 }
 
 sub fillcolor {

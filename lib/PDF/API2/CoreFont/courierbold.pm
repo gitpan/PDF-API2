@@ -23,6 +23,7 @@ $fonts->{'courierbold'} = {
 	'iscore' => 1,
 	'isfixedpitch' => 1,
 	'italicangle' => '0',
+	'missingwidth' => '600',
 	'stdhw' => '84',
 	'stdvw' => '106',
 	'type' => 'Type1',

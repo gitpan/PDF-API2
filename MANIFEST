@@ -4,6 +4,7 @@ Makefile.PL
 MANIFEST
 readme.txt
 version.p
+contrib/pod3pdf.pl
 examples/01_document_n_pages-pl
 examples/02_cfonts-w-encoding-pl
 examples/02_cfonts-w-lite-pl
@@ -102,6 +103,7 @@ lib/PDF/API2/PDF/Utils.pm
 lib/PDF/API2/PSFont.pm
 lib/PDF/API2/Text.pm
 lib/PDF/API2/TTFont.pm
+lib/PDF/API2/TrueTypeFont.pm
 lib/PDF/API2/UniMap.pm
 lib/PDF/API2/UniMap/adobe-standard.map
 lib/PDF/API2/UniMap/adobe-symbol.map

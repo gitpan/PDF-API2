@@ -51,6 +51,13 @@ sub outobjdeep
     $fh->print ("null");
 }
 
+sub outxmldeep
+{
+    my ($self, $fh, $pdf, %opts) = @_;
+
+    $opts{-xmlfh}->print("<Null/>\n");
+}
+
 =head2 $s->is_obj
 
 Returns false because null is not a full object.

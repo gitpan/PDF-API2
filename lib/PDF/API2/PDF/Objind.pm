@@ -174,7 +174,14 @@ sub outobjdeep
 {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    $self->{' parent'}->read_obj($self)->outobjdeep($fh, $pdf) unless ($self->{' realised'});
+    $self->{' parent'}->read_obj($self)->outobjdeep($fh, $pdf,%opts) unless ($self->{' realised'});
+}
+
+sub outxmldeep
+{
+    my ($self, $fh, $pdf, %opts) = @_;
+
+    $self->{' parent'}->read_obj($self)->outxmldeep($fh, $pdf,%opts) unless ($self->{' realised'});
 }
 
 
@@ -193,6 +200,16 @@ sub outobj
     { $fh->printf("%d %d R", @{$pdf->{' objects'}{$self->uid}}[0..1]); }
     else
     { $self->outobjdeep($fh, $pdf, %opts); }
+}
+
+sub outxml
+{
+    my ($self, $fh, $pdf, %opts) = @_;
+
+    if (defined $pdf->{' objects'}{$self->uid})
+    { $opts{-xmlfh}->printf("<Ref id=\"%d %d\" />", @{$pdf->{' objects'}{$self->uid}}[0..1]); }
+    else
+    { $self->outxmldeep($fh, $pdf, %opts); }
 }
 
 

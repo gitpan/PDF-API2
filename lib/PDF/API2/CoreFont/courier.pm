@@ -22,6 +22,7 @@ $fonts->{'courier'} = {
 	'xheight' => 426.00,
 	'iscore' => 1,
 	'isfixedpitch' => 1,
+	'missingwidth' => '600',
 	'fontname' => 'Courier',
 	'type' => 'Type1',
 	'fontbbox' => [ -23, -250, 715, 805 ],

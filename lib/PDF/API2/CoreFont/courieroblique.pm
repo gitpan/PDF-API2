@@ -23,6 +23,7 @@ $fonts->{'courieroblique'} = {
 	'iscore' => 1,
 	'isfixedpitch' => 1,
 	'italicangle' => '-12',
+	'missingwidth' => '600',
 	'stdhw' => '51',
 	'stdvw' => '51',
 	'type' => 'Type1',

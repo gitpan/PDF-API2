@@ -11,6 +11,10 @@ $f1=$pdf->corefont('Helvetica');
 
 
 foreach $fn (qw(
+	Arial
+	Arial,Bold
+	Arial,BoldItalic
+	Arial,Italic
 	Courier 
 	Courier-Bold
 	Courier-BoldOblique
@@ -25,10 +29,6 @@ foreach $fn (qw(
 	Times-Italic
 	Times-Roman 
 	ZapfDingbats
-	Arial
-	Arial,Bold
-	Arial,BoldItalic
-	Arial,Italic
 	BankGothic
 	BankGothic,Bold
 	BankGothic,BoldItalic
@@ -76,9 +76,9 @@ foreach $fn (qw(
 	greek
 	bats
 )) {
-#		adobe-standard latin1 uni0 uni1
-#		uni0 uni1 uni2 uni3 uni240 uni255
-	foreach $en (undef) {
+
+	foreach $en (qw(		adobe-standard latin1 latin2 latin3 uni0 uni1
+		uni2 uni3 uni240 uni255 ) ) {
 
 		print STDERR qq($fn - $en --- ).time().qq(\n);
 		my $font=$pdf->corefont($fn,-encoding => $en);
@@ -94,6 +94,7 @@ foreach $fn (qw(
 		}
 
 	}
+	last;
 }
 
 $pdf->saveas("$0.pdf");

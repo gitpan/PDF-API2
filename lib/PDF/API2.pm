@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -108,7 +108,7 @@ sub new {
 	my $dig=digest16(digest32($class,$self,%opt));
        	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
        	$self->{pdf}->{' id'}=$dig;
-       	$self->{forcecompress}=1;
+       	$self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
 	if($opt{-file}) {
 		$self->{' filed'}=$opt{-file};
 		$self->{pdf}->create_file($opt{-file});
@@ -116,50 +116,184 @@ sub new {
 	return $self;
 }
 
-my $rrr=<<EOT;
+=item $pdf->preferences %opts
 
-PageMode 
-	UseNone Open document with neither outline nor thumbnails visible.
-	UseOutlines Open document with outline visible.
-	UseThumbs Open document with thumbnails visible.
-	FullScreen Open document in full-screen mode. In full-screen mode, there is
-		no menu bar, window controls, nor any other window present.
-		The default value of PageMode is UseNone.
-ViewerPreferences
-	dictionary (Optional) Specifies a dictionary that contains kiosk options for this document; see
-	Table 6.2. If this key is omitted, viewers behave in accordance with any current
-	user preferences. The name of the key reflects the fact that this dictionary is not
-	part of the document structure itself, but represents a set of viewer-level options for
-	displaying this document. A given viewer implementation may or may not support
-	the options in this dictionary.
+Controls viewing=preferences for the pdf.
 
-	HideToolbar Boolean (Optional) Specifies that the viewer's toolbar should be hidden whenever the
-		document is active. This attribute defaults to false.
-	HideMenubar Boolean (Optional) Specifies that the viewer's menubar should be hidden whenever the
-		document is active. This attribute defaults to false.
-	HideWindowUI Boolean (Optional) Specifies that the user interface elements in the document's window
-		should be hidden. This attribute defaults to false.
-	FitWindow Boolean (Optional) Specifies that the viewer should resize the window displaying the
-		document to fit the size of the first displayed page of the document. This attribute
-		defaults to false.
-	CenterWindow Boolean (Optional) Specifies that the viewer should position the window displaying the
-		document in the center of the computer's monitor. This attribute defaults to false.
-	PageLayout name (Optional) Specifies the layout for the page when the document is opened. If this
-		attribute is not present, viewers behave in accordance with the current user
-		preference. Allowed values:
-			SinglePage Display the pages one page at a time.
-			OneColumn Display the pages in one column.
-			TwoColumnLeft Display the pages in two columns, with odd-numbered
-				pages on the left.
-			TwoColumnRight Display the pages in two columns, with odd-numbered
-				pages on the right.
-	NonFullScreenPageMode
-		name (Optional) Specifies how the document should be displayed after exiting fullscreen
-		mode if the value of the PageMode key in the Catalog is FullScreen.
-		This key is ignored if the value of the PageMode key in the Catalog is not
-		FullScreen. Allowed values and semantics are the same as for the PageMode
-		key in the Catalog, except that a value of FullScreen is not allowed.
-EOT
+B<Options:>
+
+	-fullscreen ... Full-screen mode, with no menu bar, window controls, or any other window visible.
+	-thumbs ... Thumbnail images visible.
+	-outlines ... Document outline visible.
+	-singlepage ... Display one page at a time.
+	-onecolumn ... Display the pages in one column.
+	-twocolumnleft ... Display the pages in two columns, with oddnumbered pages on the left.
+	-twocolumnrigth ... Display the pages in two columns, with oddnumbered pages on the right.
+	-hidetoolbar ... Specifying whether to hide tool bars.
+	-hidemenubar ... Specifying whether to hide menu bars.
+	-hidewindowui ... Specifying whether to hide user interface elements.
+	-fitwindow ... Specifying whether to resize the document’s window to the size of the displayed page.
+	-centerwindow ... Specifying whether to position the document’s window in the center of the screen.
+	-displaytitle ... Specifying whether the window’s title bar should display the document title 
+			taken from the Title entry of the document information dictionary.
+	-afterfullscreenthumbs ... Thumbnail images visible after Full-screen mode.
+	-afterfullscreenoutlines ... Document outline visible after Full-screen mode.
+	
+	-firstpage => [ $pageobj, %opts] ... Specifying the page to be displayed, 
+			plus one of the following options:
+			
+		-fit => 1
+		
+		Display the page designated by page, with its contents magnified just enough to
+		fit the entire page within the window both horizontally and vertically. If the
+		required horizontal and vertical magnification factors are different, use the
+		smaller of the two, centering the page within the window in the other dimension.
+		
+		-fith => $top
+		
+		Display the page designated by page, with the vertical coordinate top positioned
+		at the top edge of the window and the contents of the page magnified just enough
+		to fit the entire width of the page within the window.
+		
+		-fitv => $left
+		
+		Display the page designated by page, with the horizontal coordinate left positioned
+		at the left edge of the window and the contents of the page magnified just enough
+		to fit the entire height of the page within the window.
+		
+		-fitr => [ $left, $bottom, $right, $top ]
+		
+		Display the page designated by page, with its contents magnified just enough to
+		fit the rectangle specified by the coordinates left, bottom, right, and top
+		entirely within the window both horizontally and vertically. If the required
+		horizontal and vertical magnification factors are different, use the smaller of
+		the two, centering the rectangle within the window in the other dimension.
+		
+		-fitb => 1
+		
+		Display the page designated by page, with its contents magnified just enough 
+		to fit its bounding box entirely within the window both horizontally and
+		vertically. If the required horizontal and vertical magnification factors are
+		different, use the smaller of the two, centering the bounding box within the
+		window in the other dimension.
+		
+		-fitbh => $top
+		
+		Display the page designated by page, with the vertical coordinate top
+		positioned at the top edge of the window and the contents of the page 
+		magnified just enough to fit the entire width of its bounding box 
+		within the window.
+		
+		-fitbv => $left
+		
+		Display the page designated by page, with the horizontal coordinate
+		left positioned at the left edge of the window and the contents of the page
+		magnified just enough to fit the entire height of its bounding box within the
+		window.
+		
+		-xyz => [ $left, $top, $zoom ]
+		
+		Display the page designated by page, with the coordinates (left, top) positioned
+		at the top-left corner of the window and the contents of the page magnified by
+		the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
+		specifies that the current value of that parameter is to be retained unchanged.
+
+
+B<Example:>
+
+	$pdf->preferences(
+		-fullscreen => 1,
+		-onecolumn => 1,
+		-afterfullscreenoutlines => 1,
+		-firstpage => [ $pageobj , -fit => 1],
+	);
+	
+=cut
+
+sub preferences {
+	my $self=shift @_;
+	my %opt=@_;
+	if($opt{-fullscreen}) {
+		$self->{catalog}->{PageMode}=PDFName('FullScreen');
+	} elsif($opt{-thumbs}) {
+		$self->{catalog}->{PageMode}=PDFName('UseThumbs');
+	} elsif($opt{-outlines}) {
+		$self->{catalog}->{PageMode}=PDFName('UseOutlines');
+	} else {
+		$self->{catalog}->{PageMode}=PDFName('UseNone');
+	}
+	if($opt{-singlepage}) {
+		$self->{catalog}->{PageLayout}=PDFName('SinglePage');
+	} elsif($opt{-onecolumn}) {
+		$self->{catalog}->{PageLayout}=PDFName('OneColumn');
+	} elsif($opt{-twocolumnleft}) {
+		$self->{catalog}->{PageLayout}=PDFName('TwoColumnLeft');
+	} elsif($opt{-twocolumnrigth}) {
+		$self->{catalog}->{PageLayout}=PDFName('TwoColumnRight');
+	} else {
+		$self->{catalog}->{PageLayout}=PDFName('SinglePage');
+	}
+
+	$self->{catalog}->{ViewerPreferences}||=PDFDict();
+
+	if($opt{-hidetoolbar}) {
+		$self->{catalog}->{ViewerPreferences}->{HideToolbar}=PDFBool(1);
+	}
+	if($opt{-hidemenubar}) {
+		$self->{catalog}->{ViewerPreferences}->{HideMenubar}=PDFBool(1);
+	}
+	if($opt{-hidewindowui}) {
+		$self->{catalog}->{ViewerPreferences}->{HideWindowUI}=PDFBool(1);
+	}
+	if($opt{-fitwindow}) {
+		$self->{catalog}->{ViewerPreferences}->{FitWindow}=PDFBool(1);
+	}
+	if($opt{-centerwindow}) {
+		$self->{catalog}->{ViewerPreferences}->{CenterWindow}=PDFBool(1);
+	}
+	if($opt{-displaytitle}) {
+		$self->{catalog}->{ViewerPreferences}->{DisplayDocTitle}=PDFBool(1);
+	}
+	if($opt{-righttoleft}) {
+		$self->{catalog}->{ViewerPreferences}->{Direction}=PDFName("R2L");
+	}
+	
+	if($opt{-afterfullscreenthumbs}) {
+		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseThumbs');
+	} elsif($opt{-afterfullscreenoutlines}) {
+		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseOutlines');
+	} else {
+		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseNone');
+	}
+
+	if($opt{-firstpage}) {
+		my ($page,%o)=@{$opt{-firstpage}};
+		
+		$o{-fit}=1 if(scalar(keys %o)<1);
+	
+		if(defined $o{-fit}) {
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('Fit'));
+		} elsif(defined $o{-fith}) {
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitH'),PDFNum($o{-fith}));
+		} elsif(defined $o{-fitb}) {
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitB'));
+		} elsif(defined $o{-fitbh}) {
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBH'),PDFNum($o{-fitbh}));
+		} elsif(defined $o{-fitv}) {
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitV'),PDFNum($o{-fitv}));
+		} elsif(defined $o{-fitbv}) {
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBV'),PDFNum($o{-fitbv}));
+		} elsif(defined $o{-fitr}) {
+			die "insufficient parameters to -fitr => [] " unless(scalar @{$o{-fitr}} == 4);
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$o{-fitr}});
+		} elsif(defined $o{-xyz}) {
+			die "insufficient parameters to -xyz => [] " unless(scalar @{$o{-xyz}} == 3);
+			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$o{-xyz}});
+		}
+	}
+	
+	return $self;
+}
 
 sub proc_pages {
 	my ($pdf, $pgs) = @_;
@@ -231,7 +365,7 @@ sub open {
 		$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
 		$self->{pdf}->{' id'}=$dig;
 	}
-       	$self->{forcecompress}=1;
+       	$self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
 	return $self;
 }
 
@@ -285,19 +419,87 @@ B<Note:> on $index
 
 =cut
 
+sub unfilter {
+	my ($filter,$stream)=@_;
+
+	if((defined $filter) ) {
+		# we need to fix filter because it MAY be
+		# an array BUT IT COULD BE only a name
+		if(ref($filter)!~/Array$/) {
+		       $filter = PDFArray($filter);
+		}
+		use PDF::API2::PDF::Filter;
+		my @filts;
+		my ($hasflate) = -1;
+		my ($temp, $i, $temp1);
+
+		@filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
+
+		foreach my $f (@filts) {
+			$stream = $f->infilt($stream, 1);
+		}
+	}
+	return($stream);
+}
+
+sub dofilter {
+	my ($filter,$stream)=@_;
+
+	if((defined $filter) ) {
+		# we need to fix filter because it MAY be
+		# an array BUT IT COULD BE only a name
+		if(ref($filter)!~/Array$/) {
+		       $filter = PDFArray($filter);
+		}
+		use PDF::API2::PDF::Filter;
+		my @filts;
+		my ($hasflate) = -1;
+		my ($temp, $i, $temp1);
+
+		@filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
+
+		foreach my $f (@filts) {
+			$stream = $f->outfilt($stream, 1);
+		}
+	}
+	return($stream);
+}
+
 sub openpage {
 	my $self=shift @_;
 	my $index=shift @_||0;
 	my $page;
 
 	if($index==0) {
-		$page=@{$self->{pagestack}}[-1];
+		$page=$self->{pagestack}->[-1];
 	} elsif($index<0) {
-		$page=@{$self->{pagestack}}[$index];
+		$page=$self->{pagestack}->[$index];
 	} else {
-		$page=@{$self->{pagestack}}[$index-1];
+		$page=$self->{pagestack}->[$index-1];
 	}
-	$page=PDF::API2::Page->coerce($self->{pdf},$page) if(ref($page) ne 'PDF::API2::Page');
+	if(ref($page) ne 'PDF::API2::Page') {
+		$page=PDF::API2::Page->coerce($self->{pdf},$page);
+		if($index==0) {
+			$self->{pagestack}->[-1]=$page;
+		} elsif($index<0) {
+			$self->{pagestack}->[$index]=$page;
+		} else {
+			$self->{pagestack}->[$index-1]=$page;
+		}
+		if(defined $page->{Contents}) {
+			$page->fixcontents;
+			my $uncontent=$page->{Contents};
+			delete $page->{Contents};
+			my $content=$page->hybrid();
+			foreach my $k ($uncontent->elementsof) {
+				$k->realise;
+				$content->add("q",unfilter($k->{Filter}, $k->{' stream'}),"Q");
+			}
+			$content->compress;
+			$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+			$content->{' nofilt'}=1;
+		}
+	}
 
 #        $self->{pdf}->out_obj($page);
 #        $self->{pdf}->out_obj($self->{pages});
@@ -402,18 +604,12 @@ sub walk_obj {
 		}
 		if($obj->{' stream'}) {
 			if($tobj->{Filter}) {
-#				my $f=join('', (map { $_->val } $tobj->{Filter}->elementsof));
-#				if($f eq 'FlateDecode') {
-#					delete $tobj->{' nofilt'};
-#					delete $tobj->{Filter};
-#					$tobj->{' stream'}=uncompress($obj->{' stream'});
-#				} else {
-#					$tobj->{' stream'}=$obj->{' stream'};
 				$tobj->{' nofilt'}=1;
-				}
-#			} else {
-				$tobj->{' stream'}=$obj->{' stream'};
-#			}
+			} else {
+				delete $tobj->{' nofilt'};
+				$tobj->{Filter}=PDFArray(PDFName('FlateDecode'));
+			}
+			$tobj->{' stream'}=$obj->{' stream'};
 		}
 	}
 	delete $tobj->{' streamloc'};
@@ -434,29 +630,6 @@ B<Note:> you can specify a page object instead as $targetindex
 so that the contents of the sourcepage will be 'merged into'.
 
 =cut
-
-sub unfilter {
-	my ($filter,$stream)=@_;
-
-	if((defined $filter) ) {
-		# we need to fix filter because it MAY be
-		# an array BUT IT COULD BE only a name
-		if(ref($filter)!~/Array$/) {
-		       $filter = PDFArray($filter);
-		}
-		use PDF::API2::PDF::Filter;
-		my @filts;
-		my ($hasflate) = -1;
-		my ($temp, $i, $temp1);
-
-		@filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
-
-		foreach my $f (@filts) {
-			$stream = $f->infilt($stream, 1);
-		}
-	}
-	return($stream);
-}
 
 sub importpage {
 	my $self=shift @_;
@@ -501,7 +674,7 @@ sub importpage {
 		$s_page->{$k}->realise if(ref($s_page->{$k})=~/Objind$/);
 
 		$t_page->{$k}||=PDFDict();
-		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
+		foreach my $sk (qw( XObject ExtGState Font ProcSet Properties )) {
 			next unless(defined $s_page->{$k}->{$sk});
 			$s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
 			$t_page->{$k}->{$sk}||=PDFDict();
@@ -511,6 +684,15 @@ sub importpage {
 				$resmod{$ssk}=$nssk;
 				$t_page->{$k}->{$sk}->{$nssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
 				$seq++;
+			}
+		}
+		foreach my $sk (qw( ColorSpace Pattern Shading )) {
+			next unless(defined $s_page->{$k}->{$sk});
+			$s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
+			$t_page->{$k}->{$sk}||=PDFDict();
+			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
+				next if($ssk=~/^ /);
+				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
 			}
 		}
 	}
@@ -617,6 +799,16 @@ sub save {
 	$self->end;
 }
 
+sub save_xml {
+	my ($self,$file)=@_;
+	my $fh=IO::File->new;
+	$fh->open("> $file");
+	$self->{pdf}->save_xml($fh);
+	$fh->close;
+	$self->end;
+}
+
+
 =item $string = $pdf->stringify
 
 Returns the document in a string.
@@ -663,9 +855,22 @@ sub end {
 	undef;
 }
 
-=item $pdf->info %infohash
+=item %infohash $pdf->info %infohash
 
-Sets the info structure of the document.
+Sets/Gets the info structure of the document.
+
+B<Example:>
+
+	$pdf->info(
+		'Author'       => " Alfred Reibenschuh ",
+		'CreationDate' => "D:20020911000000+01'00'",
+		'ModDate'      => "D:YYYYMMDDhhmmssOHH'mm'",
+		'Creator'      => "fredos-script.pl",
+		'Producer'     => "PDF::API2",
+		'Title'        => "some Publication",
+		'Subject'      => "perl ?",
+		'Keywords'     => "all good things are pdf"
+	);
 
 =cut
 
@@ -680,6 +885,14 @@ sub info {
 
         map { $self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}) } keys %opt;
         $self->{pdf}->out_obj($self->{pdf}->{'Info'});
+        
+	if(defined $self->{pdf}->{'Info'}) {
+		%opt=map { 
+			($_,$self->{pdf}->{'Info'}->{$_}->val) 
+			if(defined $self->{pdf}->{'Info'}->{$_}); 
+		} qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  );
+        }
+        return(%opt);
 }
 
 =item $pdf->finishobjects @objects
@@ -831,8 +1044,8 @@ has been discontinued in favor of the GD::Image import facility.
 =cut
 
 sub image {
-	my ($self,$file)=@_;
-        my $obj=PDF::API2::Image->new($self->{pdf},$file,$self->{time});
+	my ($self,$file,@opts)=@_;
+        my $obj=PDF::API2::Image->new($self->{pdf},$file,$self->{time},@opts);
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 	if($obj->{SMask}) {
 		$self->{pdf}->new_obj($obj->{SMask}) unless($obj->{SMask}->is_obj($self->{pdf}));
