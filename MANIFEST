@@ -30,6 +30,7 @@ examples/canterbury.pfb
 examples/canterbury.ttf
 examples/sRGB.icc
 lib/PDF/API2.pm
+lib/PDF/API2/Lite.pm
 lib/PDF/API2/Util.pm
 lib/PDF/API2/Color.pm
 lib/PDF/API2/UniMap.pm

@@ -248,9 +248,9 @@ sub open
     $fh->seek(0, 2);            # go to end of file
     $end = $fh->tell();
     $self->{' epos'} = $end;
-    $fh->seek($end - 40, 0);
-    $fh->read($buf, 40);
-    if ($buf !~ m/startxref$cr([0-9]+)$cr\%\%eof/oi)
+    $fh->seek($end - 1024, 0);
+    $fh->read($buf, 1024);
+    if ($buf !~ m/startxref$cr([0-9]+)$cr\%\%eof.*?$/oi)
     { die "Malformed PDF file $fname"; }
     $xpos = $1;
     

@@ -3,13 +3,18 @@
 # Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
 # This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself. 
+# modify it under the same terms as Perl itself.
 #
 #==================================================================
 package PDF::API2;
 
-use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 20011230.072032 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+BEGIN {
+	use vars qw( $VERSION $hasWeakRef );
+	( $VERSION ) = '$Revisioning: 20020226.201611 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	eval " use WeakRef; ";
+	$hasWeakRef= $@ ? 0 : 1;
+}
+
 
 =head1 PDF::API2
 
@@ -43,7 +48,7 @@ use PDF::API2::Util;
 
 use POSIX qw( ceil floor );
 
-=head1 METHODS 
+=head1 METHODS
 
 =head2 PDF::API2
 
@@ -55,18 +60,18 @@ sub new {
 	my $class=shift(@_);
 	my %opt=@_;
 	my $self={};
-	bless($self);
-	$self->default('pdf',Text::PDF::File->new);
-	$self->default('Compression',1);
-	$self->default('subset',1);
-	$self->default('time','_'.pdfkey(time()));
+	bless($self,$class);
+	$self->{pdf}=Text::PDF::File->new();
+	$self->{time}='_'.pdfkey(time());
 	foreach my $para (keys(%opt)) {
-		$self->default($para,$opt{$para});
+		$self->{$para}=$opt{$para};
 	}
 	$self->{pdf}->{' version'} = 3;
 	$self->{pages} = Text::PDF::Pages->new($self->{pdf});
+	weaken($self->{pages}) if($hasWeakRef);
 	$self->{pages}->proc_set(qw( PDF Text ImageB ImageC ImageI ));
 	$self->{catalog}=$self->{pdf}->{Root};
+	weaken($self->{catalog}) if($hasWeakRef);
 	$self->{pagestack}=[];
 	my $dig=digest16(digest32($class,$self,%opt));
        	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
@@ -96,6 +101,7 @@ sub proc_pages {
 					$pg->{Resources}->realise;
 				};
 			}
+			weaken($pgref) if($hasWeakRef);
 			push (@pglist, $pgref);
 		}
 	}
@@ -128,6 +134,7 @@ sub open {
 	$self->{pdf}->{' fname'}=$file;
 	$self->{pdf}->{'Root'}->realise;
 	$self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
+	weaken($self->{pages}) if($hasWeakRef);
 	$self->{pdf}->{' version'} = 3;
 	my @pages=proc_pages($self->{pdf},$self->{pages});
 	$self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
@@ -151,8 +158,8 @@ sub open {
 Returns a new page object or inserts-and-returns a new page at $index.
 
 B<Note:> on $index
-	
-	-1 ... is inserted before the last page 
+
+	-1 ... is inserted before the last page
 	1 ... is inserted before page number 1
 	0 ... is simply appended
 
@@ -168,7 +175,9 @@ sub page {
 		$page=PDF::API2::Page->new($self->{pdf},$self->{pages},$index);
 	}
 	$page->{' apipdf'}=$self->{pdf};
+	weaken($page->{' apipdf'}) if($hasWeakRef);
 	$page->{' api'}=$self;
+	weaken($page->{' api'}) if($hasWeakRef);
         $self->{pdf}->out_obj($page);
         $self->{pdf}->out_obj($self->{pages});
 	if($index==0) {
@@ -178,6 +187,7 @@ sub page {
 	} else {
 		splice(@{$self->{pagestack}},$index-1,0,$page);
 	}
+	weaken($page) if($hasWeakRef);
 	return $page;
 }
 
@@ -186,7 +196,7 @@ sub page {
 Returns the pageobject of page $index.
 
 B<Note:> on $index
-	
+
 	-1,0 ... returns the last page
 	1 ... returns page number 1
 
@@ -196,7 +206,7 @@ sub openpage {
 	my $self=shift @_;
 	my $index=shift @_||0;
 	my $page;
-	
+
 	if($index==0) {
 		$page=@{$self->{pagestack}}[-1];
 	} elsif($index<0) {
@@ -205,10 +215,11 @@ sub openpage {
 		$page=@{$self->{pagestack}}[$index-1];
 	}
 	$page=PDF::API2::Page->coerce($self->{pdf},$page) if(ref($page) ne 'PDF::API2::Page');
-	
+
 #        $self->{pdf}->out_obj($page);
 #        $self->{pdf}->out_obj($self->{pages});
 	$page->{' api'}=$self;
+	weaken($page->{' api'}) if($hasWeakRef);
 	$page->{' reopened'}=1;
 	return($page);
 }
@@ -218,7 +229,7 @@ sub openpage {
 Returns the pageobject of page $targetindex, cloned from $sourceindex.
 
 B<Note:> on $index
-	
+
 	-1,0 ... returns the last page
 	1 ... returns page number 1
 
@@ -241,7 +252,7 @@ sub clonepage {
 	$t_page=$self->page($t_idx);
 
 	$s_page->copy($self->{pdf},$t_page);
-	
+
 ####################################################################
         if(defined($t_page->{Resources})) {
                 $t_page->{Resources}->realise if($t_page->{Resources}->is_obj($self->{pdf}));
@@ -265,7 +276,7 @@ sub clonepage {
         #        foreach my $content ($t_page->{Contents}->elementsof) {
         #                $self->{pdf}->new_obj($content);
         #        }
-        
+
 		$t_page->{Contents}->{' val'}=[];
 		$t_page->{Contents}->add_elements($s_page->{Contents}->elementsof);
         }
@@ -282,18 +293,18 @@ sub walk_obj {
 	my ($objs,$spdf,$tpdf,$obj,@key)=@_;
 
 	my $tobj;
-	
+
 	return($objs->{$obj}) if(defined $objs->{$obj});
-	
+
 	if(ref($obj)=~/Objind$/) {
 		$obj->realise;
 	}
 
-	$tobj=$obj->copy;	
+	$tobj=$obj->copy;
 	$tpdf->new_obj($tobj) if($obj->is_obj($spdf));
-	
+
 	$objs->{$obj}=$tobj;
-	
+
 	if(ref($obj)=~/Array$/) {
 		$tobj->{' val'}=[];
 		foreach my $k ($obj->elementsof) {
@@ -318,7 +329,7 @@ sub walk_obj {
 Returns the pageobject of page $targetindex, imported from $sourcepdf,$sourceindex.
 
 B<Note:> on $index
-	
+
 	-1,0 ... returns the last page
 	1 ... returns page number 1
 
@@ -334,12 +345,13 @@ sub importpage {
 
 	$s_page=$s_pdf->openpage($s_idx);
 	$t_page=$self->page($t_idx);
-	
+
 	$self->{apiimportcache}=$self->{apiimportcache}||{};
+	$self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
 
 	foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
 		next unless(defined $s_page->{$k});
-		$t_page->{$k} = walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+		$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
 	}
 	foreach my $k (qw( Thumb Annots )) {
 		next unless(defined $s_page->{$k});
@@ -354,19 +366,38 @@ sub importpage {
 			$t_page->{$k}->{$sk}=PDFDict();
 			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
 				next if($ssk=~/^ /);
-				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
 			}
 		}
 	}
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
 		$t_page->{Contents}=PDFArray();
+		my $content=PDFDict();
+		$self->{pdf}->new_obj($content);
+		$t_page->{Contents}->add_elements($content);
+
 		foreach my $k ($s_page->{Contents}->elementsof) {
-			$t_page->{Contents}->add_elements(walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$k));
+
+			$k->realise;
+			if($k->{Filter}){
+				$k->{Filter}->realise;
+				foreach my $flt ($k->{Filter}->elementsof) {
+					my $fn=$flt->{val};
+					my $f="Text::PDF::$fn"->new();
+					$k->{' stream'}=$f->infilt($k->{' stream'},1) if($f);
+				}
+			}
+			$k->{' stream'}=~s/[\x0a\x0d]+/ /gm if($k->{' stream'});
+
+			$content->{' stream'}.=$k->{' stream'}." \n";
+			
+			$content->{'Filter'}=PDFArray(PDFName('FlateDecode'));
+			
 		}
 	}
-        $self->{pdf}->out_obj($t_page);
-        $self->{pdf}->out_obj($self->{pages});
+	$self->{pdf}->out_obj($t_page);
+	$self->{pdf}->out_obj($self->{pages});
 	return($t_page);
 }
 
@@ -429,7 +460,7 @@ sub saveas {
 		print OUTF ${$self->{pdf}->{' OUTFILE'}->string_ref};
 		CORE::close(OUTF);
 	} else {
-		$self->{pdf}->out_file($file);	
+		$self->{pdf}->out_file($file);
 	}
 }
 
@@ -440,7 +471,7 @@ Returns the document in a string.
 =cut
 
 sub stringify {
-	my ($this)=@_;
+	my ($self)=@_;
 	my $str;
 	if((defined $self->{reopened}) && ($self->{reopened}==1)) {
 		$self->{pdf}->append_file;
@@ -449,11 +480,11 @@ sub stringify {
 		my $fh = PDF::API2::IOString->new();
 		$fh->open();
 		eval {
-			$this->{pdf}->out_file($fh);
+			$self->{pdf}->out_file($fh);
 		};
 		$str=${$fh->string_ref};
 		$fh->realclose;
-	} 
+	}
 	return($str);
 }
 
@@ -475,7 +506,7 @@ sub end {
 	        {
 	            # Remove scalar value.
 	            delete $self->{$key};
-	        }
+		}
 	        elsif ($ref =~ /^Text::PDF::/o)
 	        {
 	            if ($key =~ /parent/io)
@@ -495,10 +526,7 @@ sub end {
 	        {
 	            # Remove sub-array (of _scalars_)
 	            delete $self->{$key};
-	        }
-	        elsif ($ref =~ /^Font::TTF::/o)
-	        {
-	            # TTF font structure, explicitly destruct.
+	        } elsif (UNIVERSAL::can($self->{$key},'release')) {
 	            my $val = $self->{$key};
 	            delete $self->{$key};
 	            $val->release();
@@ -513,17 +541,12 @@ sub end {
 	            # Remove sub-hash (of _scalars_)
 	            delete $self->{$key};
 	        }
-	        elsif (UNIVERSAL::can($self->{$key},'release'))
-	        {
-	        	$self->{$key}->release();
-	        	delete($self->{$key});
-	        }
-	        else 
+	        else
 	        {
 	        	delete($self->{$key});
 	        }
 	    }
-	
+
 	    ###########################################################################
 	    # Now that we think that we've gone back and freed up all of the memory
 	    # that we were using, check to make sure that we don't have any keys left
@@ -537,7 +560,7 @@ sub end {
 
 #	foreach my $k (keys %{$self}) {
 #		delete $self->{$k};
-#	} 
+#	}
 	undef;
 }
 
@@ -599,20 +622,20 @@ sub corefont {
 	my $obj;
 
         $self->{pages}->{'Resources'}
-        	= $self->{pages}->{'Resources'} 
+        	= $self->{pages}->{'Resources'}
         	|| PDFDict();
  	$self->{pages}->{'Resources'}->{'Font'}
- 		= $self->{pages}->{'Resources'}->{'Font'} 
+ 		= $self->{pages}->{'Resources'}->{'Font'}
  		|| PDFDict();
 	if((defined $self->{pages}->{'Resources'}->{'Font'}->{$key}) && $self->{reopened}) {
 		# we are here because we somehow created
-		# the reopened pdf so we simulate a valid 
+		# the reopened pdf so we simulate a valid
 		# object without writing a new one
 		$obj= PDF::API2::CoreFont->coerce(
 				$self->{pages}->{'Resources'}->{'Font'}->{$key},$self->{pdf},$name,$key,$light
 			);
 	} else {
-		$obj= $self->{pages}->{'Resources'}->{'Font'}->{$key} 
+		$obj= $self->{pages}->{'Resources'}->{'Font'}->{$key}
 			|| PDF::API2::CoreFont->new(
 				$self->{pdf},$name,$key,$light
 			);
@@ -632,7 +655,7 @@ sub corefont {
 
 sub xfont {
 	my ($self,@opts)=@_;
-	
+
 	my $obj=PDF::API2::xFont->new($self->{pdf},@opts);
 	my $key=$obj->{' apiname'};
 
@@ -667,8 +690,8 @@ sub psfont {
 
 	if($^O eq 'MSWin32') {
 		my %opts=opts_from_pfm($pfb);
-		$pfb = defined $opts{-pfbfile} ? $opts{-pfbfile} : $pfb; 
-		$afm = defined $opts{-pfbfile} ? undef : $afm; 
+		$pfb = defined $opts{-pfbfile} ? $opts{-pfbfile} : $pfb;
+		$afm = defined $opts{-pfbfile} ? undef : $afm;
 	}
 
 	my $obj=PDF::API2::PSFont->new($self->{pdf},$pfb,$afm,$key,$encoding,@glyphs);
@@ -699,7 +722,7 @@ B<Examples:>
 
 B<Beware:>
 
-The $lazy option set to 1 will make several assumptions about truetype, used encoding 
+The $lazy option set to 1 will make several assumptions about truetype, used encoding
 and the reader-application (eg. Adobe Acrobat) to provide easy access to fonts without
 embedding.
 
@@ -711,12 +734,12 @@ This is fixed and cannot be changed !
 2. API2 assumes that the fonts is not needed to be embedded and as such that the
 reader-application (eg. Acrobat 5) supports proper font search or substitution.
 
-3. Encodings of symbol-fonts do not have to be changed, since this should also be 
+3. Encodings of symbol-fonts do not have to be changed, since this should also be
 handled by the reader-application (eg. Acrobat).
 
 4. Utf8 methods will discard any characters outside of the 'latin1' and 'ms-symbol' ranges.
 
-=back 
+=back
 
 B<Benefits:>
 
@@ -740,14 +763,14 @@ B<Lazy Example:>
 
 B<Windows Font Names:>
 
-	arial arialbold arialitalic arialbolditalic arialblack 
-	comicsansms comicsansmsbold 
-	couriernew couriernewbold couriernewitalic couriernewbolditalic 
-	tahoma tahomabold 
-	timesnewroman timesnewromanbold timesnewromanitalic timesnewromanbolditalic 
-	verdana verdanabold verdanaitalic verdanabolditalic 
+	arial arialbold arialitalic arialbolditalic arialblack
+	comicsansms comicsansmsbold
+	couriernew couriernewbold couriernewitalic couriernewbolditalic
+	tahoma tahomabold
+	timesnewroman timesnewromanbold timesnewromanitalic timesnewromanbolditalic
+	verdana verdanabold verdanaitalic verdanabolditalic
 	wingdings
-	
+
 B<Note:>
 
 =over 2
@@ -760,14 +783,14 @@ Please see L<PDF::API2::xFont> for other informations.
 
 sub ttfont {
 	my ($self,$file,$lazy)=@_;
-	
+
 	if($^O eq 'MSWin32') {
 		my %opts=opts_from_ttf($file);
-		$file = defined $opts{-ttfile} ? $opts{-ttfile} : $file; 
+		$file = defined $opts{-ttfile} ? $opts{-ttfile} : $file;
 	}
 
 	return $self->xfont(-ttfile=>$file,-ttopts=>$lazy) if($lazy);
-	
+
 	my $key='TTx'.pdfkey($file).$self->{time};
 
 	my $obj=PDF::API2::TTFont->new($self->{pdf},$file,$key);
@@ -827,13 +850,13 @@ B<Examples:>
 	$img=$pdf->image('reallargefile.pnm');
 	$pdf->imagemask($img,'reallargefile_mask.pnm');
 
-B<Note:> This appends a pdf1.4 (Acrobat 5.x) transparency mask 
-(aka. Soft Mask) to the specified image. The mask may be a grayscale 
-JPG or PNM which is used as the transparency/opacity information. 
+B<Note:> This appends a pdf1.4 (Acrobat 5.x) transparency mask
+(aka. Soft Mask) to the specified image. The mask may be a grayscale
+JPG or PNM which is used as the transparency/opacity information.
 
-B<PNG Note:> In case of a PNG the actual transparency or 
-alpha-channel information is read, but works only for 
-the following imagetypes: 
+B<PNG Note:> In case of a PNG the actual transparency or
+alpha-channel information is read, but works only for
+the following imagetypes:
 
 	Indexed plus tRNS-Chunk
 	Grayscale plus Alpha-Channel
@@ -857,7 +880,7 @@ sub imagemask {
 
 =item $img = $pdf->pdfimage $file, $page_number
 
-Returns a new image object, 
+Returns a new image object,
 which is actually a page from another pdf.
 
 B<Examples:>
@@ -870,7 +893,7 @@ B<Examples:>
 
 As $pdf->pdfimage, but takes an already opened pdfobject (API2->open) as parameter.
 
-B<Note:> This is functionally the same as the one above, but far less 
+B<Note:> This is functionally the same as the one above, but far less
 resource-intensive, if you use many pages (possible the same) from one single pdf.
 
 =cut
@@ -884,7 +907,7 @@ sub pdfimageobj {
 
 	$s_page=$s_pdf->openpage($s_idx);
 	$t_page=PDF::API2::PdfImage->new();
-	
+
 	$self->{apiimportcache}=$self->{apiimportcache}||{};
 
 	my $dict = $s_page->find_prop('CropBox')||$s_page->find_prop('MediaBox');
@@ -931,7 +954,7 @@ sub pdfimageobj {
 				my @filts;
 			        my ($hasflate) = -1;
 			        my ($temp, $i, $temp1);
-			        
+
 			        for ($i = 0; $i <= $#{$k->{'Filter'}{' val'}}; $i++)
 			        {
 			            $temp = $k->{'Filter'}{' val'}[$i]->val;
@@ -939,8 +962,8 @@ sub pdfimageobj {
 			            push (@filts, $temp1->new);
 			        }
 
-				foreach my $f (@filts) { 
-					$str = $f->infilt($str, 1); 
+				foreach my $f (@filts) {
+					$str = $f->infilt($str, 1);
 				}
 			}
 			$t_page->{' pdfimage'}.="\n$str\n";
@@ -1126,8 +1149,8 @@ Returns a new or existing outlines object.
 
 sub outlines {
 	my ($self)=@_;
-	
-	$self->{pdf}->{Root}->{Outlines}=$self->{pdf}->{Root}->{Outlines} 
+
+	$self->{pdf}->{Root}->{Outlines}=$self->{pdf}->{Root}->{Outlines}
 		|| PDF::API2::Outlines->new($self);
 	my $obj=$self->{pdf}->{Root}->{Outlines};
 
@@ -1164,7 +1187,7 @@ sub resource {
 
 	$dict->{$type}=$dict->{$type} || PDFDict();
 	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
-	
+
 	if($force) {
 		$dict->{$type}->{$key}=$obj;
 	} else {
@@ -1173,15 +1196,15 @@ sub resource {
 
 	$self->{pdf}->out_obj($dict)
 		if($dict->is_obj($self->{pdf}));
-	
+
 	$self->{pdf}->out_obj($dict->{$type})
 		if($dict->{$type}->is_obj($self->{pdf}));
-	
+
 	$self->{pdf}->out_obj($obj)
 		if($obj->is_obj($self->{pdf}));
 
         $self->{pdf}->out_obj($self->{pages});
-		
+
 	return($dict);
 }
 
@@ -1370,70 +1393,70 @@ sub outline {
 
 Sets the destination page of the outline.
 
-=item $otl->dest( $page, -fit => 1 ) 
+=item $otl->dest( $page, -fit => 1 )
 
-Display the page designated by page, with its contents magnified just enough to 
-fit the entire page within the window both horizontally and vertically. If the 
-required horizontal and vertical magnification factors are different, use the 
+Display the page designated by page, with its contents magnified just enough to
+fit the entire page within the window both horizontally and vertically. If the
+required horizontal and vertical magnification factors are different, use the
 smaller of the two, centering the page within the window in the other dimension.
 
 =item $otl->dest( $page, -fith => $top )
 
 Display the page designated by page, with the vertical coordinate top positioned
-at the top edge of the window and the contents of the page magnified just enough 
+at the top edge of the window and the contents of the page magnified just enough
 to fit the entire width of the page within the window.
 
-=item $otl->dest( $page, -fitv => $left ) 
+=item $otl->dest( $page, -fitv => $left )
 
 Display the page designated by page, with the horizontal coordinate left positioned
-at the left edge of the window and the contents of the page magnified just enough 
+at the left edge of the window and the contents of the page magnified just enough
 to fit the entire height of the page within the window.
 
-=item $otl->dest( $page, -fitr => [ $left, $bottom, $right, $top ] ) 
+=item $otl->dest( $page, -fitr => [ $left, $bottom, $right, $top ] )
 
-Display the page designated by page, with its contents magnified just enough to 
-fit the rectangle specified by the coordinates left, bottom, right, and top 
+Display the page designated by page, with its contents magnified just enough to
+fit the rectangle specified by the coordinates left, bottom, right, and top
 entirely within the window both horizontally and vertically. If the required
 horizontal and vertical magnification factors are different, use the smaller of
 the two, centering the rectangle within the window in the other dimension.
 
 =item $otl->dest( $page, -fitb => 1 )
 
-Display the page designated by page, with its contents magnified just 
-enough to fit its bounding box entirely within the window both horizontally and 
-vertically. If the required horizontal and vertical magnification factors are 
-different, use the smaller of the two, centering the bounding box within the 
+Display the page designated by page, with its contents magnified just
+enough to fit its bounding box entirely within the window both horizontally and
+vertically. If the required horizontal and vertical magnification factors are
+different, use the smaller of the two, centering the bounding box within the
 window in the other dimension.
 
 =item $otl->dest( $page, -fitbh => $top )
 
-Display the page designated by page, with the vertical coordinate top 
-positioned at the top edge of the window and the contents of the page magnified 
+Display the page designated by page, with the vertical coordinate top
+positioned at the top edge of the window and the contents of the page magnified
 just enough to fit the entire width of its bounding box within the window.
 
 =item $otl->dest( $page, -fitbv => $left )
 
-Display the page designated by page, with the horizontal coordinate 
-left positioned at the left edge of the window and the contents of the page 
-magnified just enough to fit the entire height of its bounding box within the 
+Display the page designated by page, with the horizontal coordinate
+left positioned at the left edge of the window and the contents of the page
+magnified just enough to fit the entire height of its bounding box within the
 window.
 
 =item $otl->dest( $page, -xyz => [ $left, $top, $zoom ] )
 
-Display the page designated by page, with the coordinates (left, top) positioned 
-at the top-left corner of the window and the contents of the page magnified by 
-the factor zoom. A zero (0) value for any of the parameters left, top, or zoom 
+Display the page designated by page, with the coordinates (left, top) positioned
+at the top-left corner of the window and the contents of the page magnified by
+the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
 specifies that the current value of that parameter is to be retained unchanged.
 
 =cut
 
 sub dest {
 	my ($self,$page,%opts)=@_;
-	
+
 	die "no valid page '$page' specified." if(!ref($page));
-	
+
 	$opts{-fit}=1 if(scalar(keys %opts)<1);
-	
+
 	if(defined $opts{-fit}) {
 		$self->{Dest}=PDFArray($page,PDFName('Fit'));
 	} elsif(defined $opts{-fith}) {
@@ -1506,12 +1529,12 @@ sub new {
 		$opts{-whitepoint}=$opts{-whitepoint} || [ 0.95049, 1, 1.08897 ];
 		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
 		$opts{-gamma}=$opts{-gamma} || [ 2.22218, 2.22218, 2.22218 ];
-		$opts{-matrix}=$opts{-matrix} || [ 
+		$opts{-matrix}=$opts{-matrix} || [
 			0.41238, 0.21259, 0.01929,
 			0.35757, 0.71519, 0.11919,
 			0.1805,  0.07217, 0.95049
 		];
-		
+
 		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
 		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
 		$csd->{Gamma}=PDFArray(map {PDFNum($_)} @{$opts{-gamma}});
@@ -1530,7 +1553,7 @@ sub new {
 		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
 		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
 		$csd->{Gamma}=PDFNum($opts{-gamma});
-		
+
 		$self->add_elements(PDFName($opts{-type}),$csd);
 
 		$self->{' type'}='gray';
@@ -1542,12 +1565,12 @@ sub new {
 		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
 		$opts{-range}=$opts{-range} || [ -200, 200, -200, 200 ];
 		$opts{-gamma}=$opts{-gamma} || [ 2.22218, 2.22218, 2.22218 ];
-		
+
 		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
 		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
 		$csd->{Gamma}=PDFArray(map {PDFNum($_)} @{$opts{-gamma}});
 		$csd->{Range}=PDFArray(map {PDFNum($_)} @{$opts{-range}});
-		
+
 		$self->add_elements(PDFName($opts{-type}),$csd);
 
 		$self->{' type'}='lab';
@@ -1560,18 +1583,18 @@ sub new {
 		$opts{-whitepoint}=$opts{-whitepoint} || [ 0.95049, 1, 1.08897 ];
 		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
 		$opts{-gamma}=$opts{-gamma} || [ 2.22218, 2.22218, 2.22218 ];
-		
+
 		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
 		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
 		$csd->{Gamma}=PDFArray(map {PDFNum($_)} @{$opts{-gamma}});
-		
+
 		foreach my $col (@{$opts{-colors}}) {
 			map { $csd->{' stream'}.=pack('C',$_); } @{$col};
 		}
 		$pdf->new_obj($csd);
 		$csd->{Filter}=PDFArray(PDFName('FlateDecode'));
 		$self->add_elements(PDFName($opts{-type}),PDFName($opts{-base}),PDFNum($opts{-maxindex}),$csd);
-		
+
 		$self->{' type'}='index';
 
 	} elsif($opts{-type} eq 'ICCBased') {
@@ -1585,7 +1608,7 @@ sub new {
 		$pdf->new_obj($csd);
 		$self->add_elements(PDFName($opts{-type}),$csd);
 
-		$self->{' type'} = 
+		$self->{' type'} =
 			$opts{-base}=~/RGB/i ? 'rgb' :
 			$opts{-base}=~/CMYK/i ? 'cmyk' :
 			$opts{-base}=~/Lab/i ? 'lab' :
@@ -1863,8 +1886,8 @@ for one font use 'clone' and then 'encode'.
 
 B<Note:> The following encodings are supported (as of version 0.1.16_beta):
 
-	adobe-standard adobe-symbol adobe-zapf-dingbats 
-	cp1250 cp1251 cp1252 
+	adobe-standard adobe-symbol adobe-zapf-dingbats
+	cp1250 cp1251 cp1252
 	cp437 cp850
 	es es2 pt pt2
 	iso-8859-1 iso-8859-2 latin1 latin2
@@ -1885,7 +1908,7 @@ sub encode {
 		};
 		$encoding='custom';
 	}
-	
+
 	if($self->{' apifontlight'}) {
 		$self->encodeProperLight($encoding,32,255,@glyphs);
 	} else {
@@ -1974,7 +1997,7 @@ sub new {
 	$class = ref $class if ref $class;
 
 	$self = $class->SUPER::new();
-	
+
 	%opts=opts_from_ttf($opts{-ttfile},%opts) if(defined $opts{-ttfile});
 
 	$self->{'Type'} = PDFName("Font");
@@ -1985,7 +2008,7 @@ sub new {
 	$self->{'Encoding'}=PDFName('WinAnsiEncoding');
 	$self->{'FirstChar'} = PDFNum($opts{-firstchar});
 	$self->{'LastChar'} = PDFNum($opts{-lastchar});
-	
+
 	$self->{'Widths'}=PDFArray(map { PDFNum($_ || 0) } @{$opts{-widths}})  if(defined $opts{-widths});
 
 	$self->{' fc'}=$opts{-firstchar};
@@ -2011,7 +2034,7 @@ sub new {
 	$self->{' fontbbox'}=$opts{-fontbbox}||[0,0,600,600];
 	$self->{' capheight'}=$opts{-capheight}||0;
 	$self->{' xheight'}=$opts{-xheight}||0;
-	
+
 	if(defined($pdf) && !$self->is_obj($pdf)) {
 		$pdf->new_obj($self);
 	}
@@ -2130,7 +2153,7 @@ sub new {
 sub coerce {
 	my ($class,$font,$pdf,$name,$key,$light) = @_;
 	my ($self) = {};
-	
+
 	$class = ref $class if ref $class;
 	if((defined $light) && ($light==1)) {
 		$self = $class->SUPER::newCoreLight(undef,$name,$key);
@@ -2140,7 +2163,7 @@ sub coerce {
 	}
 	$self->{' apiname'}=$key;
 	$self->{' apipdf'}=$pdf;
- 
+
 	foreach my $k (keys %{$font}) {
 		$self->{$k}=$font->{$k};
 	}
@@ -2625,13 +2648,13 @@ sub resource {
 	my ($self, $type, $key, $obj, $force) = @_;
 	my ($dict) = $self->find_prop('Resources');
 
-	$dict= $dict || $self->{Resources} || PDFDict();	
+	$dict= $dict || $self->{Resources} || PDFDict();
 
 	$dict->realise if(ref($dict)=~/Objind$/);
 
 	$dict->{$type}=$dict->{$type} || PDFDict();
 	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
-	
+
 	if($force) {
 		$dict->{$type}->{$key}=$obj;
 	} else {
@@ -2640,15 +2663,15 @@ sub resource {
 
 	$self->{' apipdf'}->out_obj($dict)
 		if($dict->is_obj($self->{' apipdf'}));
-	
+
 	$self->{' apipdf'}->out_obj($dict->{$type})
 		if($dict->{$type}->is_obj($self->{' apipdf'}));
-	
+
 	$self->{' apipdf'}->out_obj($obj)
 		if($obj->is_obj($self->{' apipdf'}));
 
         $self->{' apipdf'}->out_obj($self);
-		
+
 	return($dict);
 }
 
@@ -2691,7 +2714,7 @@ use PDF::API2::Util;
 
 Subclassed from Text::PDF::Dict.
 
-=item $ant = PDF::API2::Annotation->new 
+=item $ant = PDF::API2::Annotation->new
 
 Returns a annotation object (called from $page->annotation).
 
@@ -2754,70 +2777,70 @@ sub open {
 	return($self);
 }
 
-=item $ant->dest( $page, -fit => 1 ) 
+=item $ant->dest( $page, -fit => 1 )
 
-Display the page designated by page, with its contents magnified just enough to 
-fit the entire page within the window both horizontally and vertically. If the 
-required horizontal and vertical magnification factors are different, use the 
+Display the page designated by page, with its contents magnified just enough to
+fit the entire page within the window both horizontally and vertically. If the
+required horizontal and vertical magnification factors are different, use the
 smaller of the two, centering the page within the window in the other dimension.
 
 =item $ant->dest( $page, -fith => $top )
 
 Display the page designated by page, with the vertical coordinate top positioned
-at the top edge of the window and the contents of the page magnified just enough 
+at the top edge of the window and the contents of the page magnified just enough
 to fit the entire width of the page within the window.
 
-=item $ant->dest( $page, -fitv => $left ) 
+=item $ant->dest( $page, -fitv => $left )
 
 Display the page designated by page, with the horizontal coordinate left positioned
-at the left edge of the window and the contents of the page magnified just enough 
+at the left edge of the window and the contents of the page magnified just enough
 to fit the entire height of the page within the window.
 
-=item $ant->dest( $page, -fitr => [ $left, $bottom, $right, $top ] ) 
+=item $ant->dest( $page, -fitr => [ $left, $bottom, $right, $top ] )
 
-Display the page designated by page, with its contents magnified just enough to 
-fit the rectangle specified by the coordinates left, bottom, right, and top 
+Display the page designated by page, with its contents magnified just enough to
+fit the rectangle specified by the coordinates left, bottom, right, and top
 entirely within the window both horizontally and vertically. If the required
 horizontal and vertical magnification factors are different, use the smaller of
 the two, centering the rectangle within the window in the other dimension.
 
 =item $ant->dest( $page, -fitb => 1 )
 
-(PDF 1.1) Display the page designated by page, with its contents magnified just 
-enough to fit its bounding box entirely within the window both horizontally and 
-vertically. If the required horizontal and vertical magnification factors are 
-different, use the smaller of the two, centering the bounding box within the 
+(PDF 1.1) Display the page designated by page, with its contents magnified just
+enough to fit its bounding box entirely within the window both horizontally and
+vertically. If the required horizontal and vertical magnification factors are
+different, use the smaller of the two, centering the bounding box within the
 window in the other dimension.
 
 =item $ant->dest( $page, -fitbh => $top )
 
-(PDF 1.1) Display the page designated by page, with the vertical coordinate top 
-positioned at the top edge of the window and the contents of the page magnified 
+(PDF 1.1) Display the page designated by page, with the vertical coordinate top
+positioned at the top edge of the window and the contents of the page magnified
 just enough to fit the entire width of its bounding box within the window.
 
 =item $ant->dest( $page, -fitbv => $left )
 
-(PDF 1.1) Display the page designated by page, with the horizontal coordinate 
-left positioned at the left edge of the window and the contents of the page 
-magnified just enough to fit the entire height of its bounding box within the 
+(PDF 1.1) Display the page designated by page, with the horizontal coordinate
+left positioned at the left edge of the window and the contents of the page
+magnified just enough to fit the entire height of its bounding box within the
 window.
 
 =item $ant->dest( $page, -xyz => [ $left, $top, $zoom ] )
 
-Display the page designated by page, with the coordinates (left, top) positioned 
-at the top-left corner of the window and the contents of the page magnified by 
-the factor zoom. A zero (0) value for any of the parameters left, top, or zoom 
+Display the page designated by page, with the coordinates (left, top) positioned
+at the top-left corner of the window and the contents of the page magnified by
+the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
 specifies that the current value of that parameter is to be retained unchanged.
 
 =cut
 
 sub dest {
 	my ($self,$page,%opts)=@_;
-	
+
 	die "no valid page '$page' specified." if(!ref($page));
-	
+
 	$opts{-fit}=1 if(scalar(keys %opts)<1);
-	
+
 	if(defined $opts{-fit}) {
 		$self->{Dest}=PDFArray($page,PDFName('Fit'));
 	} elsif(defined $opts{-fith}) {
@@ -3010,7 +3033,7 @@ sub fillcolor {
 		($type,@clrs)=checkcolor(undef,$c,$m,$y,$k);
 		$self->add(floats(@clrs),$type);
 	}
-	
+
 	return($self);
 }
 
@@ -3043,45 +3066,45 @@ sub fillcolorbyspace {
 Sets strokecolor.
 
 B<Defined color-names are:>
-	
+
 	aliceblue, antiquewhite, aqua, aquamarine, azure,
-	beige, bisque, black, blanchedalmond, blue, 
-	blueviolet, brown, burlywood, cadetblue, chartreuse, 
-	chocolate, coral, cornflowerblue, cornsilk, crimson, 
-	cyan, darkblue, darkcyan, darkgoldenrod, darkgray, 
-	darkgreen, darkgrey, darkkhaki, darkmagenta, 
+	beige, bisque, black, blanchedalmond, blue,
+	blueviolet, brown, burlywood, cadetblue, chartreuse,
+	chocolate, coral, cornflowerblue, cornsilk, crimson,
+	cyan, darkblue, darkcyan, darkgoldenrod, darkgray,
+	darkgreen, darkgrey, darkkhaki, darkmagenta,
 	darkolivegreen, darkorange, darkorchid, darkred,
 	darksalmon, darkseagreen, darkslateblue, darkslategray,
-	darkslategrey, darkturquoise, darkviolet, deeppink, 
-	deepskyblue, dimgray, dimgrey, dodgerblue, firebrick, 
-	floralwhite, forestgreen, fuchsia, gainsboro, ghostwhite, 
-	gold, goldenrod, gray, grey, green, greenyellow, 
-	honeydew, hotpink, indianred, indigo, ivory, khaki, 
-	lavender, lavenderblush, lawngreen, lemonchiffon, 
-	lightblue, lightcoral, lightcyan, lightgoldenrodyellow, 
+	darkslategrey, darkturquoise, darkviolet, deeppink,
+	deepskyblue, dimgray, dimgrey, dodgerblue, firebrick,
+	floralwhite, forestgreen, fuchsia, gainsboro, ghostwhite,
+	gold, goldenrod, gray, grey, green, greenyellow,
+	honeydew, hotpink, indianred, indigo, ivory, khaki,
+	lavender, lavenderblush, lawngreen, lemonchiffon,
+	lightblue, lightcoral, lightcyan, lightgoldenrodyellow,
 	lightgray, lightgreen, lightgrey, lightpink, lightsalmon,
-	lightseagreen, lightskyblue, lightslategray, 
-	lightslategrey, lightsteelblue, lightyellow, lime, 
-	limegreen, linen, magenta, maroon, mediumaquamarine, 
-	mediumblue, mediumorchid, mediumpurple, mediumseagreen, 
-	mediumslateblue, mediumspringgreen, mediumturquoise, 
-	mediumvioletred, midnightblue, mintcream, mistyrose, 
-	moccasin, navajowhite, navy, oldlace, olive, olivedrab, 
-	orange, orangered, orchid, palegoldenrod, palegreen, 
-	paleturquoise, palevioletred, papayawhip, peachpuff, 
-	peru, pink, plum, powderblue, purple, red, rosybrown, 
-	royalblue, saddlebrown, salmon, sandybrown, seagreen, 
-	seashell, sienna, silver, skyblue, slateblue, slategray, 
-	slategrey, snow, springgreen, steelblue, tan, teal, 
-	thistle, tomato, turquoise, violet, wheat, white, 
+	lightseagreen, lightskyblue, lightslategray,
+	lightslategrey, lightsteelblue, lightyellow, lime,
+	limegreen, linen, magenta, maroon, mediumaquamarine,
+	mediumblue, mediumorchid, mediumpurple, mediumseagreen,
+	mediumslateblue, mediumspringgreen, mediumturquoise,
+	mediumvioletred, midnightblue, mintcream, mistyrose,
+	moccasin, navajowhite, navy, oldlace, olive, olivedrab,
+	orange, orangered, orchid, palegoldenrod, palegreen,
+	paleturquoise, palevioletred, papayawhip, peachpuff,
+	peru, pink, plum, powderblue, purple, red, rosybrown,
+	royalblue, saddlebrown, salmon, sandybrown, seagreen,
+	seashell, sienna, silver, skyblue, slateblue, slategray,
+	slategrey, snow, springgreen, steelblue, tan, teal,
+	thistle, tomato, turquoise, violet, wheat, white,
 	whitesmoke, yellow, yellowgreen
-	
+
 or the rgb-hex-notation:
-	
+
 	#rgb, #rrggbb, #rrrgggbbb and #rrrrggggbbbb
 
 or the cmyk-hex-notation:
-	
+
 	%cmyk, %ccmmyykk, %cccmmmyyykkk and %ccccmmmmyyyykkkk
 
 and additionally the hsv-hex-notation:
@@ -3113,7 +3136,7 @@ sub strokecolor {
 		($type,@clrs)=checkcolor(undef,$c,$m,$y,$k);
 		$self->add(floats(@clrs),uc $type);
 	}
-	
+
 	return($self);
 }
 
@@ -3161,10 +3184,16 @@ Sets linedash.
 
 sub linedash {
 	my ($self,@a)=@_;
-	if(scalar @a < 1) {
-		$self->add('[ 1 ] 0 d');
+	if($a[0]=~/^\-/){
+		my %a=@a;
+		$a{-pattern}=[$a{-full}||0,$a{-clear}||0] unless($a{-pattern});
+		$self->add('[',floats(@{$a{-pattern}}),']',intg($a{-shift}||0),'d');
 	} else {
-		$self->add('[',floats(@a),'] 0 d');
+		if(scalar @a < 1) {
+			$self->add('[ ] 0 d');
+		} else {
+			$self->add('[',floats(@a),'] 0 d');
+		}
 	}
 }
 
@@ -3402,7 +3431,7 @@ sub line { # x,y ...
 
 =cut
 
-sub hline { 
+sub hline {
 	my($self,$x)=@_;
 	$self->add(floats($x,$self->{' y'}),'l');
 	$self->{' x'}=$x;
@@ -3413,7 +3442,7 @@ sub hline {
 
 =cut
 
-sub vline { 
+sub vline {
 	my($self,$y)=@_;
 	$self->add(floats($self->{' x'},$y),'l');
 	$self->{' y'}=$y;
@@ -3605,9 +3634,9 @@ sub pie {
 sub pie3d {
 	my $self=shift @_;
 	my ($x,$y,$a,$b,$alfa,$beta,$th,$sd)=@_;
-	
+
 	my ($sa,$sb);
-	
+
 	while($alfa<0) {$alfa+=360;$beta+=360;}
 
 	while($alfa>360) {$alfa-=360;$beta-=360;}
@@ -3627,15 +3656,15 @@ sub pie3d {
 			$self->line($x+$p0x,$y+$p0y-$th);
 			$self->line($x+$p0x,$y+$p0y);
 			$self->close;
-		} 
+		}
 		if (($sb>90) && ($sb<270)) {
 			$self->move($x,$y);
 			$self->line($x,$y-$th);
 			$self->line($x+$p1x,$y+$p1y-$th);
 			$self->line($x+$p1x,$y+$p1y);
 			$self->close;
-		} 
-	}	
+		}
+	}
 
 	my($r_s,$r_m,$r_e);
 
@@ -3823,9 +3852,9 @@ sub image {
 	return($self);
 }
 
-=item $gfx->pdfimage $imgobj, $x, $y, $sx, $sy 
+=item $gfx->pdfimage $imgobj, $x, $y, $sx, $sy
 
-=item $gfx->pdfimage $imgobj, $x, $y, $scale 
+=item $gfx->pdfimage $imgobj, $x, $y, $scale
 
 =item $gfx->pdfimage $imgobj, $x, $y
 
@@ -3963,6 +3992,7 @@ sub new {
 	my ($class)=@_;
 	my $self = $class->SUPER::new(@_);
 	$self->add('BT');
+	$self->{' hspace'}=100;
 	return($self);
 }
 
@@ -4024,6 +4054,7 @@ sub wordspace {
 
 sub hspace {
 	my ($self,$para)=@_;
+	$self->{' hspace'}=$para;
 	$self->add(float($para),'Tz');
 }
 
@@ -4110,9 +4141,9 @@ sub text {
 
 sub text_center {
 	my ($self,$text)=@_;
-	$self->distance(float(-($self->{' font'}->width($text)*$self->{' fontsize'}/2)),0);
+	$self->distance(float(-($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100)/2)),0);
 	$self->add($self->{' font'}->text($text),'Tj');
-	$self->distance(float($self->{' font'}->width($text)*$self->{' fontsize'}/2),0);
+	$self->distance(float($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100)/2),0);
 }
 
 =item $txt->text_right $string
@@ -4121,9 +4152,9 @@ sub text_center {
 
 sub text_right {
 	my ($self,$text)=@_;
-	$self->distance(float(-($self->{' font'}->width($text)*$self->{' fontsize'})),0);
+	$self->distance(float(-($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100))),0);
 	$self->add($self->{' font'}->text($text),'Tj');
-	$self->distance(float($self->{' font'}->width($text)*$self->{' fontsize'}),0);
+	$self->distance(float($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100)),0);
 }
 
 =item $txt->text_utf8 $utf8string
@@ -4169,10 +4200,10 @@ sub paragraph {
 	while((defined $txt[0]) && ($ht>0)) {
 		$self->translate($x+$idt,$y+$ht-$h);
 		@line=();
-		while( (defined $txt[0]) && ($self->{' font'}->width(join(' ',@line,$txt[0]))*$sz<($wd-$idt)) ) {
+		while( (defined $txt[0]) && ($self->{' font'}->width(join(' ',@line,$txt[0]))*($self->{' hspace'}/100)*$sz<($wd-$idt)) ) {
 			push(@line, shift @txt);
 		}
-		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0])*$sz>($wd-$idt) );
+		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0])*($self->{' hspace'}/100)*$sz>($wd-$idt) );
 		my $l=$self->{' font'}->width(join(' ',@line))*$sz;
 		$self->wordspace(($wd-$idt-$l)/(scalar @line)) if(defined $txt[0] && scalar @line>0);
 		$idt=$l+$self->{' font'}->width(' ')*$sz;
@@ -4224,6 +4255,7 @@ Returns a new hybrid content object (called from $page->hybrid).
 sub new {
 	my ($class)=@_;
 	my $self = PDF::API2::Content::new(@_);
+	$self->{' hspace'}=100;
 	return($self);
 }
 
@@ -4251,11 +4283,7 @@ sub outobjdeep {
 
 sub transform {
 	my ($self)=@_;
-	if($self->{' apiistext'} == 1) {
-		PDF::API2::Text::transform(@_);
-	} else {
-		PDF::API2::Gfx::transform(@_);
-	}
+	PDF::API2::Content::transform(@_);
 	return($self);
 }
 
@@ -4336,15 +4364,15 @@ sub height {
 package PDF::API2::Barcode;
 
 ## use strict;
-use vars qw( 
+use vars qw(
 	@ISA
-	
-	$code3of9 
+
+	$code3of9
 	@bar3of9
 	%bar3of9ext
 	%bar_wdt
-	
-	@bar128 
+
+	@bar128
 
 	$code128a
 	$code128b
@@ -4655,7 +4683,7 @@ sub encode_128_string {
 					$code='b';
 					unshift(@chars,substr($c,1,1));
 					$c=substr($c,0,1);
-				} 
+				}
 				($b,$i)=encode_128_char_idx($code,$c);
 			}
 		}
@@ -4804,7 +4832,7 @@ B<Example:>
 					# (if applicable)
 		-umzn	=> 10,		# (u)pper (m)ending (z)o(n)e
 		-lmzn	=> 10,		# (l)ower (m)ending (z)o(n)e
-		-zone	=> 50,		# height (zone) of bars 	
+		-zone	=> 50,		# height (zone) of bars
 		-quzn	=> 10,		# (qu)iet (z)o(n)e
 		-ofwt	=> 0.01,	# (o)ver(f)low (w)id(t)h
 		-fnsz	=> 10,		# (f)o(n)t(s)i(z)e
@@ -4825,10 +4853,10 @@ sub new {
 	my $self = $class->SUPER::new;
 	$self->{' stream'}='';
 	my (@bar,@ext);
-	
+
 	$opts{-type}=lc($opts{-type});
 	$self->{' font'}=$opts{-font};
-	
+
 	$self->{' umzn'}=$opts{-umzn};		# (u)pper (m)ending (z)o(n)e
 	$self->{' lmzn'}=$opts{-lmzn};		# (l)ower (m)ending (z)o(n)e
 	$self->{' zone'}=$opts{-zone};
@@ -4842,7 +4870,7 @@ sub new {
         $self->{'Name'}=PDFName($key);
         $self->{'Formtype'}=PDFNum(1);
         $self->{'BBox'}=PDFArray(PDFNum(0),PDFNum(0),PDFNum(1000),PDFNum(1000));
-	
+
 	if( $opts{-type}=~/^3of9/ ) {
 		if( $opts{-type} eq '3of9' ) {
 			@bar = encode_3of9($opts{-code});
@@ -4870,7 +4898,7 @@ sub new {
 	} else {
 		$self->drawbar([@bar],$opts{-text},[@ext]);
 	}
-	
+
 	return($self);
 }
 
@@ -4884,7 +4912,7 @@ sub drawbar {
 	my ($code,$str,$bw,$f,$t,$l,$h,$xo);
 	$self->fillcolorbyname('black');
 	$self->strokecolorbyname('black');
-	
+
 	foreach my $b (@bar) {
 		if(ref($b)) {
 			($code,$str)=@{$b};
@@ -4938,7 +4966,7 @@ sub drawbar {
 			$self->textend;
 		}
 		$x+=$xo;
-	}	
+	}
 	if(defined $bartext) {
 		$f=$self->{' fnsz'}||$self->{' lmzn'};
 		$t=$self->{' quzn'}-$f;
@@ -4947,7 +4975,7 @@ sub drawbar {
 		$self->font($self->{' font'},$f);
 		$self->text_center($bartext);
 		$self->textend;
-	}	
+	}
 	$self->{' w'}=$self->{' quzn'}+$x;
 	$self->{' h'}=2*$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'};
 }
@@ -5089,8 +5117,9 @@ use Text::PDF::Utils;
 use vars qw(@ISA);
 @ISA = qw(Text::PDF::Dict PDF::API2::Image);
 
+
 sub new {
-	my ($class,$img,$file,$tt)=@_;
+	my ($class,$file,$tt)=@_;
 	my $self = $class->SUPER::new();
 	$self->{' apiname'}='IMGxPPMx'.pdfkey($file).$tt;
 
@@ -5494,7 +5523,7 @@ sub parsePNG {
 	@img=split(//,$img);
 	$img='';
 	my $bpcm=($bpc>8) ? 8 : $bpc/8;
-		
+
 	if($cs==0) { # grayscale
 		foreach my $y (0..$h-1) {
 			$filter=unpack('C',shift(@img));
@@ -5503,11 +5532,11 @@ sub parsePNG {
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
 			if($bpc>8) {
 				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;
 				}
 			} else {
 				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);		
+					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);
 				}
 			}
 		}
@@ -5520,7 +5549,7 @@ sub parsePNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*3)));
 			foreach my $x (0..($w*3)-1) {
-				$img.=pack('C',vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+				$img.=pack('C',vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1);
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5532,7 +5561,7 @@ sub parsePNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
 			foreach my $x (0..$w-1) {
-				$img.=$pal[vec($imgline,$x,$bpc)];		
+				$img.=$pal[vec($imgline,$x,$bpc)];
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5544,7 +5573,7 @@ sub parsePNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*2)));
 			foreach my $x (0..$w-1) {
-				$img.=pack('C',vec($imgline,$x*2,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+				$img.=pack('C',vec($imgline,$x*2,$bpc)*(2**(8*(1-($bpc/8))))-1);
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5557,9 +5586,9 @@ sub parsePNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*4)));
 			foreach my $x (0..$w-1) {
-				$img.=pack('C',vec($imgline,$x*4,$bpc)*(2**(8*(1-($bpc/8))))-1);		
-				$img.=pack('C',vec($imgline,$x*4+1,$bpc)*(2**(8*(1-($bpc/8))))-1);		
-				$img.=pack('C',vec($imgline,$x*4+2,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+				$img.=pack('C',vec($imgline,$x*4,$bpc)*(2**(8*(1-($bpc/8))))-1);
+				$img.=pack('C',vec($imgline,$x*4+1,$bpc)*(2**(8*(1-($bpc/8))))-1);
+				$img.=pack('C',vec($imgline,$x*4+2,$bpc)*(2**(8*(1-($bpc/8))))-1);
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5631,7 +5660,7 @@ sub maskPNG {
 	@img=split(//,$img);
 	$img='';
 	my $bpcm=($bpc>8) ? 8 : $bpc/8;
-		
+
 	if($cs==0) { # grayscale
 		warn "Image $file does not contain transparency information !!\n(or are we here as an foreign masking image ??)" unless($trans);
 		foreach my $y (0..$h-1) {
@@ -5641,11 +5670,11 @@ sub maskPNG {
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
 			if($bpc>8) {
 				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;
 				}
 			} else {
 				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);		
+					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);
 				}
 			}
 		}
@@ -5662,7 +5691,7 @@ sub maskPNG {
 				$val+=vec($imgline,$x*3+1,$bpc)*(2**(8*(1-($bpc/8))))-1;
 				$val+=vec($imgline,$x*3+2,$bpc)*(2**(8*(1-($bpc/8))))-1;
 				$val/=3;
-				$img.=pack('C',$val);		
+				$img.=pack('C',$val);
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5674,7 +5703,7 @@ sub maskPNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
 			foreach my $x (0..$w-1) {
-				vec($img,($y*$w)+$x,8)=$palt[vec($trans,vec($imgline,$x,$bpc),8)];		
+				vec($img,($y*$w)+$x,8)=$palt[vec($trans,vec($imgline,$x,$bpc),8)];
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5685,7 +5714,7 @@ sub maskPNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*2)));
 			foreach my $x (0..$w-1) {
-				vec($img,($y*$w)+$x,8)=vec($imgline,$x*2+1,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+				vec($img,($y*$w)+$x,8)=vec($imgline,$x*2+1,$bpc)*(2**(8*(1-($bpc/8))))-1;
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5696,7 +5725,7 @@ sub maskPNG {
 
 			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*4)));
 			foreach my $x (0..$w-1) {
-				vec($img,($y*$w)+$x,8)=vec($imgline,$x*4+3,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+				vec($img,($y*$w)+$x,8)=vec($imgline,$x*4+3,$bpc)*(2**(8*(1-($bpc/8))))-1;
 			}
 		}
 		$bpc=8; # all images have been converted to 8bit values !!
@@ -5744,17 +5773,17 @@ sub import {
 	*$self->{buf} = \$buf;
 	*$self->{pos} = 0;
 	*$self->{lno} = 0;
-	
+
 	my $in;
 	open(INF,$file);
 	binmode(INF);
 	while(!eof(INF)) {
 		read(INF,$in,512);
-		$self->print($in);	
+		$self->print($in);
 	}
 	close(INF);
 	$self->seek(0,0);
-	
+
 	$self;
 }
 
@@ -6129,7 +6158,7 @@ sub string_ref
 *sref = \&string_ref;
 
 
-# Matrix.pm -- 
+# Matrix.pm --
 # Author          : Ulrich Pfeifer
 # Created On      : Tue Oct 24 18:34:08 1995
 # Last Modified By: Ulrich Pfeifer
@@ -6137,9 +6166,9 @@ sub string_ref
 # Language        : Perl
 # Update Count    : 143
 # Status          : Unknown, Use with caution!
-# 
+#
 # (C) Copyright 1995, Universität Dortmund, all rights reserved.
-# 
+#
 # $Locker:  $
 # $Log: API2.pm,v $
 # Revision 1.1  2001/11/22 20:51:56  Administrator
@@ -6171,9 +6200,9 @@ sub concat {
     my $self = shift;
     my $other = shift;
     my $result = new PDF::API2::Matrix (@{$self});
-    
+
     return undef if scalar(@{$self}) != scalar(@{$other});
-    for my $i (0 .. $#{$self}) {	
+    for my $i (0 .. $#{$self}) {
 	push @{$result->[$i]}, @{$other->[$i]};
     }
     $result;
@@ -6205,13 +6234,13 @@ sub vekpro {
     }
     $result;
 }
-                  
+
 sub multiply {
     my $self  = shift;
     my $other = shift->transpose;
     my @result;
     my $m;
-    
+
     return undef if $#{$self->[0]} != $#{$other->[0]};
     for my $row (@{$self}) {
         my $rescol = [];
@@ -6259,13 +6288,13 @@ sub solve {
             }
         }
     }
-# Answer is in augmented column    
+# Answer is in augmented column
     transpose new PDF::API2::Matrix @{$m->transpose}[$mr+1 .. $mc];
 }
 
 sub print {
     my $self = shift;
-    
+
     print @_ if scalar(@_);
     for my $row (@{$self}) {
         for my $col (@{$row}) {
