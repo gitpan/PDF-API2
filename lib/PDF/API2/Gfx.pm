@@ -24,7 +24,7 @@ use PDF::API2::Content;
 use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 use Math::Trig;
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 =head2 PDF::API2::Gfx

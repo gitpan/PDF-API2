@@ -10,7 +10,7 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3a25 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a29 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -70,7 +70,7 @@ Opens a new page.
 
 sub page {
 	my $self=shift;
-	$self->{page}=$self->{api}->page; 
+	$self->{page}=$self->{api}->page;
 	$self->{page}->mediabox(@_) if($_[0]);
 	$self->{hybrid}=$self->{page}->hybrid;
 	$self->{hybrid}->compress;
@@ -157,8 +157,8 @@ B<Examples:>
 =cut
 
 sub ttfont {
-	my ($self,$file)=@_;
-	return $self->{api}->ttfont($file);
+	my ($self,$file,@opts)=@_;
+	return $self->{api}->ttfont($file,@opts);
 }
 
 =item $font = $pdf->psfont $pfb, $afm, $encoding
@@ -197,6 +197,21 @@ B<Examples:>
 sub color {
 	my $self=shift @_;
 	return $self->{api}->businesscolor(@_);
+}
+
+=item $egs = $pdf->create_egs
+
+Returns a new extended-graphics-state object.
+
+B<Examples:>
+
+	$egs = $pdf->create_egs;
+
+=cut
+
+sub create_egs {
+	my ($self)=@_;
+	return $self->{api}->extgstate;
 }
 
 =item $img = $pdf->loadimage $file
@@ -238,6 +253,18 @@ sub restorestate {
 	$self->{hybrid}->restore;
 }
 
+=item $pdf->egstate $egs
+
+Sets extended-graphics-state.
+
+=cut
+
+sub egstate {
+	my $self=shift @_;
+	$self->{hybrid}->egstate(@_);
+	return($self);
+}
+
 =item $pdf->fillcolor $color
 
 Sets fillcolor.
@@ -256,22 +283,22 @@ Sets strokecolor.
 
 B<Defined color-names are:>
 
-	aliceblue, antiquewhite, aqua, aquamarine, azure, beige, bisque, black, blanchedalmond, 
-	blue, blueviolet, brown, burlywood, cadetblue, chartreuse, chocolate, coral, cornflowerblue, 
-	cornsilk, crimson, cyan, darkblue, darkcyan, darkgoldenrod, darkgray, darkgreen, darkgrey, 
-	darkkhaki, darkmagenta, darkolivegreen, darkorange, darkorchid, darkred, darksalmon, 
-	darkseagreen, darkslateblue, darkslategray, darkslategrey, darkturquoise, darkviolet, 
-	deeppink, deepskyblue, dimgray, dimgrey, dodgerblue, firebrick, floralwhite, forestgreen, 
-	fuchsia, gainsboro, ghostwhite, gold, goldenrod, gray, grey, green, greenyellow, honeydew, 
+	aliceblue, antiquewhite, aqua, aquamarine, azure, beige, bisque, black, blanchedalmond,
+	blue, blueviolet, brown, burlywood, cadetblue, chartreuse, chocolate, coral, cornflowerblue,
+	cornsilk, crimson, cyan, darkblue, darkcyan, darkgoldenrod, darkgray, darkgreen, darkgrey,
+	darkkhaki, darkmagenta, darkolivegreen, darkorange, darkorchid, darkred, darksalmon,
+	darkseagreen, darkslateblue, darkslategray, darkslategrey, darkturquoise, darkviolet,
+	deeppink, deepskyblue, dimgray, dimgrey, dodgerblue, firebrick, floralwhite, forestgreen,
+	fuchsia, gainsboro, ghostwhite, gold, goldenrod, gray, grey, green, greenyellow, honeydew,
 	hotpink, indianred, indigo, ivory, khaki, lavender, lavenderblush, lawngreen, lemonchiffon,
-	lightblue, lightcoral, lightcyan, lightgoldenrodyellow, lightgray, lightgreen, lightgrey, 
-	lightpink, lightsalmon, lightseagreen, lightskyblue, lightslategray, lightslategrey, 
+	lightblue, lightcoral, lightcyan, lightgoldenrodyellow, lightgray, lightgreen, lightgrey,
+	lightpink, lightsalmon, lightseagreen, lightskyblue, lightslategray, lightslategrey,
 	lightsteelblue, lightyellow, lime, limegreen, linen, magenta, maroon, mediumaquamarine,
-	mediumblue, mediumorchid, mediumpurple, mediumseagreen, mediumslateblue, mediumspringgreen, 
-	mediumturquoise, mediumvioletred, midnightblue, mintcream, mistyrose, moccasin, navajowhite, 
+	mediumblue, mediumorchid, mediumpurple, mediumseagreen, mediumslateblue, mediumspringgreen,
+	mediumturquoise, mediumvioletred, midnightblue, mintcream, mistyrose, moccasin, navajowhite,
 	navy, oldlace, olive, olivedrab, orange, orangered, orchid, palegoldenrod, palegreen,
-	paleturquoise, palevioletred, papayawhip, peachpuff, peru, pink, plum, powderblue, purple, 
-	red, rosybrown, royalblue, saddlebrown, salmon, sandybrown, seagreen, seashell, sienna, 
+	paleturquoise, palevioletred, papayawhip, peachpuff, peru, pink, plum, powderblue, purple,
+	red, rosybrown, royalblue, saddlebrown, salmon, sandybrown, seagreen, seashell, sienna,
 	silver, skyblue, slateblue, slategray, slategrey, snow, springgreen, steelblue, tan, teal,
 	thistle, tomato, turquoise, violet, wheat, white, whitesmoke, yellow, yellowgreen
 

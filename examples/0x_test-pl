@@ -1,13 +1,11 @@
 #!/usr/bin/perl
 
 use PDF::API2;
-use PDF::API2::cFont;
 
 my $pdf  = PDF::API2->new(-file => "$0.pdf");
 $pdf->mediabox(595,842);
 my $page = $pdf->page;
-my $fnt = PDF::API2::cFont->new_api($pdf,'Arial',-encoding 
-=> 'latin1'); 
+my $fnt = $pdf->corefont('Arial',-encoding => 'latin1'); 
 my $txt = $page->hybrid;
 $txt->textstart;
 $txt->font($fnt, 20);

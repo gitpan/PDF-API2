@@ -16,11 +16,11 @@ use PDF::API2::PDF::Number;
 use PDF::API2::PDF::Objind;
 use PDF::API2::PDF::String;
 use PDF::API2::PDF::File 0.19;
-use Font::TTF::Font 0.28;
+use PDF::API2::TTF::Font 0.28;
 
 @ISA=qw( PDF::API2::PDF::File );
 
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 BEGIN
 {
@@ -59,6 +59,7 @@ sub open
     }
     else
     {
+    	die "File '$fname' does not exist !" unless(-f $fname);
         $fh = IO::File->new(($update ? "+" : "") . "<$fname") || return undef;
         $self->{' INFILE'} = $fh;
         binmode $fh;

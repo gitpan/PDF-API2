@@ -23,11 +23,9 @@ foreach $fn (qw(
 	trebuchet trebuchetbold trebuchetbolditalic trebuchetitalic
 	verdana verdanabold verdanaitalic verdanabolditalic
 )) {
-#		adobe-standard latin1 uni0 uni1
-#		uni0 uni1 uni2 uni3 uni240 uni255
-	foreach $en (qw( iso-8859-15 )) {
+	foreach $en (qw( adobe-standard latin1 winansi macroman )) {
 
-		my $font=$pdf->corefont($fn,-encoding => $en);
+		my $font=$pdf->corefont($fn,-encode => $en);
 		print STDERR qq($fn - $en ---\n);
 		$page = $pdf->page;
 		$page->mediabox(595,842);

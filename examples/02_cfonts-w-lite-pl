@@ -77,11 +77,18 @@ foreach $fn (qw(
 	bats
 )) {
 
-	foreach $en (qw(		adobe-standard latin1 latin2 latin3 uni0 uni1
-		uni2 uni3 uni240 uni255 ) ) {
+	foreach $en (qw(
+			adobe-standard
+			latin1
+			latin2
+			latin3
+			uni0
+			uni1
+			uni2
+		) ) {
 
 		print STDERR qq($fn - $en --- ).time().qq(\n);
-		my $font=$pdf->corefont($fn,-encoding => $en);
+		my $font=$pdf->corefont($fn,-encode => $en);
 		$pdf->page(595,842);
 		$pdf->print($font, 50, 100, 700, 0, 0, 'Hello World !');
 		$pdf->print($font, 10, 100, 650, 0, 0, "german spec.chars: ae='ä' AE='Ä' oe='ö' OE='Ö' ue='ü' UE='Ü' ss='ß' !");
@@ -94,7 +101,6 @@ foreach $fn (qw(
 		}
 
 	}
-	last;
 }
 
 $pdf->saveas("$0.pdf");

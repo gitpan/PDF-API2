@@ -20,6 +20,7 @@ EOT
 
 		find( sub {
 			my $file=$_;
+			unlink($file) && return if($file=~/\.bak$/);
 			return if($file!~/\.pm$/);
 			open(INF,$file);
 			@lines=<INF>;
@@ -72,7 +73,6 @@ WriteMakefile (
 	MAN3PODS	=>	{},
 	PREREQ_PM	=>	{
 					'Compress::Zlib'	=> 1.03,
-					'Font::TTF::Font'	=> 0.28,
 				},
 	BINARY_LOCATION	=>  "PDF-API2-$version$tag-ppd.tar.gz",
 );

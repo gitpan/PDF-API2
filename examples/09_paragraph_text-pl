@@ -3,7 +3,7 @@
 use PDF::API2;
 
 $pdf=PDF::API2->new;
-
+$pdf->{forcecompress}=0;
 $f1=$pdf->corefont('Helvetica',1);
 $f1->encode('latin1');
 $f2=$pdf->corefont('Helvetica-Bold',1);
@@ -13,102 +13,23 @@ $f3->encode('latin1');
 $f4=$pdf->corefont('Times-Italic',1);
 $f4->encode('latin1');
 
-@txt=($f1,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- )],$f2,' lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj'
- ,$f3,qq(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- ),$f4,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
-)],$f1,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- )],$f2,' lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj'
- ,$f3,qq(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- ),$f4,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
-)],$f1,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- )],$f2,' lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj'
- ,$f3,qq(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- ),$f4,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
-)],$f1,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- )],$f2,' lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj'
- ,$f3,qq(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- ),$f4,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
-)],$f1,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- )],$f2,' lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj'
- ,$f3,qq(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- ),$f4,[qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
-)]);
+$txt='lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn ensu5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn ensu5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwjlej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj ';
 
 $page=$pdf->page;
 $page->mediabox(595,842);
 
 $t=$page->text;
 
+
+$t->lead(-20);
 $t->font($f4,15);
 $x=0;$y=750;
-($x,$y)=$t->paragraphformat(50,$y,500,750,0,@txt);
+($x,$y,$o)=$t->paragraph($txt x 20,-x=>50,-y=>$y,-w=>500,-h=>700);
 
 $t->cr;
 
-$t->text("x=$x,y=$y,t='".join(' ',@t)."'");
-
-@txt=qw(
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
- lej ornj vorel bvrln l e ntz in ewu ontö ken flk ds jnfg nedutn ewö kngt ker jngfn en 
- su5e nön5 eknßä öüT RUR jnfn fsj rzkrtj fj r jrjrej tejt jre j r wjrjwr u7i 64 6tje t jwj
-);
-
-$page=$pdf->page;
-$page->mediabox(595,842);
-
-$t=$page->text;
-
-$t->font($f4,15);
-$x=0;$y=750;
-($x,$y)=$t->paragraph(50,$y,500,750,0,@txt);
-
-$t->cr;
-
-$t->text("x=$x,y=$y,t='".join(' ',@t)."'");
+$t->translate(50,20);
+$t->text("x=$x,y=$y,t=".substr($o,0,10)."...");
 
 $pdf->saveas("$0.pdf");
 

@@ -8,7 +8,7 @@ BEGIN {
 	@EXPORT      = qw ();
 	@EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
 	@EXPORT_TAGS = qw ();
-	( $VERSION ) = '$Revisioning: 0.3a25 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a29 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 sub utf8_to_ucs2 {
@@ -25,7 +25,7 @@ sub new {
 	my $class=shift(@_);
 	my $encoding=lc(shift @_) || 'latin1';
 	my $this={};
-	$encoding=~s/[^a-z0-9\-]+//cgi;
+	$encoding=~s/[^a-z0-9\-]+//gi;
 	bless($this,$class);
 	my $buf;
 	my $unimap='';
@@ -112,7 +112,7 @@ sub glyphs {
 sub unimaps {
 	return( 
 		map {	
-			$_=~s/^.*\/([^\/]+)\.map$/$1/cgi; 
+			$_=~s/^.*\/([^\/]+)\.map$/$1/gi; 
 			lc($_); 
 		} (
 			map { 
@@ -125,7 +125,7 @@ sub unimaps {
 sub isMap {
 	my $encoding=lc(shift @_);
 	return(undef) if(!$encoding);
-	$encoding=~s/[^a-z0-9\-]+//cgi;
+	$encoding=~s/[^a-z0-9\-]+//gi;
 	return(scalar grep(/$encoding/,PDF::API2::UniMap::unimaps()));
 }
 

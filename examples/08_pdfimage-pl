@@ -2,7 +2,7 @@
 
 use PDF::API2;
 
-$pdf2=PDF::API2->open($ARGV[0]||'06_images-pl.pdf');
+$pdf2=PDF::API2->open($ARGV[0]||'06_imagesx-pl.pdf');
 
 $pdf=PDF::API2->new;
 

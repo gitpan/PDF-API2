@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -43,7 +43,7 @@ PDF::API2 - The Next Generation API for creating and modifing PDFs.
 
 =cut
 
-require 5.6.1;
+require 5.006;
 
 use PDF::API2::PDF::FileAPI;
 use PDF::API2::PDF::Page;
@@ -56,7 +56,7 @@ use PDF::API2::CoreFont;
 use PDF::API2::Page;
 use PDF::API2::IOString;
 use PDF::API2::PSFont;
-use PDF::API2::TTFont;
+use PDF::API2::TrueTypeFont;
 use PDF::API2::Image;
 use PDF::API2::PdfImage;
 use PDF::API2::Pattern;
@@ -340,7 +340,7 @@ sub open {
 	foreach my $para (keys(%opt)) {
 		$self->default($para,$opt{$para});
 	}
-
+	die "File '$file' does not exist." unless(-f $file);
 	my $fh=PDF::API2::IOString->new();
 	$fh->import($file);
 	$self->{pdf}=PDF::API2::PDF::FileAPI->open($fh,1);
@@ -491,13 +491,18 @@ sub openpage {
 			my $uncontent=$page->{Contents};
 			delete $page->{Contents};
 			my $content=$page->hybrid();
+			$content->add(" q ");
 			foreach my $k ($uncontent->elementsof) {
 				$k->realise;
-				$content->add("q",unfilter($k->{Filter}, $k->{' stream'}),"Q");
+				$content->add(" ".unfilter($k->{Filter}, $k->{' stream'})." ");
 			}
-			$content->compress;
-			$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
-			$content->{' nofilt'}=1;
+			$content->add(" Q ");
+			## if we like compress we will do it now to do quicker saves
+			if($self->{forcecompress}>0){
+				$content->compress;
+				$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+				$content->{' nofilt'}=1;
+			}
 		}
 	}
 
@@ -573,9 +578,10 @@ sub clonepage {
 	return($t_page);
 }
 
+# $target_object = walk_obj $obj_cache, $source_pdf, $target_pdf, $source_object [, @keys_to_copy ]
 
 sub walk_obj {
-	my ($objs,$spdf,$tpdf,$obj,@key)=@_;
+	my ($objs,$spdf,$tpdf,$obj,@keys)=@_;
 
 	my $tobj;
 
@@ -597,8 +603,8 @@ sub walk_obj {
 			$tobj->add_elements(walk_obj($objs,$spdf,$tpdf,$k));
 		}
 	} elsif(ref($obj)=~/Dict$/) {
-		@key=keys(%{$tobj}) if(scalar @key <1);
-		foreach my $k (@key) {
+		@keys=keys(%{$tobj}) if(scalar @keys <1);
+		foreach my $k (@keys) {
 			next if($k=~/^ /);
 			$tobj->{$k}=walk_obj($objs,$spdf,$tpdf,$obj->{$k});
 		}
@@ -661,12 +667,6 @@ sub importpage {
 		}
 	}
 
-
-#	foreach my $k (qw( Thumb )) {
-#		next unless(defined $s_page->{$k});
-#		$t_page->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
-#	}
-
 	my %resmod=();
 	foreach my $k (qw( Resources )) {
 		$s_page->{$k}=$s_page->find_prop($k);
@@ -697,7 +697,9 @@ sub importpage {
 		}
 	}
 
+	# create a whole content stream
 	my $content=$t_page->hybrid();
+	$content->add(" q ");
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
 
@@ -707,10 +709,91 @@ sub importpage {
 			foreach my $r (keys %resmod) {
 				$stream=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
 			}
-			$content->add("q",$stream,"Q");
+			$content->add(" $stream ");
 		}
-		$content->compress;
 	}
+	$content->add(" Q ");
+	## if we like compress we will do it now to do quicker saves
+	if($self->{forcecompress}>0){
+		$content->compress;
+		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+		$content->{' nofilt'}=1;
+	}
+
+        # copy annotations and/or form elements as well
+        if (exists $s_page->{Annots} and $s_page->{Annots}) {
+ 
+                # first set up the AcroForm, if required
+                my $AcroForm;
+                if (my $a = $s_pdf->{pdf}->{Root}->realise->{AcroForm}) {
+                        $a->realise;
+                #        $AcroForm = PDFDict;
+                #        # keys from PDF Reference 1.4 (table 8.47)
+                #        my @done = qw(Fields); # doing later
+                #        foreach my $k (qw(Fields NeedAppearances SigFlags CO DR DA Q)) {
+                #                next if grep $_ eq $k , @done;
+                #                push @done,$k;
+                #                next unless defined $a->{$k};
+                #                $AcroForm->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a->{$k});
+                #        }
+                	# more compact
+                        $AcroForm = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a,qw(NeedAppearances SigFlags CO DR DA Q));
+                }
+                my @Fields = ();
+                my @Annots = ();
+                foreach my $a ($s_page->{Annots}->elementsof) {
+                        $a->realise;
+                        my $t_a = PDFDict;
+                        $self->{pdf}->new_obj($t_a);
+                        # these objects are likely to be both annotations and Acroform fields
+                        # key names are copied from PDF Reference 1.4 (Tables)
+                        my @k = (
+                                qw( Type Subtype Contents P Rect NM M F BS Border
+                                        AP AS C CA T Popup A AA StructParent
+                                ), # Annotations - Common (8.10)
+                                qw( Subtype Contents Open Name ), # Text Annotations (8.15)
+                                qw( Subtype Contents Dest H PA ), # Link Annotations (8.16)
+                                qw( Subtype Contents DA Q ), # Free Text Annotations (8.17)
+                                qw( Subtype Contents L BS LE IC ) , # Line Annotations (8.18)
+                                qw( Subtype Contents BS IC ), # Square and Circle Annotations (8.20)
+                                qw( Subtype Contents QuadPoints ), # Markup Annotations (8.21)
+                                qw( Subtype Contents Name ), # Rubber Stamp Annotations (8.22)
+                                qw( Subtype Contents InkList BS ), # Ink Annotations (8.23)
+                                qw( Subtype Contents Parent Open ), # Popup Annotations (8.24)
+                                qw( Subtype FS Contents Name ), # File Attachment Annotations (8.25)
+                                qw( Subtype Sound Contents Name ), # Sound Annotations (8.26)
+                                qw( Subtype Movie Contents A ), # Movie Annotations (8.27)
+                                qw( Subtype Contents H MK ), # Widget Annotations (8.28)
+                                # Printers Mark Annotations (none)
+                                # Trap Network Annotations (none)
+                        );
+                        push @k, (
+                                qw( Subtype FT Parent Kids T TU TM Ff V DV AA ), # Fields - Common (8.49)
+                                qw( DR DA Q ), # Fields containing variable text (8.51)
+                                qw( Opt ), # Checkbox field (8.54)
+                                qw( Opt ), # Radio field (8.55)
+                                qw( MaxLen ), # Text field (8.57)
+                                qw( Opt TI I ), # Choice field (8.59)
+                        ) if $AcroForm;
+                        # sorting out dups
+                        my %ky=map { $_ => 1 } @k;
+                        # we do P separately, as it points to the page the Annotation is on
+                        delete $ky{P};
+                        # copy everything else
+                        foreach my $k (keys %ky) {
+                                next unless defined $a->{$k};
+                                $t_a->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a->{$k});
+                        }
+                        $t_a->{P} = $t_page;
+                        push @Annots, $t_a;
+                        push @Fields, $t_a if ($AcroForm and $t_a->{Subtype}->val eq 'Widget');
+                }
+                $t_page->{Annots} = PDFArray(@Annots);
+                $AcroForm->{Fields} = PDFArray(@Fields) if $AcroForm;
+                $self->{pdf}->{Root}->{AcroForm} = $AcroForm;
+        }
+
+        $t_page->{' imported'} = 1;
 
 	$self->{pdf}->out_obj($t_page);
 	$self->{pdf}->out_obj($self->{pages});
@@ -989,7 +1072,7 @@ sub psfont {
 	return($obj);
 }
 
-=item $font = $pdf->ttfont $ttfile
+=item $font = $pdf->ttfont $ttfile [, %options]
 
 Returns a new or existing truetype font object.
 
@@ -1004,23 +1087,26 @@ B<Examples:>
 =cut
 
 sub ttfont {
-	my ($self,$file)=@_;
+	my ($self,$file,@opts)=@_;
 
-	my $key='TTx'.pdfkey($file,$self->{time});
-
-	my $obj=PDF::API2::TTFont->new($self->{pdf},$file,$key);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
-
-	$obj->{' apiname'}=$key;
-	$obj->{' apipdf'}=$self->{pdf};
-	weaken($obj->{' apipdf'}) if($hasWeakRef);
-        $obj->{' api'}=$self;
-	weaken($obj->{' api'}) if($hasWeakRef);
-
-	$self->resource('Font',$key,$obj,$self->{reopened});
-
-	$self->{pdf}->out_obj($self->{pages});
+	my $obj=PDF::API2::TrueTypeFont->new_api($self,$file,@opts);
 	return($obj);
+
+#	my $key='TTx'.pdfkey($file,$self->{time});
+#
+#	my $obj=PDF::API2::TTFont->new($self->{pdf},$file,$key);
+#	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+#
+#	$obj->{' apiname'}=$key;
+#	$obj->{' apipdf'}=$self->{pdf};
+#	weaken($obj->{' apipdf'}) if($hasWeakRef);
+#        $obj->{' api'}=$self;
+#	weaken($obj->{' api'}) if($hasWeakRef);
+#
+#	$self->resource('Font',$key,$obj,$self->{reopened});
+#
+#	$self->{pdf}->out_obj($self->{pages});
+#	return($obj);
 }
 
 =item $img = $pdf->image $file
@@ -1038,8 +1124,8 @@ B<Examples:>
 
 B<Important Note:>
 
-As of version 0.2.3.4 the development of the PNG import methods
-has been discontinued in favor of the GD::Image import facility.
+This is an unmaintained function, please use one of the following
+for proper support: imagejpeg, imagepng, imagegd, imagepnm.
 
 =cut
 
@@ -1053,6 +1139,20 @@ sub image {
 
 #	$obj->{' apipdf'}=$self->{pdf};
 #	$obj->{' api'}=$self;
+
+	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
+}
+
+sub imagejpeg {
+	my ($self,$file,%opts)=@_;
+	my $objname='IMGxJPEGx'.pdfkey($file.time());
+	my $obj=PDF::API2::PDF::ImageJPEG->new($pdf,$objname,$file);
+	$obj->{' apiname'}=$objname;
+        
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
 	$self->resource('XObject',$obj->{' apiname'},$obj,1);
 
@@ -1328,6 +1428,12 @@ sub barcode {
 	$obj->compress() if($self->{forcecompress});
 	return($obj);
 }
+
+=item $egs = $pdf->extgstate
+
+Returns a new extended-graphics-state object.
+
+=cut
 
 sub extgstate {
 	my ($self)=@_;

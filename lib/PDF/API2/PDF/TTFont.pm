@@ -28,7 +28,7 @@ use PDF::API2::PDF::Dict;
 use PDF::API2::PDF::Utils;
 @ISA = qw(PDF::API2::PDF::Dict);
 
-use Font::TTF::Font 0.23;
+use PDF::API2::TTF::Font 0.23;
 
 @cp1252 = (0 .. 127,
        0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
@@ -66,10 +66,10 @@ sub new
     if (ref($fontname))                             # $fontname is a font object
     { $font = $fontname; }
     else
-    { $font = Font::TTF::Font->open($fontname) || return undef; }
+    { $font = PDF::API2::TTF::Font->open($fontname) || return undef; }
 
     $self->{' font'} = $font;
-    $Font::TTF::Name::utf8 = 1;
+    $PDF::API2::TTF::Name::utf8 = 1;
     
     $self->{'Type'} = PDFName("Font");
     $self->{'Subtype'} = PDFName("TrueType");

@@ -184,7 +184,11 @@ sub add_page
     if ($p ne $s->{'Parent'})
     {
         $nt = $p->new($p->{' outto'} || $page->{' outto'}, $p);
-        splice(@{$p->{'Kids'}{' val'}}, $c, 0, $nt);
+	if($c >= scalar @{$p->{'Kids'}{' val'}}) {
+	    	push(@{$p->{'Kids'}{' val'}},$nt);
+	} else {
+		splice(@{$p->{'Kids'}{' val'}}, $c, 0, $nt);
+	}
         $p->{' outto'} = $page->{' outto'} unless defined $p->{' outto'};
         $p->out_obj;
         $p = $nt;
@@ -340,3 +344,5 @@ sub empty
 }
 
 1;
+__END__
+

@@ -24,7 +24,7 @@ use PDF::API2::PDF::Dict;
 use POSIX;
 use vars qw(@ISA $VERSION);
 @ISA = qw( PDF::API2::PDF::Dict );
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =item $font = PDF::API2::TrueTypeFont->new $pdf, $file, %options
 
@@ -49,7 +49,7 @@ sub new {
 	#================================================
 
 	unless($opts{-nonembed}) {
-		$t0 = PDF::API2::TrueTypeFont0->new($pdf,$des);
+		$t0 = PDF::API2::TrueTypeFont0->new($pdf,$des,@opts);
 		if($des->issymbol) {
 			return($t0);
 		}
@@ -73,6 +73,7 @@ sub new {
 
 	my @w=();
 
+	$self->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
 	$self->{'Encoding'}=PDFDict();
 	$self->{'Encoding'}->{'Type'}=PDFName('Encoding');
 	$self->{'Encoding'}->{'BaseEncoding'}=PDFName('WinAnsiEncoding');
@@ -227,38 +228,38 @@ sub width_array {
 	}
 }
 
-=item ($llx,$lly,$urx,$ury) = $font->bbox $text
-
-Returns the texts bounding-box as if it were at size 1.
-
-=cut
-
-sub bbox {
-	my ($self,$text,%opts)=@_;
-	return(map {$_/1000} $self->bbx($text,%opts));
-}
-
-=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $text
-
-Returns the texts bounding-box as if it were at size 1.
-
-=cut
-
-sub bbox_ucs2 {
-	my ($self,$text,%opts)=@_;
-	return(map {$_/1000} $self->bbx($text,-ucs2=>1));
-}
-
-=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $text
-
-Returns the texts bounding-box as if it were at size 1.
-
-=cut
-
-sub bbox_utf8 {
-	my ($self,$text,%opts)=@_;
-	return(map {$_/1000} $self->bbx($text,-utf8=>1));
-}
+#=item ($llx,$lly,$urx,$ury) = $font->bbox $text
+#
+#Returns the texts bounding-box as if it were at size 1.
+#
+#=cut
+#
+#sub bbox {
+#	my ($self,$text,%opts)=@_;
+#	return(map {$_/1000} $self->bbx($text,%opts));
+#}
+#
+#=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $text
+#
+#Returns the texts bounding-box as if it were at size 1.
+#
+#=cut
+#
+#sub bbox_ucs2 {
+#	my ($self,$text,%opts)=@_;
+#	return(map {$_/1000} $self->bbx($text,-ucs2=>1));
+#}
+#
+#=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $text
+#
+#Returns the texts bounding-box as if it were at size 1.
+#
+#=cut
+#
+#sub bbox_utf8 {
+#	my ($self,$text,%opts)=@_;
+#	return(map {$_/1000} $self->bbx($text,-utf8=>1));
+#}
 
 
 sub name { return (shift @_)->{' apiname'}; }
@@ -282,11 +283,11 @@ sub wxn { return( (shift @_)->fontdesc->wxn(@_) ); }
 sub wxg { return( (shift @_)->fontdesc->wxg(@_) ); }
 sub wx { return( (shift @_)->fontdesc->wx(@_) ); }
 
-sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
-sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
-sub bbxe { return( (shift @_)->fontdesc->bbxe(@_) ); }
-sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
-sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
+#sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
+#sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
+#sub bbxe { return( (shift @_)->fontdesc->bbxe(@_) ); }
+#sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
+#sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
 
 
 #=======================================================================
@@ -340,6 +341,7 @@ sub new {
 	$self->{' apiname'} = 'T0x'.pdfkey($des->fontname,%opts);
 	$self->{'Name'} = PDFName($self->{' apiname'});
 	$self->{'Encoding'} = PDFName('Identity-H');
+	$self->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
 	my $de=PDFDict();
 	$pdf->new_obj($de);
 	$self->{'DescendantFonts'} = PDFArray($de);
@@ -467,38 +469,38 @@ sub width_array {
 	}
 }
 
-=item ($llx,$lly,$urx,$ury) = $font->bbox $text
-
-Returns the texts bounding-box as if it were at size 1.
-
-=cut
-
-sub bbox {
-	my ($self,$text,%opts)=@_;
-	return(map {$_/1000} $self->bbx($text,%opts));
-}
-
-=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $text
-
-Returns the texts bounding-box as if it were at size 1.
-
-=cut
-
-sub bbox_ucs2 {
-	my ($self,$text)=@_;
-	return(map {$_/1000} $self->bbx($text,-ucs2=>1));
-}
-
-=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $text
-
-Returns the texts bounding-box as if it were at size 1.
-
-=cut
-
-sub bbox_utf8 {
-	my ($self,$text)=@_;
-	return(map {$_/1000} $self->bbx($text,-utf8=>1));
-}
+#=item ($llx,$lly,$urx,$ury) = $font->bbox $text
+#
+#Returns the texts bounding-box as if it were at size 1.
+#
+#=cut
+#
+#sub bbox {
+#	my ($self,$text,%opts)=@_;
+#	return(map {$_/1000} $self->bbx($text,%opts));
+#}
+#
+#=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $text
+#
+#Returns the texts bounding-box as if it were at size 1.
+#
+#=cut
+#
+#sub bbox_ucs2 {
+#	my ($self,$text)=@_;
+#	return(map {$_/1000} $self->bbx($text,-ucs2=>1));
+#}
+#
+#=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $text
+#
+#Returns the texts bounding-box as if it were at size 1.
+#
+#=cut
+#
+#sub bbox_utf8 {
+#	my ($self,$text)=@_;
+#	return(map {$_/1000} $self->bbx($text,-utf8=>1));
+#}
 
 
 sub outobjdeep {
@@ -554,11 +556,11 @@ sub wxn { return( (shift @_)->fontdesc->wxn(@_) ); }
 sub wxg { return( (shift @_)->fontdesc->wxg(@_) ); }
 sub wx { return( (shift @_)->fontdesc->wx(@_) ); }
 
-sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
-sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
-sub bbxe { return( (shift @_)->fontdesc->bbxe(@_) ); }
-sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
-sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
+#sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
+#sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
+#sub bbxe { return( (shift @_)->fontdesc->bbxe(@_) ); }
+#sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
+#sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
 
 
 #=======================================================================
@@ -618,6 +620,7 @@ sub new {
 	$self->{'Flags'}=PDFNum($self->fontfile->flags);
 	$self->{'MaxWidth'}=PDFNum($self->fontfile->maxwidth);
 	$self->{'MissingWidth'}=PDFNum($self->fontfile->missingwidth);
+	$self->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
 
 	return($self);
 }
@@ -638,11 +641,11 @@ sub wxn { return( (shift @_)->fontfile->wxn(@_) ); }
 sub wxg { return( (shift @_)->fontfile->wxg(@_) ); }
 sub wx { return( (shift @_)->fontfile->wx(@_) ); }
 
-sub bbxg { return( (shift @_)->fontfile->bbxg(@_) ); }
-sub bbxu { return( (shift @_)->fontfile->bbxu(@_) ); }
-sub bbxe { return( (shift @_)->fontfile->bbxe(@_) ); }
-sub bbxn { return( (shift @_)->fontfile->bbxn(@_) ); }
-sub bbx { return( (shift @_)->fontfile->bbx(@_) ); }
+#sub bbxg { return( (shift @_)->fontfile->bbxg(@_) ); }
+#sub bbxu { return( (shift @_)->fontfile->bbxu(@_) ); }
+#sub bbxe { return( (shift @_)->fontfile->bbxe(@_) ); }
+#sub bbxn { return( (shift @_)->fontfile->bbxn(@_) ); }
+#sub bbx { return( (shift @_)->fontfile->bbx(@_) ); }
 
 sub subsetg { return( (shift @_)->fontfile->subsetg(@_) ); }
 sub subsete { return( (shift @_)->fontfile->subsete(@_) ); }
@@ -688,7 +691,7 @@ use PDF::API2::IOString;
 use PDF::API2::PDF::Utils;
 use PDF::API2::PDF::Dict;
 use POSIX;
-use Font::TTF::Font;
+use PDF::API2::TTF::Font;
 
 use vars qw(@ISA %u2n);
 @ISA = qw( PDF::API2::PDF::Dict );
@@ -2201,7 +2204,7 @@ sub new {
 	my $self;
 	my %opts=();
 	die "cannot find font '$file' ..." unless(-f $file);
-	my $font=Font::TTF::Font->open($file);
+	my $font=PDF::API2::TTF::Font->open($file);
 	## die "Opentype font '$file' not supported -- exiting." if($font->{'CFF '});
 	%opts=@opts if((scalar @opts)%2 == 0);
 	$class = ref $class if ref $class;
@@ -2363,8 +2366,10 @@ sub wx {
 sub bbxg {
 	my $self=shift @_;
 	my $g=shift @_;
-	my $l=$self->font->{'loca'}->read;
 	my @b;
+	return([0,0,0,0]) if($self->iscff);
+
+	my $l=$self->font->{'loca'}->read;
 
 	if($l->{'glyphs'}[$g]) {
 		my $m = $l->{'glyphs'}[$g]->read;

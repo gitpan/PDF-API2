@@ -3,7 +3,6 @@
 use Data::Dumper;
 
 use PDF::API2;
-use PDF::API2::cFont;
 
 my $pdf  = PDF::API2->new(-file => "$0.pdf");
 $pdf->mediabox(595,842);
@@ -32,13 +31,17 @@ $txt->text_center("Text center-aligned");
 $txt->translate(300,650);
 $txt->text_center("Text underline/red",-color=>['red'],-underline=>1);
 $txt->translate(100,600);
-$txt->text("Text left-aligned 0123456789",-color=>['red'],-underline=>1,-indent=>100);
+$txt->text("Text left-alignedt 0123456789",-color=>['blue'],-underline=>1);
+$txt->translate(100,550);
+$txt->text("Text left-aligned/indent 0123456789",-color=>['green'],-underline=>1,-indent=>100);
 
 $txt->font($fnt, 15);
 $texting="Text justified:";
 foreach $y (500,400,300,200,100) {
 	$txt->translate(100,$y+30);
-	$txt->text_justify("wh/overflow: $texting",-width=>400,-overflow=>1);
+	my($w,@txt)=$txt->text_justify("wh/overflow: $texting",-width=>400,-overflow=>1);
+	$txt->translate(100,$y+15);
+	$txt->text("overflow= ".join(' ',@txt));
 	$txt->translate(100,$y);
 	$txt->text_justify("wo/overflow: $texting",-width=>400);
 	$txt->translate(100,$y-30);

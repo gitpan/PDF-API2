@@ -20,7 +20,7 @@ package PDF::API2::Text;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Content);
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::Content;
@@ -525,15 +525,19 @@ sub text_right {
 	return $self->text($text,-indent=>-$width,%opt);
 }
 
-=item ($flowwidth, $overflow) = $txt->text_justify $text , -width => $width [, -overflow => 1 ] [, -underflow => 1 ] [, %options ]
+=item ($width, $overflow) = $txt->text_justify $text , -width => $width [, %options ]
 
 If -overflow is given, $overflow will contain any text, which wont 
-fit into width without exessive scaling and $flowwidth will be 0. 
+fit into width without exessive scaling.
 
-If -underflow is given, and $text is smaller than $width, $flowwidth will contain the delta between
-$width and the text-advancewidth AND text will typeset using $txt->text. 
+If -underflow is given, and $text is smaller than $width
+the text will be typeset using $txt->text. 
+
+if -less is given, text overflow will be calculated using minimal number of words.
 
 You can use the -utf8 option to give the text in utf8.
+
+The returned width is that of the typeset text.
 
 =cut
 
@@ -556,33 +560,49 @@ sub text_justify {
 	my $indent=$opts{-indent}||0;
 	if($opts{-overflow}) {
 		my @linetext=();
-		
 		while(($self->advancewidth(join($spacer,@linetext),%opts) < ($opts{-width}-$indent)) && scalar @texts){
 			push @linetext, shift @texts;
+		}
+		if($opts{-less} && (scalar @linetext > 1) && ($self->advancewidth(join($spacer,@linetext),%opts) > ($opts{-width}-$indent))) {
+			unshift @texts, pop @linetext;
 		}
 		$overflow=join($spacer,@texts);
 		$text=join($spacer,@linetext);
 	} else {
+		$overflow='';
 		$text=join($spacer,@texts);
 	}
 
-	if($opts{-underflow} && ($self->advancewidth($text,%opts) < ($opts{-width}-$indent))) {
-		$ofw=($opts{-width}-$indent)-$self->advancewidth($text,%opts);
-		$self->text($text,%opts);
-		return ($ofw,$overflow);
+	if($opts{-test}) {
+		if($opts{-underflow} 
+			&& ($self->advancewidth($text,%opts) < ($opts{-width}-$indent))
+			&& (length($overflow)==0)
+		) {
+			$ofw=$indent+$self->advancewidth($text,%opts);
+		} else {
+			$ofw=$opts{-width};
+		}
 	} else {
-		$ofw=0;
+		if($opts{-underflow} 
+			&& ($self->advancewidth($text,%opts) < ($opts{-width}-$indent))
+			&& (length($overflow)==0)
+		) {
+			$ofw=$indent+$self->advancewidth($text,%opts);
+			$self->text($text,%opts);
+			return ($ofw,'');
+		} else {
+			$ofw=$opts{-width};
+		}
+	
+		my @wds=$self->{' font'}->width_array($text,%opts);
+		my $swt=$self->{' font'}->width(' ');
+		my $wth=$self->advancewidth($text,%opts);
+	
+		my $hs=$self->hspace;
+		$self->hspace($hs*($opts{-width}-$indent)/$wth);
+		$self->text($text,%opts);
+		$self->hspace($hs);
 	}
-
-	my @wds=$self->{' font'}->width_array($text,%opts);
-	my $swt=$self->{' font'}->width(' ');
-	my $wth=$self->advancewidth($text,%opts);
-
-	my $hs=$self->hspace;
-	$self->hspace($hs*($opts{-width}-$indent)/$wth);
-	$self->text($text,%opts);
-	$self->hspace($hs);
-
 	return ($ofw,$overflow);
 }
 
@@ -611,42 +631,23 @@ sub paragraph {
 	my @txt;
 	my $spacer;
 		
-	$self->lead($opt{-lead} || $self->lead() || $sz);
-
-	if($opt{-ucs2}) {
-		@txt=split(/\x00\x20/,$text);
-		$spacer="\x00\x20";
-	} else {
-		@txt=split(/\s+/,$text);
-		$spacer=" ";
-	}
-
-	my @line=();
+	$self->lead($opt{-lead} || $self->lead() || -$sz);
 
 	if($opt{-rel}) {
-		$self->transform_rel(-translate=>[$x+$idt,$y]);
+		$self->transform_rel(-translate=>[$x,$y]);
+	} else {
+		$self->translate($x,$y);
 	}
-
-	while((defined $txt[0]) && ($ht>0)) {
-		@line=();
-		if(!$opt{-rel}) {
-			$self->translate($x+$idt,$y+$ht-$h);
-		}
-		while( (defined $txt[0]) && ($self->{' font'}->width(join($spacer,@line,$txt[0]),%opt)*($self->{' hspace'}/100)*$sz<($wd-$idt)) ) {
-			push(@line, shift @txt);
-		}
-		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0],%opt)*($self->{' hspace'}/100)*$sz>($wd-$idt) );
-		my $l=$self->{' font'}->width(join($spacer,@line),%opt)*$sz*($self->{' hspace'}/100);
-		$self->wordspace(($wd-$idt-$l)/(scalar @line )) if(defined $txt[0] && scalar @line>0);
-		$idt=$l+$self->{' font'}->width(' ')*$sz;
-		my $lw=$self->text(join($spacer,@line),%opt);
-		if(defined $txt[0]) { $ht-= $self->lead(); $idt=0; }
-		$self->wordspace(0.0);
-		if($opt{-rel} && defined $txt[0]) {
-			$self->transform_rel(-translate=>[-$lw,-$self->lead()]);
-		}
+	$ht+=$self->lead();
+	my $ofw=0;
+	my $first=1;
+	while( ($ht>0) && (length($text)>0) ) {
+		($ofw,$text)=$self->text_justify($text,-width=>$wd,-indent=>($first?$flidt:0),-overflow=>1,-less=>1,-underflow=>1,%opt);
+		$self->transform_rel(-translate=>[-$ofw,$self->lead()]) if(length($text)>0);
+		$ht+=$self->lead() if(length($text)>0);
+		$first=0;
 	}
-	return( (($ht-$h)==0 ? $flidt+$idt: $idt),$y+$ht-$h,@txt);
+	return( $ofw,$y+$ht-$h,$text);
 }
 
 sub fillcolor {

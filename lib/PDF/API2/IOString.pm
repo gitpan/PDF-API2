@@ -19,11 +19,12 @@
 #=======================================================================
 package PDF::API2::IOString;
 
-require 5.005_03;
+require 5.006;
 use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Symbol ();
+use IO::File;
 
 sub new
 {
@@ -43,13 +44,16 @@ sub import {
 	*$self->{lno} = 0;
 
 	my $in;
-	open(INF,$file);
-	binmode(INF);
-	while(!eof(INF)) {
-		read(INF,$in,512);
+	my $inf=IO::File->new;
+	$inf->open($file);
+	eval {
+		binmode($inf);
+	};
+	while(!eof($inf)) {
+		$inf->read($in,512);
 		$self->print($in);
 	}
-	close(INF);
+	$inf->close;
 	$self->seek(0,0);
 
 	$self;

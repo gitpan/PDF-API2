@@ -4,7 +4,7 @@ use vars qw($VERSION @ISA @EXPORT %colors);
 use Math::Trig;
 use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 0.3a25 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Exporter;
 @ISA = qw(Exporter);
@@ -880,7 +880,7 @@ sub HSLtoRGB {
 
 sub namecolor {
 	my $name=lc(shift @_);
-	$name=~s/[^\#!%\&a-z0-9]//cg;
+	$name=~s/[^\#!%\&a-z0-9]//g;
 	my $col;
 	my $opt=shift @_;
 	if($name=~/^#/) {

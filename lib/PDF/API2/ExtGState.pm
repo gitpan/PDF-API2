@@ -7,7 +7,7 @@
 #
 #	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-#	This library is free software; you can redistribute it 
+#	This library is free software; you can redistribute it
 #	and/or modify it under the same terms as Perl itself.
 #
 #=======================================================================
@@ -20,7 +20,7 @@ package PDF::API2::ExtGState;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::PDF::Dict;
@@ -156,11 +156,19 @@ sub halftone {
 	return($self);
 }
 
+=item $egs->halftonephase $obj
+
+=cut
+
 sub halftonephase {
 	my ($self,$obj)=@_;
 	$self->{HTP}=$obj;
 	return($self);
 }
+
+=item $egs->smoothness $num
+
+=cut
 
 sub smoothness {
 	my ($self,$var)=@_;
@@ -168,11 +176,19 @@ sub smoothness {
 	return($self);
 }
 
+=item $egs->font $font, $size
+
+=cut
+
 sub font {
 	my ($self,$font,$size)=@_;
 	$self->{Font}=PDFArray(PDFName($font->{' apiname'}),PDFNum($size));
 	return($self);
 }
+
+=item $egs->linewidth $size
+
+=cut
 
 sub linewidth {
 	my ($self,$var)=@_;
@@ -180,11 +196,19 @@ sub linewidth {
 	return($self);
 }
 
+=item $egs->linecap $cap
+
+=cut
+
 sub linecap {
 	my ($self,$var)=@_;
 	$self->{LC}=PDFNum($var);
 	return($self);
 }
+
+=item $egs->linejoin $join
+
+=cut
 
 sub linejoin {
 	my ($self,$var)=@_;
@@ -192,11 +216,19 @@ sub linejoin {
 	return($self);
 }
 
+=item $egs->meterlimit $limit
+
+=cut
+
 sub meterlimit {
 	my ($self,$var)=@_;
 	$self->{ML}=PDFNum($var);
 	return($self);
 }
+
+=item $egs->dash @dash
+
+=cut
 
 sub dash {
 	my ($self,@dash)=@_;
@@ -204,15 +236,125 @@ sub dash {
 	return($self);
 }
 
+=item $egs->flatness $flat
+
+=cut
+
 sub flatness {
 	my ($self,$var)=@_;
 	$self->{FL}=PDFNum($var);
 	return($self);
 }
 
+=item $egs->renderingintent $intentName
+
+=cut
+
 sub renderingintent {
 	my ($self,$var)=@_;
 	$self->{FL}=PDFName($var);
+	return($self);
+}
+
+=item $egs->strokealpha $alpha
+
+The current stroking alpha constant, specifying the
+constant shape or constant opacity value to be used
+for stroking operations in the transparent imaging model.
+
+=cut
+
+sub strokealpha {
+	my ($self,$var)=@_;
+	$self->{CA}=PDFNum($var);
+	return($self);
+}
+
+=item $egs->fillalpha $alpha
+
+Same as strokealpha, but for nonstroking operations.
+
+=cut
+
+sub fillalpha {
+	my ($self,$var)=@_;
+	$self->{ca}=PDFNum($var);
+	return($self);
+}
+
+=item $egs->blendmode $blendname
+
+=item $egs->blendmode $blendfunctionobj
+
+The current blend mode to be used in the transparent
+imaging model.
+
+=cut
+
+sub blendmode {
+	my ($self,$var)=@_;
+	if(ref($var)) {
+		$self->{BM}=$var;
+	} else {
+		$self->{BM}=PDFName($var);
+	}
+	return($self);
+}
+
+=item $egs->alphaisshape $boolean
+
+The alpha source flag (alpha is shape), specifying
+whether the current soft mask and alpha constant
+are to be interpreted as shape values (true) or
+opacity values (false).
+
+=cut
+
+sub alphaisshape {
+	my ($self,$var)=@_;
+	$self->{AIS}=PDFBool($var);
+	return($self);
+}
+
+=item $egs->textknockout $boolean
+
+The text knockout flag, which determines the behavior
+of overlapping glyphs within a text object in the
+transparent imaging model.
+
+=cut
+
+sub textknockout {
+	my ($self,$var)=@_;
+	$self->{TK}=PDFBool($var);
+	return($self);
+}
+
+=item $egs->transparency $t
+
+The graphics tranparency , with 0 being fully opaque and 1 being fully transparent.
+This is a convenience method setting proper values for strokeaplha and fillalpha.
+
+=cut
+
+sub transparency {
+	my ($self,$var)=@_;
+	$self->strokealpha(1-$var);
+	$self->fillalpha(1-$var);
+	return($self);
+}
+
+=item $egs->opacity $op
+
+The graphics opacity , with 1 being fully opaque and 0 being fully transparent.
+This is a convenience method setting proper values for strokeaplha and fillalpha.
+
+=cut
+
+sub opacity {
+	my ($self,$var)=@_;
+	$self->strokealpha($var);
+	$self->fillalpha($var);
 	return($self);
 }
 

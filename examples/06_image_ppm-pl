@@ -2,7 +2,6 @@
 
 use PDF::API2;
 use PDF::API2::Util;
-use Text::PDF::Utils;
 
 $pdf=PDF::API2->new;
 

@@ -4,7 +4,7 @@ package PDF::API2::PDF::AFont;
 # use strict;
 use vars qw(@ISA $VERSION );
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3a25 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 use PDF::API2::PDF::Utils;
@@ -137,7 +137,7 @@ sub readAFM {
 		$self->{' AFM'}->{wx}->{'.notdef'} = 0;
 		$self->{' AFM'}->{bbox}{'.notdef'} = "0 0 0 0";
 	}
-	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//cg;
+	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//g;
 
 }
 
@@ -151,11 +151,11 @@ sub readPSF {
 	}	
 
 	foreach my $x (keys %h) {
-		$h{$x}=~s/^\s*[\(\[\{](.+)[\}\]\)]\s*readonly\s*$/$1/ci if($h{$x}=~/readonly/);	
-		$h{$x}=~s/^\s+//cgi;
-		$h{$x}=~s/\s+$//cgi;
+		$h{$x}=~s/^\s*[\(\[\{](.+)[\}\]\)]\s*readonly\s*$/$1/i if($h{$x}=~/readonly/);	
+		$h{$x}=~s/^\s+//gi;
+		$h{$x}=~s/\s+$//gi;
 	}
-	$h{'fontname'}=~s|/||cgi;
+	$h{'fontname'}=~s|/||gi;
 
 	($x,$x,$x,$wy)=split(/\s+/,$h{'fontbbx'});
 
@@ -187,10 +187,10 @@ sub readPSF {
 	@asci=split(/[\x0d\x0a]/,$newdata);
         map {
                 my($s,$t)=$_=~/^\/(\w+)\s(.+)\sdef$/;
-                $t=~s|[\/\(\)\[\]\{\}]||cgi;
-                $t=~s|^\s+||cgi;
-                $t=~s|\s+$||cgi;
-                $t=~s|\s+noaccess$||cgi;
+                $t=~s|[\/\(\)\[\]\{\}]||gi;
+                $t=~s|^\s+||gi;
+                $t=~s|\s+$||gi;
+                $t=~s|\s+noaccess$||gi;
                 $h{lc($s)}=$t;
         } grep(/^\/(\w+)\s(.+)\sdef$/,@asci);
 	@asci=grep(/^\/\w+\s\d+\sRD\s/,@asci);
@@ -295,7 +295,7 @@ sub readPSF {
 	$h{'descender'}=0;
 
 	$self->{' AFM'}={%h};
-	$self->{' AFM'}->{fontname}=~s/[\x00-\x1f]+//cg;
+	$self->{' AFM'}->{fontname}=~s/[\x00-\x1f]+//g;
 	return(%h);
 }
 
@@ -437,7 +437,7 @@ sub newNonEmbed {
 	
 	$self = $file2 ? $class->SUPER::new : $class;
 	$self->readAFM($file2) if($file2);
-	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//cgm;
+	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//gm;
 	$self->{'Type'} = PDFName("Font");
 	$self->{'Subtype'} = PDFName("Type1");
 	$self->{'BaseFont'} = PDFName($self->{' AFM'}->{'fontname'});
@@ -470,7 +470,7 @@ sub newNonEmbed {
 	my $flags=0;
 	$self->{' AFM'}->{'encoding'}=$self->{' AFM'}->{'encoding'}||'';
 	$flags|=1 if(lc($self->{' AFM'}->{'isfixedpitch'}) ne 'false');
-	if($self->{' AFM'}->{'encoding'}=~/standardencoding/cgi){
+	if($self->{' AFM'}->{'encoding'}=~/standardencoding/gi){
 		$flags|=1<<5 ;
 	} else {
 		$flags|=1<<2 ;
@@ -518,7 +518,7 @@ sub newNonEmbedLight {
 	
 	$self = $class->SUPER::new;
 	$self->readAFM($file2) if($file2);
-	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//cgm;
+	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//gm;
 	$self->{'Type'} = PDFName("Font");
 	$self->{'Subtype'} = PDFName("Type1");
 	$self->{'BaseFont'} = PDFName($self->{' AFM'}->{'fontname'} || $name);
@@ -1299,5 +1299,4 @@ BEGIN
 
 1;
 __END__
-
 

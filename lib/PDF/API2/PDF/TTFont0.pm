@@ -28,7 +28,7 @@ use PDF::API2::PDF::TTFont;
 use PDF::API2::PDF::Dict;
 @ISA = qw(PDF::API2::PDF::TTFont);
 
-use Font::TTF::Font;
+use PDF::API2::TTF::Font;
 use PDF::API2::PDF::Utils;
 
 =head2 PDF::API2::PDF::TTFont->new($parent, $fontfname. $pdfname)

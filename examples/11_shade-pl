@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use PDF::API2;
-use Text::PDF::Utils;
+use PDF::API2::PDF::Utils;
 
 $pdf=PDF::API2->new;
 
