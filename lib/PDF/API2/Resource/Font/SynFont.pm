@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: SynFont.pm,v 1.11 2004/11/26 15:14:59 fredo Exp $
+#   $Id: SynFont.pm,v 1.12 2004/11/29 10:00:54 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::SynFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/26 15:14:59 $
+    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/29 10:00:54 $
 
 }
 
@@ -96,6 +96,9 @@ I<-oblique>
 
 I<-bold>
 ... embolding factor (0.1+, bold=1, heavy=2, ...)
+
+I<-space>
+... additional charspacing in em (0-1000)
 
 =cut
 
@@ -267,6 +270,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: SynFont.pm,v $
+    Revision 1.12  2004/11/29 10:00:54  fredo
+    added charspacer docs
+
     Revision 1.11  2004/11/26 15:14:59  fredo
     fixed docs
 

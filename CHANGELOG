@@ -1,3 +1,15 @@
+2004-11-29 16:57  fredo
+
+	* lib/PDF/API2/Resource/UniFont.pm: added docs for unifont
+
+2004-11-29 16:19  fredo
+
+	* lib/PDF/API2.pm: added docs for bdfont, synfont and unifont
+
+2004-11-29 11:00  fredo
+
+	* lib/PDF/API2/Resource/Font/SynFont.pm: added charspacer docs
+
 2004-11-26 16:14  fredo
 
 	* lib/PDF/API2/Resource/Font/SynFont.pm: fixed docs

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniFont.pm,v 1.2 2004/11/25 23:51:16 fredo Exp $
+#   $Id: UniFont.pm,v 1.3 2004/11/29 15:57:42 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::UniFont;
@@ -43,13 +43,48 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/25 23:51:16 $
+    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/29 15:57:42 $
 
 }
 
-=item $font = PDF::API2::Resource::UniFont->new $pdf, @fontarray
+=item $font = PDF::API2::Resource::UniFont->new $pdf, @fontspecs, %options
 
 Returns a uni-font object.
+
+=cut
+
+=pod
+
+B<FONTSPECS:> fonts can be registered using the following hash-ref:
+
+    {
+        font   => $fontobj,     # the font to be registered
+        blocks => $blockspec,   # the unicode blocks, the font is being registered for
+        codes  => $codespec,    # the unicode codepoints, -"-
+    }
+
+B<BLOCKSPECS:> 
+
+    [
+        $block1, $block3,    # register font for block 1 + 3
+        [$blockA,$blockZ],   # register font for blocks A .. Z
+    ]
+    
+B<CODESPECS:> 
+
+    [
+        $cp1, $cp3,          # register font for codepoint 1 + 3
+        [$cpA,$cpZ],         # register font for codepoints A .. Z
+    ]
+    
+B<NOTE:> if you want to register a font for the entire unicode space 
+(ie. U+0000 .. U+FFFF), then simply specify a font-object without the hash-ref.
+
+
+Valid %options are:
+
+  '-encode' ... changes the encoding of the font from its default.
+    (see "perldoc Encode" for a list of valid tags)
 
 =cut
 
@@ -87,11 +122,7 @@ sub new {
                 }
                 else
                 {
-                    my $r1=shift @{$font};
-                    foreach my $c ($r0..$r1)
-                    {
-                        $self->{code}->{$c}=$fn;
-                    }
+                    $self->{block}->{$r0}=$fn;
                 }
             }
         }

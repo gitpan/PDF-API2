@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.66 2004/11/24 20:09:57 fredo Exp $
+#   $Id: API2.pm,v 1.67 2004/11/29 15:19:23 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = ('$Revision: 1.66 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/11/24 20:09:57 $
+    ($VERSION) = ('$Revision: 1.67 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/11/29 15:19:23 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -1392,6 +1392,39 @@ sub cjkfont {
     return($obj);
 }
 
+=item $font = $pdf->synfont $basefont  [, %options]
+
+Returns a new synthetic font object.
+
+=cut
+
+=pod
+
+See L<PDF::API2::Resource::Font::SynFont> for an explanation.
+
+B<Examples:>
+
+    $cf = $pdf->corefont('Times-Roman',-encode=>'latin1');
+    $sf = $pdf->synfont($cf,-slant=>0.85);  # compressed 85%
+    $sfb= $pdf->synfont($cf,-bold=>1);      # embolden by 10em
+    $sfi= $pdf->synfont($cf,-oblique=>-12); # italic at -12 degrees
+
+Valid %options are:
+
+I<-slant>
+... slant/expansion factor (0.1-0.9 = slant, 1.1+ = expansion).
+
+I<-oblique>
+... italic angle (+/-)
+
+I<-bold>
+... embolding factor (0.1+, bold=1, heavy=2, ...)
+
+I<-space>
+... additional charspacing in em (0-1000)
+
+=cut
+
 sub synfont {
     my ($self,@opts)=@_;
 
@@ -1404,6 +1437,18 @@ sub synfont {
     return($obj);
 }
 
+=item $font = $pdf->bdfont $bdffile
+
+Returns a new BDF font object, based on the specified adobe-bdf file.
+
+=cut
+
+=pod
+
+See L<PDF::API2::Resource::Font::BdFont> for an explanation.
+
+=cut
+
 sub bdfont {
     my ($self,@opts)=@_;
 
@@ -1415,6 +1460,24 @@ sub bdfont {
     ## $obj->tounicodemap; # does not support unicode!
     return($obj);
 }
+
+=item $font = $pdf->unifont @fontspecs, %options
+
+Returns a new uni-font object, based on the specified fonts and options.
+
+=cut
+
+=pod
+
+B<BEWARE:> This is not a true pdf-object, but a virtual/abstract font-definition !
+
+See L<PDF::API2::Resource::UniFont> for an explanation.
+
+Valid %options are:
+
+  '-encode' ... changes the encoding of the font from its default.
+
+=cut
 
 sub unifont {
     my ($self,@opts)=@_;
@@ -2048,6 +2111,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.67  2004/11/29 15:19:23  fredo
+    added docs for bdfont, synfont and unifont
+
     Revision 1.66  2004/11/24 20:09:57  fredo
     added unifont
 
