@@ -4,7 +4,7 @@ use vars qw($VERSION @ISA @EXPORT %colors);
 use Math::Trig;
 use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 0.2.3.8 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a1 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Exporter;
 @ISA = qw(Exporter);
@@ -12,10 +12,16 @@ use Exporter;
 	pdfkey digest digestx digest16 digest32 
 	float floats floats5 intg intgs 
 	mMin mMax 
-	cRGB cRGB8 RGBasCMYK HSVtoRGB HSLtoRGB
+	cRGB cRGB8 RGBasCMYK 
+	HSVtoRGB 
+	RGBtoHSV
+	HSLtoRGB
+	RGBtoHSL
 	RGBtoLUM
 	namecolor
 );            
+
+
 
 BEGIN {
 
@@ -742,7 +748,7 @@ sub RGBasCMYK {
 	return((map { $_-$k } @cmy),$k);
 }
 
-sub HSVtoRGB ($$$) {
+sub HSVtoRGB {
 	my ($h,$s,$v)=@_;
 	my ($r,$g,$b,$i,$f,$p,$q,$t);
 
@@ -801,7 +807,60 @@ sub RGBquant ($$$) {
 		return($q1);
 	}
 }
-sub HSLtoRGB ($$$) {
+
+sub RGBtoHSV {
+	my ($r,$g,$b)=@_;
+	my ($h,$s,$v,$min,$max,$delta);
+
+	$min= mMin($r,$g,$b);
+	$max= mMax($r,$g,$b);
+
+        $v = $max;                              
+
+        $delta = $max - $min;
+
+        if( $delta > 0.000000001 ) {
+                $s = $delta / $max;
+        } else {
+                $s = 0;
+                $h = 0;
+                return($h,$s,$v);
+        }
+
+        if( $r == $max ) {
+                $h = ( $g - $b ) / $delta; 
+        } elsif( $g == $max ) {
+                $h = 2 + ( $b - $r ) / $delta; 
+        } else {
+                $h = 4 + ( $r - $g ) / $delta;
+	}
+        $h *= 60;
+        if( $h < 0 ) {$h += 360;}
+        return($h,$s,$v);
+}
+
+sub RGBtoHSL {
+	my ($r,$g,$b)=@_;
+	my ($h,$s,$v,$l,$min,$max,$delta);
+
+	$min= mMin($r,$g,$b);
+	$max= mMax($r,$g,$b);
+	($h,$s,$v)=RGBtoHSV($r,$g,$b);
+	$l=($max+$min)/2.0;
+        $delta = $max - $min;
+	if($delta<0.00000000001){
+		return(0,0,$l);
+	} else {
+		if($l<=0.5){
+			$s=$delta/($max+$min);
+		} else {
+			$s=$delta/(2-$max-$min);
+		}
+	}
+	return($h,$s,$l);
+}
+
+sub HSLtoRGB {
 	my($h,$s,$l,$r,$g,$b,$p1,$p2)=@_;
 	if($l<=0.5){
 		$p2=$l*(1+$s);
@@ -819,11 +878,11 @@ sub HSLtoRGB ($$$) {
 	return($r,$g,$b);
 }
 
-
 sub namecolor {
 	my $name=lc(shift @_);
-	$name=~s/[^\#!%a-z0-9]//cg;
+	$name=~s/[^\#!%\&a-z0-9]//cg;
 	my $col;
+	my $opt=shift @_;
 	if($name=~/^#/) {
 		my ($r,$g,$b,$h);
 		if(length($name)<5) {		# zb. #fa4,          #cf0
@@ -867,10 +926,17 @@ sub namecolor {
 			$y=hex(substr($name,9,4))/0xffff;
 			$k=hex(substr($name,13,4))/0xffff;
 		}
-		$r=1-$c-$k;
-		$g=1-$m-$k;
-		$b=1-$y-$k;
-		$col=[$r,$g,$b];
+		if($opt) {
+			$r=1-$c-$k;
+			$g=1-$m-$k;
+			$b=1-$y-$k;
+			$col=[$r,$g,$b];
+		} else {
+			$r=1-$c-$k;
+			$g=1-$m-$k;
+			$b=1-$y-$k;
+			$col=[$r,$g,$b];
+		}
 	} elsif($name=~/^!/) {
 		my ($r,$g,$b,$h,$s,$v);
 		if(length($name)<5) {		
@@ -890,8 +956,13 @@ sub namecolor {
 			$s=hex(substr($name,5,4))/0xffff;
 			$v=hex(substr($name,9,4))/0xffff;
 		}
-		($r,$g,$b)=HSVtoRGB($h,$s,$v);
-		$col=[$r,$g,$b];
+		if($opt) {
+			($r,$g,$b)=HSVtoRGB($h,$s,$v);
+			$col=[$r,$g,$b];
+		} else {
+			($r,$g,$b)=HSVtoRGB($h,$s,$v);
+			$col=[$r,$g,$b];
+		}
 	} elsif($name=~/^&/) {
 		my ($r,$g,$b,$h,$s,$l);
 		if(length($name)<5) {		
@@ -911,8 +982,13 @@ sub namecolor {
 			$s=hex(substr($name,5,4))/0xffff;
 			$l=hex(substr($name,9,4))/0xffff;
 		}
-		($r,$g,$b)=HSLtoRGB($h,$s,$l);
-		$col=[$r,$g,$b];
+		if($opt) {
+			($r,$g,$b)=HSLtoRGB($h,$s,$l);
+			$col=[$r,$g,$b];
+		} else {
+			($r,$g,$b)=HSLtoRGB($h,$s,$l);
+			$col=[$r,$g,$b];
+		}
 	} else {
 		$col = $colors{$name} || [0,0,0];
 	}

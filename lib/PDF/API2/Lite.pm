@@ -10,11 +10,9 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.2.3.8 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a1 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
-	$PDF::API2::Lite::useInternalFonts=0;
-	$PDF::API2::Lite::loadedInternalFonts=0;
 }
 
 
@@ -142,14 +140,7 @@ B<Examples:>
 
 sub corefont {
 	my ($self,$name,@opts)=@_;
-	my $obj;
-	if($PDF::API2::Lite::useInternalFonts) {
-		eval " use PDF::API2::cFont; " unless($PDF::API2::Lite::loadedInternalFonts);
-		$PDF::API2::Lite::loadedInternalFonts=1;
-		$obj=PDF::API2::cFont->new_api($self->{api},$name,@opts);
-	} else {
-		$obj=$self->{api}->corefont($name,1);
-	}
+	my $obj=$self->{api}->corefont($name,@opts);
 	return $obj;
 }
 
@@ -168,6 +159,28 @@ B<Examples:>
 sub ttfont {
 	my ($self,$file)=@_;
 	return $self->{api}->ttfont($file);
+}
+
+=item @color = $pdf->color $colornumber [, $lightdark ]
+
+=item @color = $pdf->color $basecolor [, $lightdark ]
+
+Returns a color.
+
+B<Examples:>
+
+	@color = $pdf->color(0);		# 50% grey
+	@color = $pdf->color(0,+4);		# 10% grey
+	@color = $pdf->color(0,-3);		# 80% grey
+	@color = $pdf->color('yellow');		# yellow, fully saturated
+	@color = $pdf->color('red',+1);		# red, +10% white
+	@color = $pdf->color('green',-2);	# green, +20% black
+
+=cut
+
+sub color {
+	my $self=shift @_;
+	return $self->{api}->businesscolor(@_);
 }
 
 =item $img = $pdf->loadimage $file
@@ -217,7 +230,7 @@ Sets fillcolor.
 
 sub fillcolor {
 	my $self=shift @_;
-	$self->{hybrid}->fillcolor(shift);
+	$self->{hybrid}->fillcolor(@_);
 	return($self);
 }
 
@@ -227,153 +240,24 @@ Sets strokecolor.
 
 B<Defined color-names are:>
 
-	aliceblue, 
-	antiquewhite, 
-	aqua, 
-	aquamarine, 
-	azure,
-	beige, 
-	bisque, 
-	black, 
-	blanchedalmond, 
-	blue,
-	blueviolet, 
-	brown, 
-	burlywood, 
-	cadetblue, 
-	chartreuse,
-	chocolate, 
-	coral, 
-	cornflowerblue, 
-	cornsilk, 
-	crimson,
-	cyan, 
-	darkblue, 
-	darkcyan, 
-	darkgoldenrod, 
-	darkgray,
-	darkgreen, 
-	darkgrey, 
-	darkkhaki, 
-	darkmagenta,
-	darkolivegreen, 
-	darkorange, 
-	darkorchid, 
-	darkred,
-	darksalmon, 
-	darkseagreen, 
-	darkslateblue, 
-	darkslategray,
-	darkslategrey, 
-	darkturquoise, 
-	darkviolet, 
-	deeppink,
-	deepskyblue, 
-	dimgray, 
-	dimgrey, 
-	dodgerblue, 
-	firebrick,
-	floralwhite, 
-	forestgreen, 
-	fuchsia, 
-	gainsboro, 
-	ghostwhite,
-	gold, 
-	goldenrod, 
-	gray, 
-	grey, 
-	green, 
-	greenyellow,
-	honeydew, 
-	hotpink, 
-	indianred, 
-	indigo, 
-	ivory, 
-	khaki,
-	lavender, 
-	lavenderblush, 
-	lawngreen, 
-	lemonchiffon,
-	lightblue, 
-	lightcoral, 
-	lightcyan, 
-	lightgoldenrodyellow,
-	lightgray, 
-	lightgreen, 
-	lightgrey, 
-	lightpink, 
-	lightsalmon,
-	lightseagreen, 
-	lightskyblue, 
-	lightslategray,
-	lightslategrey, 
-	lightsteelblue, 
-	lightyellow, 
-	lime,
-	limegreen, 
-	linen, 
-	magenta, 
-	maroon, 
-	mediumaquamarine,
-	mediumblue, 
-	mediumorchid, 
-	mediumpurple, 
-	mediumseagreen,
-	mediumslateblue, 
-	mediumspringgreen, 
-	mediumturquoise,
-	mediumvioletred, 
-	midnightblue, 
-	mintcream, 
-	mistyrose,
-	moccasin, 
-	navajowhite, 
-	navy, 
-	oldlace, 
-	olive, 
-	olivedrab,
-	orange, 
-	orangered, 
-	orchid, 
-	palegoldenrod, 
-	palegreen,
-	paleturquoise, 
-	palevioletred, 
-	papayawhip, 
-	peachpuff,
-	peru, 
-	pink, 
-	plum, 
-	powderblue, 
-	purple, 
-	red, 
-	rosybrown,
-	royalblue, 
-	saddlebrown, 
-	salmon, 
-	sandybrown, 
-	seagreen,
-	seashell, 
-	sienna, 
-	silver, 
-	skyblue, 
-	slateblue, 
-	slategray,
-	slategrey, 
-	snow, 
-	springgreen, 
-	steelblue, 
-	tan, 
-	teal,
-	thistle, 
-	tomato, 
-	turquoise, 
-	violet, 
-	wheat, 
-	white,
-	whitesmoke, 
-	yellow, 
-	yellowgreen
+	aliceblue, antiquewhite, aqua, aquamarine, azure, beige, bisque, black, blanchedalmond, 
+	blue, blueviolet, brown, burlywood, cadetblue, chartreuse, chocolate, coral, cornflowerblue, 
+	cornsilk, crimson, cyan, darkblue, darkcyan, darkgoldenrod, darkgray, darkgreen, darkgrey, 
+	darkkhaki, darkmagenta, darkolivegreen, darkorange, darkorchid, darkred, darksalmon, 
+	darkseagreen, darkslateblue, darkslategray, darkslategrey, darkturquoise, darkviolet, 
+	deeppink, deepskyblue, dimgray, dimgrey, dodgerblue, firebrick, floralwhite, forestgreen, 
+	fuchsia, gainsboro, ghostwhite, gold, goldenrod, gray, grey, green, greenyellow, honeydew, 
+	hotpink, indianred, indigo, ivory, khaki, lavender, lavenderblush, lawngreen, lemonchiffon,
+	lightblue, lightcoral, lightcyan, lightgoldenrodyellow, lightgray, lightgreen, lightgrey, 
+	lightpink, lightsalmon, lightseagreen, lightskyblue, lightslategray, lightslategrey, 
+	lightsteelblue, lightyellow, lime, limegreen, linen, magenta, maroon, mediumaquamarine,
+	mediumblue, mediumorchid, mediumpurple, mediumseagreen, mediumslateblue, mediumspringgreen, 
+	mediumturquoise, mediumvioletred, midnightblue, mintcream, mistyrose, moccasin, navajowhite, 
+	navy, oldlace, olive, olivedrab, orange, orangered, orchid, palegoldenrod, palegreen,
+	paleturquoise, palevioletred, papayawhip, peachpuff, peru, pink, plum, powderblue, purple, 
+	red, rosybrown, royalblue, saddlebrown, salmon, sandybrown, seagreen, seashell, sienna, 
+	silver, skyblue, slateblue, slategray, slategrey, snow, springgreen, steelblue, tan, teal,
+	thistle, tomato, turquoise, violet, wheat, white, whitesmoke, yellow, yellowgreen
 
 or the rgb-hex-notation:
 
@@ -383,6 +267,10 @@ or the cmyk-hex-notation:
 
 	%cmyk, %ccmmyykk, %cccmmmyyykkk and %ccccmmmmyyyykkkk
 
+or the hsl-hex-notation:
+
+	&hsl, &hhssll, &hhhssslll and &hhhhssssllll
+
 and additionally the hsv-hex-notation:
 
 	!hsv, !hhssvv, !hhhsssvvv and !hhhhssssvvvv
@@ -391,7 +279,7 @@ and additionally the hsv-hex-notation:
 
 sub strokecolor {
 	my $self=shift @_;
-	$self->{hybrid}->strokecolor(shift);
+	$self->{hybrid}->strokecolor(@_);
 	return($self);
 }
 

@@ -40,7 +40,7 @@ This module set requires you to have installed the following other perl modules:
 	Module		Required for
 	------------------------------------------------------
 	Compress::Zlib	 - Compression of PDF object streams
-	Text::PDF-0.19	 - Low-level Pdf-Object Handling
+	Text::PDF-0.20	 - Low-level Pdf-Object Handling
 	Font::TTF-0.28	 - Truetype Handling
 
 

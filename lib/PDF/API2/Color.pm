@@ -3,7 +3,7 @@ package PDF::API2::Color;
 use vars qw( $VERSION );
 use PDF::API2::Util;
 
-( $VERSION ) = '$Revisioning: 0.2.3.8 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a1 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 
@@ -47,7 +47,7 @@ sub mMax {
 	return($n);	
 }
 
-sub RGBtoHSV ($$$) {
+sub RGBtoHSV {
 	my ($r,$g,$b)=@_;
 	my ($h,$s,$v,$min,$max,$delta);
 
@@ -77,7 +77,7 @@ sub RGBtoHSV ($$$) {
         if( $h < 0 ) {$h += 360;}
         return($h,$s,$v);
 }
-sub HSVtoRGB ($$$) {
+sub HSVtoRGB {
 	my ($h,$s,$v)=@_;
 	my ($r,$g,$b,$i,$f,$p,$q,$t);
 
@@ -120,7 +120,7 @@ sub HSVtoRGB ($$$) {
 	}
 	return ($r,$g,$b);
 }
-sub RGBtoHSL ($$$) {
+sub RGBtoHSL {
 	my ($r,$g,$b)=@_;
 	my ($h,$s,$v,$l,$min,$max,$delta);
 
@@ -140,7 +140,7 @@ sub RGBtoHSL ($$$) {
 	}
 	return($h,$s,$l);
 }
-sub RGBquant ($$$) {
+sub RGBquant {
 	my($q1,$q2,$h)=@_;
 	while($h<0){$h+=360;}
 	$h%=360;
@@ -154,8 +154,8 @@ sub RGBquant ($$$) {
 		return($q1);
 	}
 }
-sub HSLtoRGB ($$$) {
-	my($h,$l,$s,$r,$g,$b,$p1,$p2)=@_;
+sub HSLtoRGB {
+	my($h,$s,$l,$r,$g,$b,$p1,$p2)=@_;
 	if($l<=0.5){
 		$p2=$l*(1+$s);
 	} else {
