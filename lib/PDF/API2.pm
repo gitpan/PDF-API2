@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.68 2004/12/16 00:30:51 fredo Exp $
+#   $Id: API2.pm,v 1.71 2005/01/03 03:47:52 fredo Exp $
 #
 #=======================================================================
 
@@ -37,10 +37,10 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = ('$Revision: 1.68 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/12/16 00:30:51 $
+    ($VERSION) = ('$Revision: 1.71 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2005/01/03 03:47:52 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
-        qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
+        qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
 
     $seq="AA";
 
@@ -55,6 +55,7 @@ BEGIN {
     use PDF::API2::IOString;
 
     use PDF::API2::Outlines;
+    use PDF::API2::NamedDestination;
 
     use PDF::API2::Version;
 
@@ -1854,6 +1855,81 @@ sub colorspace_devicen {
 
 =back
 
+=head1 BARCODE METHODS
+
+=over 4
+
+=item $bc = $pdf->xo_codabar %opts
+
+=item $bc = $pdf->xo_code128 %opts
+
+=item $bc = $pdf->xo_2of5int %opts
+
+=item $bc = $pdf->xo_3of9 %opts
+
+=item $bc = $pdf->xo_ean13 %opts
+
+creates the specified barcode object as a form-xo.
+
+=cut
+
+sub xo_code128 {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::XObject::Form::BarCode::code128->new_api($self,@opts);
+
+    $self->resource('XObject',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+sub xo_codabar {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::XObject::Form::BarCode::codabar->new_api($self,@opts);
+
+    $self->resource('XObject',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+sub xo_2of5int {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::XObject::Form::BarCode::int2of5->new_api($self,@opts);
+
+    $self->resource('XObject',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+sub xo_3of9 {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::XObject::Form::BarCode::code3of9->new_api($self,@opts);
+
+    $self->resource('XObject',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+sub xo_ean13 {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::XObject::Form::BarCode::ean13->new_api($self,@opts);
+
+    $self->resource('XObject',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+=back
+
 =head1 OTHER METHODS
 
 =over 4
@@ -1955,78 +2031,42 @@ sub outlines {
 
 }
 
-=back
+#=item $dst $pdf->named_destination $category, $name
+#
+#Returns a new or existing outlines object.
+#
+#=cut
 
-=head1 BARCODE METHODS
+sub named_destination
+{
+    my ($self,$cat,$name,$obj)=@_;
+    my $root=$self->{catalog};
 
-=over 4
+    $root->{Names}||=PDFDict();
+    $root->{Names}->{$cat}||=PDFDict();
+    $root->{Names}->{$cat}->{-vals}||={};
+    $root->{Names}->{$cat}->{Limits}||=PDFArray();
+    $root->{Names}->{$cat}->{Names}||=PDFArray();
+    
+    unless(defined $obj)
+    {
+        $obj=PDF::API2::NamedDestination->new_api($self);
+    }
+    $root->{Names}->{$cat}->{-vals}->{$name}=$obj;
+    
+    my @names=sort {$a cmp $b} keys %{$root->{Names}->{$cat}->{-vals}};
+    
+    $root->{Names}->{$cat}->{Limits}->{' val'}->[0]=PDFStr($names[0]);
+    $root->{Names}->{$cat}->{Limits}->{' val'}->[1]=PDFStr($names[-1]);
+    
+    @{$root->{Names}->{$cat}->{Names}->{' val'}}=();
+    
+    foreach my $k (@names)
+    {
+        push @{$root->{Names}->{$cat}->{Names}->{' val'}},
+            PDFStr($k),$root->{Names}->{$cat}->{-vals}->{$k};
+    }
 
-=item $bc = $pdf->xo_codabar %opts
-
-=item $bc = $pdf->xo_code128 %opts
-
-=item $bc = $pdf->xo_2of5int %opts
-
-=item $bc = $pdf->xo_3of9 %opts
-
-=item $bc = $pdf->xo_ean13 %opts
-
-creates the specified barcode object as a form-xo.
-
-=cut
-
-sub xo_code128 {
-    my ($self,@opts)=@_;
-
-    my $obj=PDF::API2::Resource::XObject::Form::BarCode::code128->new_api($self,@opts);
-
-    $self->resource('XObject',$obj->name,$obj);
-
-    $self->{pdf}->out_obj($self->{pages});
-    return($obj);
-}
-
-sub xo_codabar {
-    my ($self,@opts)=@_;
-
-    my $obj=PDF::API2::Resource::XObject::Form::BarCode::codabar->new_api($self,@opts);
-
-    $self->resource('XObject',$obj->name,$obj);
-
-    $self->{pdf}->out_obj($self->{pages});
-    return($obj);
-}
-
-sub xo_2of5int {
-    my ($self,@opts)=@_;
-
-    my $obj=PDF::API2::Resource::XObject::Form::BarCode::int2of5->new_api($self,@opts);
-
-    $self->resource('XObject',$obj->name,$obj);
-
-    $self->{pdf}->out_obj($self->{pages});
-    return($obj);
-}
-
-sub xo_3of9 {
-    my ($self,@opts)=@_;
-
-    my $obj=PDF::API2::Resource::XObject::Form::BarCode::code3of9->new_api($self,@opts);
-
-    $self->resource('XObject',$obj->name,$obj);
-
-    $self->{pdf}->out_obj($self->{pages});
-    return($obj);
-}
-
-sub xo_ean13 {
-    my ($self,@opts)=@_;
-
-    my $obj=PDF::API2::Resource::XObject::Form::BarCode::ean13->new_api($self,@opts);
-
-    $self->resource('XObject',$obj->name,$obj);
-
-    $self->{pdf}->out_obj($self->{pages});
     return($obj);
 }
 
@@ -2053,7 +2093,8 @@ methods.
 
 =cut
 
-sub resource {
+sub resource 
+{
     return(undef);
     my ($self, $type, $key, $obj, $force) = @_;
 
@@ -2067,28 +2108,31 @@ sub resource {
     $dict->{$type}=$dict->{$type} || PDFDict();
     $dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
 
-  unless(defined($obj)) {
-    return($dict->{$type}->{$key} || undef);
-  } else {
-    if($force) {
-        $dict->{$type}->{$key}=$obj;
-    } else {
-        $dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
+    if(defined($obj)) 
+    {
+        if($force) 
+        {
+            $dict->{$type}->{$key}=$obj;
+        } 
+        else 
+        {
+            $dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
+        }
+
+        $self->{pdf}->out_obj($dict)
+            if($dict->is_obj($self->{pdf}));
+
+        $self->{pdf}->out_obj($dict->{$type})
+            if($dict->{$type}->is_obj($self->{pdf}));
+
+        $self->{pdf}->out_obj($obj)
+            if($obj->is_obj($self->{pdf}));
+
+        $self->{pdf}->out_obj($self->{pages});
+
+        return($dict);
     }
-
-    $self->{pdf}->out_obj($dict)
-        if($dict->is_obj($self->{pdf}));
-
-    $self->{pdf}->out_obj($dict->{$type})
-        if($dict->{$type}->is_obj($self->{pdf}));
-
-    $self->{pdf}->out_obj($obj)
-        if($obj->is_obj($self->{pdf}));
-
-          $self->{pdf}->out_obj($self->{pages});
-
-    return($dict);
-  }
+    return($dict->{$type}->{$key} || undef);
 }
 
 1;
@@ -2104,6 +2148,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.71  2005/01/03 03:47:52  fredo
+    fixed use named destination
+
+    Revision 1.70  2005/01/03 03:46:25  fredo
+    added named destination support
+
+    Revision 1.69  2004/12/31 03:12:09  fredo
+    no message
+
     Revision 1.68  2004/12/16 00:30:51  fredo
     added no warn for recursion
 

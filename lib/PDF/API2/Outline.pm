@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Outline.pm,v 1.9 2004/12/16 00:30:51 fredo Exp $
+#   $Id: Outline.pm,v 1.10 2005/01/03 00:33:32 fredo Exp $
 #
 #=======================================================================
 
@@ -42,7 +42,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:51 $
+    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2005/01/03 00:33:32 $
 
 }
 
@@ -226,33 +226,58 @@ at the top-left corner of the window and the contents of the page magnified by
 the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
 specifies that the current value of that parameter is to be retained unchanged.
 
+=item $otl->dest( $name )
+
+(PDF 1.2) Connect the Outline to a "Named Destination" defined elswere.
+
 =cut
 
-sub dest {
+sub dest 
+{
     my ($self,$page,%opts)=@_;
 
-    die "no valid page '$page' specified." if(!ref($page));
+    if(ref $page)
+    {
+        $opts{-xyz}=[undef,undef,undef] if(scalar(keys %opts)<1);
 
-    $opts{-fit}=1 if(scalar(keys %opts)<1);
-
-    if(defined $opts{-fit}) {
-        $self->{Dest}=PDFArray($page,PDFName('Fit'));
-    } elsif(defined $opts{-fith}) {
-        $self->{Dest}=PDFArray($page,PDFName('FitH'),PDFNum($opts{-fith}));
-    } elsif(defined $opts{-fitb}) {
-        $self->{Dest}=PDFArray($page,PDFName('FitB'));
-    } elsif(defined $opts{-fitbh}) {
-        $self->{Dest}=PDFArray($page,PDFName('FitBH'),PDFNum($opts{-fitbh}));
-    } elsif(defined $opts{-fitv}) {
-        $self->{Dest}=PDFArray($page,PDFName('FitV'),PDFNum($opts{-fitv}));
-    } elsif(defined $opts{-fitbv}) {
-        $self->{Dest}=PDFArray($page,PDFName('FitBV'),PDFNum($opts{-fitbv}));
-    } elsif(defined $opts{-fitr}) {
-        die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
-        $self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
-    } elsif(defined $opts{-xyz}) {
-        die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-xyz}} == 3);
-        $self->{Dest}=PDFArray($page,PDFName('XYZ'),map { $_==0 ? PDFNull():PDFNum($_)} @{$opts{-xyz}});
+        if(defined $opts{-fit}) 
+        {
+            $self->{Dest}=PDFArray($page,PDFName('Fit'));
+        } 
+        elsif(defined $opts{-fith}) 
+        {
+            $self->{Dest}=PDFArray($page,PDFName('FitH'),PDFNum($opts{-fith}));
+        } 
+        elsif(defined $opts{-fitb}) 
+        {
+            $self->{Dest}=PDFArray($page,PDFName('FitB'));
+        } 
+        elsif(defined $opts{-fitbh}) 
+        {
+            $self->{Dest}=PDFArray($page,PDFName('FitBH'),PDFNum($opts{-fitbh}));
+        } 
+        elsif(defined $opts{-fitv}) 
+        {
+            $self->{Dest}=PDFArray($page,PDFName('FitV'),PDFNum($opts{-fitv}));
+        } 
+        elsif(defined $opts{-fitbv}) 
+        {
+            $self->{Dest}=PDFArray($page,PDFName('FitBV'),PDFNum($opts{-fitbv}));
+        } 
+        elsif(defined $opts{-fitr}) 
+        {
+            die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
+            $self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
+        } 
+        elsif(defined $opts{-xyz}) 
+        {
+            die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-xyz}} == 3);
+            $self->{Dest}=PDFArray($page,PDFName('XYZ'),map {defined $_ ? PDFNum($_) : PDFNull()} @{$opts{-xyz}});
+        }
+    }
+    else
+    {
+        $self->{Dest}=PDFStr($page);
     }
     return($self);
 }
@@ -354,6 +379,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Outline.pm,v $
+    Revision 1.10  2005/01/03 00:33:32  fredo
+    added named destination support
+
     Revision 1.9  2004/12/16 00:30:51  fredo
     added no warn for recursion
 

@@ -1,3 +1,127 @@
+2005-01-03 06:01  fredo
+
+	* examples/040_named_dest: genesis
+
+2005-01-03 06:00  fredo
+
+	* lib/PDF/API2/Annotation.pm: changed default behavior of border
+
+2005-01-03 05:17  fredo
+
+	* lib/PDF/API2/NamedDestination.pm: fixed dict creation
+
+2005-01-03 05:17  fredo
+
+	* lib/PDF/API2/Annotation.pm: fixed link bug
+
+2005-01-03 04:47  fredo
+
+	* lib/PDF/API2.pm: fixed use named destination
+
+2005-01-03 04:46  fredo
+
+	* lib/PDF/API2.pm: added named destination support
+
+2005-01-03 04:34  fredo
+
+	* MANIFEST: added NamedDestination.pm
+
+2005-01-03 04:31  fredo
+
+	* lib/PDF/API2/NamedDestination.pm: genesis
+
+2005-01-03 04:29  fredo
+
+	* lib/PDF/API2/Annotation.pm: removed code duplication
+
+2005-01-03 02:16  fredo
+
+	* lib/PDF/API2/Content.pm: fixed textpos tracking in nl method
+
+2005-01-03 01:33  fredo
+
+	* lib/PDF/API2/Outline.pm: added named destination support
+
+2005-01-03 01:30  fredo
+
+	* lib/PDF/API2/Annotation.pm: added named destination support
+
+2004-12-31 04:59  fredo
+
+	* lib/PDF/API2/Content.pm: fixed paragraph and text_fill_* methods
+	  (thanks to Shawn Corey <shawn.corey@sympatico.ca>)
+
+2004-12-31 04:12  fredo
+
+	* lib/PDF/: API2.pm, API2/Util.pm: no message
+
+2004-12-31 04:08  fredo
+
+	* MANIFEST: added new examples
+
+2004-12-31 04:04  fredo
+
+	* examples/: 024_bmpfonts, 025_unifonts, 026_unifont2, 027_winfont,
+	  020_textrise, 020_textunderline: genesis
+
+2004-12-31 03:58  fredo
+
+	* examples/: 021_synfonts, 022_truefonts, 023_cjkfonts: no message
+
+2004-12-31 03:53  fredo
+
+	* lib/PDF/API2/Content.pm: minor code corrections
+
+2004-12-31 03:06  fredo
+
+	* lib/PDF/API2/Content.pm: fixed textpos calculation, added
+	  underline capability (thanks to Shawn Corey
+	  <shawn.corey@sympatico.ca>)
+
+2004-12-29 23:01  fredo
+
+	* lib/PDF/API2/Content.pm: advancewidth now can take a virtual
+	  textstate
+
+2004-12-29 02:48  fredo
+
+	* lib/PDF/API2/Content.pm: fixed _font method
+
+2004-12-29 02:45  fredo
+
+	* lib/PDF/API2/Win32.pm: fixed no warn for recursion
+
+2004-12-29 02:16  fredo
+
+	* Makefile.PL: added version pod
+
+2004-12-29 02:14  fredo
+
+	* lib/PDF/API2/Content.pm: added virtual attribute support
+
+2004-12-29 02:13  fredo
+
+	* lib/PDF/API2/Resource/Font/SynFont.pm: documented -caps option
+
+2004-12-29 02:12  fredo
+
+	* lib/PDF/API2/: Resource/CIDFont/TrueType/FontFile.pm, Util.pm:
+	  fixed no warn for recursion
+
+2004-12-29 01:53  fredo
+
+	* lib/PDF/API2/Resource/uniglyph.txt: fixed .notdef glyph
+
+2004-12-28 18:23  fredo
+
+	* lib/PDF/API2/Resource/Font/CoreFont/: timesroman.pm,
+	  zapfdingbats.pm: updated to new adobe afm
+
+2004-12-28 18:23  fredo
+
+	* lib/PDF/API2/Resource/Font/CoreFont/bankgothic.pm: added new
+	  'Euro' glyph
+
 2004-12-20 13:11  fredo
 
 	* lib/PDF/API2/Content.pm: added fontset method to not set via 'Tf'

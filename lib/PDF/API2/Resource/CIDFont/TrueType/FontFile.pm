@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: FontFile.pm,v 1.10 2004/12/16 00:30:53 fredo Exp $
+#   $Id: FontFile.pm,v 1.11 2004/12/29 01:12:27 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -49,10 +49,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/29 01:12:27 $
     $cmap={};
 }
-no warnings qw[ deprecated recursion uninitialized ];
+no warnings qw[ recursion uninitialized ];
 
 
 sub _look_for_cmap ($) {
@@ -636,6 +636,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: FontFile.pm,v $
+    Revision 1.11  2004/12/29 01:12:27  fredo
+    fixed no warn for recursion
+
     Revision 1.10  2004/12/16 00:30:53  fredo
     added no warn for recursion
 

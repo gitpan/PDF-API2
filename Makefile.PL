@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 1.21 2004/10/17 04:07:14 fredo Exp $
+#   $Id: Makefile.PL,v 1.22 2004/12/29 01:16:10 fredo Exp $
 #
 #=======================================================================
 
@@ -222,7 +222,7 @@ if($overide) {
 } elsif($remake) {
     write_version(hex($PDF::API2::Version::CVersion{vHex}));
 }
-if($build | $release | $version | $overide | $alpha | $beta | $gamma | $stable) {
+if($build | $release | $version | $overide | $alpha | $beta | $gamma | $stable | $remake) {
     system('perl ../cvs2cl.pl >NIL 2>NIL2');
 }
 

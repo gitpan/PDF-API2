@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: bankgothic.pm,v 1.5 2004/06/15 09:14:53 fredo Exp $
+#   $Id: bankgothic.pm,v 1.6 2004/12/28 17:23:07 fredo Exp $
 #
 #=======================================================================
 
@@ -548,6 +548,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: bankgothic.pm,v $
+    Revision 1.6  2004/12/28 17:23:07  fredo
+    added new 'Euro' glyph
+
     Revision 1.5  2004/06/15 09:14:53  fredo
     removed cr+lf
 

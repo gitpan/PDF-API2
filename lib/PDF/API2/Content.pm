@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.21 2004/12/20 12:11:54 fredo Exp $
+#   $Id: Content.pm,v 1.28 2005/01/03 01:16:51 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.21 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/20 12:11:54 $
+    ( $VERSION ) = '$Revision: 1.28 $' =~ /Revision: (\S+)\s/; # $Date: 2005/01/03 01:16:51 $
 
 }
 
@@ -450,14 +450,14 @@ sub _transform
             $mtx=$mtx->multiply(PDF::API2::Matrix->new(
                 [$mx[0],$mx[1],0],
                 [$mx[2],$mx[3],0],
-                [$mx[4],$mx[4],1]
+                [$mx[4],$mx[5],1]
             ));
         } elsif($o eq '-matrix') {
             my @mx=@{$opt{$o}};
             $mtx=$mtx->multiply(PDF::API2::Matrix->new(
                 [$mx[0],$mx[1],0],
                 [$mx[2],$mx[3],0],
-                [$mx[4],$mx[4],1]
+                [$mx[4],$mx[5],1]
             ));
         }
     }
@@ -584,42 +584,50 @@ sub _makecolor {
     }
 }
 
+sub _fillcolor 
+{
+    my ($self,@clrs)=@_;
+    if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) 
+    {
+        $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
+    } 
+    elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) 
+    {
+        $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
+    }
+    return($self->_makecolor(1,@clrs));
+}
 sub fillcolor 
 {
     my $self=shift @_;
     if(scalar @_) 
     {
         @{$self->{' fillcolor'}}=@_;
-        my @clrs=@_;
-        $self->add($self->_makecolor(1,@clrs));
-        if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) 
-        {
-            $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
-        } 
-        elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) 
-        {
-            $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
-        }
+        $self->add($self->_fillcolor(@_));
     }
     return(@{$self->{' fillcolor'}});
 }
 
+sub _strokecolor 
+{
+    my ($self,@clrs)=@_;
+    if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) 
+    {
+        $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
+    } 
+    elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) 
+    {
+        $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
+    }
+    return($self->_makecolor(0,@clrs));
+}
 sub strokecolor 
 {
     my $self=shift @_;
     if(scalar @_) 
     {
         @{$self->{' strokecolor'}}=@_;
-        my @clrs=@_;
-        $self->add($self->_makecolor(0,@clrs));
-        if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) 
-        {
-            $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
-        } 
-        elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) 
-        {
-            $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
-        }
+        $self->add($self->_strokecolor(@_));
     }
     return(@{$self->{' strokecolor'}});
 }
@@ -632,6 +640,11 @@ sub strokecolor
 
 =cut
 
+sub _move
+{
+    my($x,$y)=@_;
+    return(floats($x,$y),'m');
+}
 sub move 
 { # x,y ...
     my $self=shift @_;
@@ -659,6 +672,11 @@ sub move
 
 =cut
 
+sub _line
+{
+    my($x,$y)=@_;
+    return(floats($x,$y),'l');
+}
 sub line 
 { # x,y ...
     my $self=shift @_;
@@ -1016,10 +1034,14 @@ sub clip
 
 =cut
 
+sub _stroke 
+{
+    return('S');
+}
 sub stroke 
 {
     my $self=shift @_;
-    $self->add('S');
+    $self->add(_stroke);
     return($self);
 }
 
@@ -1251,14 +1273,30 @@ B<Note:> This is relative to text-space.
 
 =cut
 
+sub _textpos 
+{
+    my ($self,@xy)=@_;
+    my ($x,$y)=(0,0);
+    while(scalar @xy > 0)
+    {
+        $x+=shift @xy;
+        $y+=shift @xy;
+    }
+    my (@m)=_transform(
+        -matrix=>$self->{" textmatrix"},
+        -point=>[$x,$y]
+    );
+    return($m[0],$m[1]);
+}
 sub textpos 
 {
     my $self=shift @_;
-    my (@m)=_transform(
-        -matrix=>$self->{" textmatrix"},
-        -point=>$self->{" textlinematrix"}
-    );
-    return($m[0],$m[1]);
+    return($self->_textpos(@{$self->{" textlinematrix"}}));
+}
+sub textpos2 
+{
+    my $self=shift @_;
+    return(@{$self->{" textlinematrix"}});
 }
 
 =item $txt->transform_rel %opts
@@ -1320,18 +1358,23 @@ B<Only use fontset if you know what you are doing, there is no super-secret fail
 
 =cut
 
+sub _font
+{
+    my ($font,$size)=@_;
+    if($font->isvirtual)
+    {
+        return('/'.$font->fontlist->[0]->name.' '.float($size).' Tf');
+    }
+    else
+    {
+        return('/'.$font->name.' '.float($size).' Tf');
+    }
+}
 sub font 
 {
     my ($self,$font,$size)=@_;
     $self->fontset($font,$size);
-    if($self->{' font'}->isvirtual)
-    {
-        $self->add("/".$self->{' font'}->fontlist->[0]->name,float($self->{' fontsize'}),'Tf');
-    }
-    else
-    {
-        $self->add("/".$self->{' font'}->name,float($self->{' fontsize'}),'Tf');
-    }
+    $self->add(_font($font,$size));
     $self->{' fontset'}=1;
     return($self);
 }
@@ -1361,11 +1404,18 @@ sub fontset {
 
 =cut
 
-sub charspace {
+sub _charspace 
+{
+  my ($para)=@_;
+  return(float($para,6).' Tc');
+}
+sub charspace 
+{
   my ($self,$para)=@_;
-  if(defined $para) {
+  if(defined $para) 
+  {
     $self->{' charspace'}=$para;
-    $self->add(float($para,6),'Tc');
+    $self->add(_charspace($para));
   }
   return $self->{' charspace'};
 }
@@ -1374,11 +1424,17 @@ sub charspace {
 
 =cut
 
+sub _wordspace 
+{
+  my ($para)=@_;
+  return(float($para,6).' Tw');
+}
 sub wordspace {
   my ($self,$para)=@_;
-  if(defined $para) {
+  if(defined $para) 
+  {
     $self->{' wordspace'}=$para;
-    $self->add(float($para,6),'Tw');
+    $self->add(_wordspace($para));
   }
   return $self->{' wordspace'};
 }
@@ -1387,11 +1443,18 @@ sub wordspace {
 
 =cut
 
-sub hspace {
+sub _hspace 
+{
+  my ($para)=@_;
+  return(float($para,6).' Tz');
+}
+sub hspace 
+{
   my ($self,$para)=@_;
-  if(defined $para) {
+  if(defined $para) 
+  {
     $self->{' hspace'}=$para;
-    $self->add(float($para,6),'Tz');
+    $self->add(_hspace($para));
   }
   return $self->{' hspace'};
 }
@@ -1400,13 +1463,18 @@ sub hspace {
 
 =cut
 
+sub _lead 
+{
+  my ($para)=@_;
+  return(float($para).' TL');
+}
 sub lead 
 {
     my ($self,$para)=@_;
     if (defined ($para)) 
     {
         $self->{' lead'} = $para;
-        $self->add(float($para),'TL');
+        $self->add(_lead($para));
     }
     return $self->{' lead'};
 }
@@ -1415,13 +1483,18 @@ sub lead
 
 =cut
 
+sub _rise 
+{
+  my ($para)=@_;
+  return(float($para).' Ts');
+}
 sub rise 
 {
     my ($self,$para)=@_;
     if (defined ($para)) 
     {
         $self->{' rise'} = $para;
-        $self->add(float($para),'Ts');
+        $self->add(_rise($para));
     }
     return $self->{' rise'};
 }
@@ -1430,13 +1503,20 @@ sub rise
 
 =cut
 
-sub render {
-  my ($self,$para)=@_;
-        if (defined ($para)) {
-                $self->{' render'} = $para;
-    $self->add(intg($para),'Tr');
-        }
-        return $self->{' render'};
+sub _render 
+{
+  my ($para)=@_;
+  return(intg($para).' Tr');
+}
+sub render 
+{
+    my ($self,$para)=@_;
+    if (defined ($para)) 
+    {
+        $self->{' render'} = $para;
+        $self->add(_render($para));
+    }
+    return $self->{' render'};
 }
 
 =item $txt->cr $linesize
@@ -1469,7 +1549,7 @@ sub nl
 {
     my ($self,$width)=@_;
     $self->add('T*');
-    $self->matrix_update(-($width||0),$self->lead);
+    $self->matrix_update(-($width||0),-$self->lead);
     $self->{' textlinematrix'}->[0]=0;
 }
 
@@ -1485,30 +1565,110 @@ sub distance
     $self->{' textlinematrix'}->[0]=$dx;
 }
 
-=item $width = $txt->advancewidth $string
+=item $width = $txt->advancewidth $string [, %textstate]
 
-Returns the width of the string based on all currently set text-attributes.
+Returns the width of the string based on all currently set text-attributes
+or on those overridden by %textstate.
 
 =cut
 
 sub advancewidth 
 {
-  my ($self,$text)=@_;
-  my $glyph_width=$self->{' font'}->width($text)*$self->{' fontsize'};
-  my @txt=split(/\x20/,$text);
-  my $num_space=(scalar @txt)-1;
-  my $num_char=length($text);
-  my $word_spaces=$self->wordspace*$num_space;
-  my $char_spaces=$self->charspace*$num_char;
-  my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->hspace/100;
-  return $advance;
+    my ($self,$text,@opts)=@_;
+    if(scalar @opts > 1)
+    {
+        my %opts=@opts;
+        foreach my $k (qw[ font fontsize wordspace charspace hspace])
+        {
+            $opts{$k}=$self->{" $k"} unless(defined $opts{$k});
+        }
+        my $glyph_width=$opts{font}->width($text)*$opts{fontsize};
+        my @txt=split(/\x20/,$text);
+        my $num_space=(scalar @txt)-1;
+        my $num_char=length($text);
+        my $word_spaces=$opts{wordspace}*$num_space;
+        my $char_spaces=$opts{charspace}*$num_char;
+        my $advance=($glyph_width+$word_spaces+$char_spaces)*$opts{hspace}/100;
+        return $advance;
+    }
+    else
+    {
+        my $glyph_width=$self->{' font'}->width($text)*$self->{' fontsize'};
+        my @txt=split(/\x20/,$text);
+        my $num_space=(scalar @txt)-1;
+        my $num_char=length($text);
+        my $word_spaces=$self->wordspace*$num_space;
+        my $char_spaces=$self->charspace*$num_char;
+        my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->hspace/100;
+        return $advance;
+    }
 }
 
 =item $width = $txt->text $text, %options
 
 Applys text to the content and optionally returns the width of the given text.
 
+Options
+
+=ovar 4
+
+=item -indent
+
+Indent the text by the number of points.
+
+=item -underline
+
+If this is a scalar, it is the distance, in points, below the baseline where
+the line is drawn. The line thickness is one point. If it is a reference to an
+array, each pair is the distance below the baseline and the thickness of the
+line (ie., C<-underline=E<gt>[2,1,4,2]> will draw a double underline
+with the lower twice as thick as the upper).
+
+If thickness is a reference to an array, the first value is the thickness
+and the second value is the color of the line (ie., 
+C<-underline=E<gt>[2,[1,'red'],4,[2,'#0000ff']]> will draw a "red" and a 
+"blue" line).
+
+=back
+
 =cut
+
+sub _text_underline 
+{
+    my ($self,$xy1,$xy2,$underline,$color)=@_;
+    $color||='black';
+    my @underline=();
+    if(ref($underline) eq 'ARRAY')
+    {
+        @underline=@{$underline};
+    }
+    else
+    {
+        @underline=($underline,1);
+    }
+    push @underline,1 if(@underline%2);
+    while(@underline){
+        $self->add_post(_save);
+
+        my $distance=shift @underline;
+        my $thickness=shift @underline;
+        my $scolor=$color;
+        if(ref $thickness)
+        {
+            ($thickness,$scolor)=@{$thickness};
+        }
+        my ($x1,$y1)=$self->_textpos(@{$xy1},0,-($distance+($thickness/2)));
+        my ($x2,$y2)=$self->_textpos(@{$xy2},0,-($distance+($thickness/2)));
+
+        $self->add_post($self->_strokecolor($scolor));
+        $self->add_post(_linewidth($thickness));
+        $self->add_post(_move($x1,$y1));
+        $self->add_post(_line($x2,$y2));
+        $self->add_post(_stroke);
+
+        $self->add_post(_restore);
+    }
+}
 
 sub text 
 {
@@ -1516,22 +1676,16 @@ sub text
     my $wd=0;
     if($self->{' fontset'}==0)
     {
-        if($self->{' font'}->isvirtual)
-        {
-            $self->add("/".$self->{' font'}->fontlist->[0]->name,float($self->{' fontsize'}),'Tf');
-        }
-        else
-        {
-            $self->add("/".$self->{' font'}->name,float($self->{' fontsize'}),'Tf');
-        }
+        $self->font($self->{' font'},$self->{' fontsize'});
         $self->{' fontset'}=1;
     }
     if(defined $opt{-indent}) 
     {
         $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),']','TJ');
         $wd+=$opt{-indent};
+        $self->matrix_update($wd,0);
     }
-
+    my $ulxy1=[$self->textpos2];
     if($self->{' font'}->isvirtual)
     {
         $self->add($self->{' font'}->text($text,$self->{' fontsize'}));
@@ -1541,8 +1695,15 @@ sub text
         $self->add($self->{' font'}->text($text),'Tj');
     }
     $wd=$self->advancewidth($text);
-
     $self->matrix_update($wd,0);
+
+    my $ulxy2=[$self->textpos2];
+
+    if(defined $opt{-underline}) 
+    {
+        $self->_text_underline($ulxy1,$ulxy2,$opt{-underline},$opt{-strokecolor});
+    }
+
     return($wd);
 }
 
@@ -1552,9 +1713,9 @@ sub text
 
 sub text_center 
 {
-  my ($self,$text)=@_;
+  my ($self,$text,@opts)=@_;
   my $width=$self->advancewidth($text);
-  return $self->text($text,-indent=>-($width/2));
+  return $self->text($text,-indent=>-($width/2),@opts);
 }
 
 =item $txt->text_right $text, %options
@@ -1562,22 +1723,22 @@ sub text_center
 =cut
 
 sub text_right {
-  my ($self,$text,%opt)=@_;
+  my ($self,$text,@opts)=@_;
   my $width=$self->advancewidth($text);
-  return $self->text($text,-indent=>-$width);
+  return $self->text($text,-indent=>-$width,@opts);
 }
 
-=item $width = $txt->text_justified $text, $width
+=item $width = $txt->text_justified $text, $width, %options
 
 ** DEVELOPER METHOD **
 
 =cut
 
 sub text_justified {
-    my ($self,$text,$width)=@_;
+    my ($self,$text,$width,%opts)=@_;
     my $hs=$self->hspace;
     $self->hspace($hs*($width/$self->advancewidth($text)));
-    $self->text($text);
+    $self->text($text,%opts);
     $self->hspace($hs);
     return($width);
 }
@@ -1586,9 +1747,9 @@ sub _text_fill_line {
     my ($self,$text,$width,$over)=@_;
     my @txt=split(/\x20/,$text);
     my @line=();
-    my $save=$";
+    local $";
     $"=' ';
-    while($self->advancewidth("@line")<$width) {
+    while(@txt && $self->advancewidth("@line")<$width) {
         push @line,(shift @txt);
     }
     if(!$over && (scalar @line > 1) && ($self->advancewidth("@line") > $width)) {
@@ -1596,7 +1757,6 @@ sub _text_fill_line {
     }
     my $ret="@txt";
     my $line="@line";
-    $"=$save;
     return($line,$ret);
 }
 
@@ -1607,10 +1767,25 @@ sub _text_fill_line {
 
 =cut
 
-sub text_fill_left {
-    my ($self,$text,$width)=@_;
+sub text_fill_left 
+{
+    my ($self,$text,$width,%opts)=@_;
     my ($line,$ret)=$self->_text_fill_line($text,$width);
-    $width=$self->text($line);
+    $width=$self->text($line,%opts);
+    return($width,$ret);
+}
+
+=item ($width,$chunktext) = $txt->text_fill_center $text, $width, %options
+
+** DEVELOPER METHOD **
+
+=cut
+
+sub text_fill_center 
+{
+    my ($self,$text,$width,%opts)=@_;
+    my ($line,$ret)=$self->_text_fill_line($text,$width);
+    $width=$self->text_center($line,%opts);
     return($width,$ret);
 }
 
@@ -1620,10 +1795,11 @@ sub text_fill_left {
 
 =cut
 
-sub text_fill_right {
-    my ($self,$text,$width)=@_;
+sub text_fill_right 
+{
+    my ($self,$text,$width,%opts)=@_;
     my ($line,$ret)=$self->_text_fill_line($text,$width);
-    $width=$self->text_right($line);
+    $width=$self->text_right($line,%opts);
     return($width,$ret);
 }
 
@@ -1633,39 +1809,85 @@ sub text_fill_right {
 
 =cut
 
-sub text_fill_justified {
-    my ($self,$text,$width)=@_;
+sub text_fill_justified 
+{
+    my ($self,$text,$width,%opts)=@_;
     my ($line,$ret)=$self->_text_fill_line($text,$width,1);
     my $hs=$self->hspace;
-    $self->hspace($hs*($width/$self->advancewidth($line)));
-    $width=$self->text($line);
+    my $w=$self->advancewidth($line);
+    if($ret||$w>=$width)
+    {
+        $self->hspace($hs*($width/$w));
+    }
+    $width=$self->text($line,%opts);
     $self->hspace($hs);
     return($width,$ret);
 }
 
-=item $txt->paragraph $text, $width
+=item $overflow_text = $txt->paragraph $text, $width, $height, %options
 
 ** DEVELOPER METHOD **
 
+Apply the text within the rectangle and return any leftover text.
+
+B<Options>
+
+=over 4
+
+=item -align => $choice
+
+Choice is 'justified', 'right', 'center', 'left'
+Default is 'left'
+
+=item -underline => $distance
+
+=item -underline => [ $distance, $thickness, ... ]
+
+If a scalar, distance below baseline,
+else array reference with pairs of distance and line thickness.
+
+=back
+
 B<Example:>
 
-    $txt->font($fnt,24);
-    $txt->lead(-30);
-    $txt->translate(100,700);
-    $txt->paragraph('long paragraph here ...',400);
+    $txt->font($font,$fontsize);
+    $txt->lead($lead);
+    $txt->translate($x,$y);
+    $overflow = $txt->paragraph( 'long paragraph here ...',
+                                 $width,
+                                 $y+$lead-$bottom_margin );
 
 =cut
 
-sub paragraph {
-    my ($self,$text,$width)=@_;
+sub paragraph 
+{
+    my ($self,$text,$width,$height,%opts)=@_;
     my @line=();
     my $nwidth=0;
-    while(length($text)>0) {
-        ($nwidth,$text)=$self->text_fill_justified($text,$width);
+    my $lead=$self->lead();
+    while(length($text)>0) 
+    {
+        last if(($height-=$lead)<0);
+        if($opts{-align}=~/^j/i)
+        {
+            ($nwidth,$text)=$self->text_fill_justified($text,$width,%opts);
+        }
+        elsif($opts{-align}=~/^r/i)
+        {
+            ($nwidth,$text)=$self->text_fill_right($text,$width,%opts);
+        }
+        elsif($opts{-align}=~/^c/i)
+        {
+            ($nwidth,$text)=$self->text_fill_center($text,$width,%opts);
+        }
+        else
+        {
+            ($nwidth,$text)=$self->text_fill_left($text,$width,%opts);
+        }
         $self->nl;
-    }    
-    
-    return($self);
+    }
+
+    return($text);
 }
 
 =item $hyb->textend
@@ -1724,12 +1946,12 @@ sub textlabel {
     $self->wordspace($opts{-wordspace})     if($opts{-wordspace});
     $self->render($opts{-render})           if($opts{-render});
 
-    if($opts{-right}) {
-        $wht = $self->text_right($text);
-    } elsif($opts{-center}) {
-        $wht = $self->text_center($text);
+    if($opts{-right} || $opts{-align}=~/^r/i) {
+        $wht = $self->text_right($text,%opts);
+    } elsif($opts{-center} || $opts{-align}=~/^c/i) {
+        $wht = $self->text_center($text,%opts);
     } else {
-        $wht = $self->text($text);
+        $wht = $self->text($text,%opts);
     }
     
     $self->textend;
@@ -1780,6 +2002,30 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.28  2005/01/03 01:16:51  fredo
+    fixed textpos tracking in nl method
+
+    Revision 1.27  2004/12/31 03:59:09  fredo
+    fixed paragraph and text_fill_* methods
+    (thanks to Shawn Corey <shawn.corey@sympatico.ca>)
+
+    Revision 1.26  2004/12/31 02:53:18  fredo
+    minor code corrections
+
+    Revision 1.25  2004/12/31 02:06:37  fredo
+    fixed textpos calculation,
+    added underline capability
+    (thanks to Shawn Corey <shawn.corey@sympatico.ca>)
+
+    Revision 1.24  2004/12/29 22:01:57  fredo
+    advancewidth now can take a virtual textstate
+
+    Revision 1.23  2004/12/29 01:48:15  fredo
+    fixed _font method
+
+    Revision 1.22  2004/12/29 01:14:57  fredo
+    added virtual attribute support
+
     Revision 1.21  2004/12/20 12:11:54  fredo
     added fontset method to not set via 'Tf'
 

@@ -1,5 +1,5 @@
 #Code  ; Glyph                               ; Prio # Source
-0x0000 ; controlNUL                          ; 0    # Adobe Glyph List (Sept/02) # <control>
+0x0000 ; .notdef                             ; 0    # Adobe Glyph List (Sept/02) # <control>
 0x0001 ; acute                               ; 1    # Substitution Candidate
 0x0001 ; controlSTX                          ; 6    # Adobe Glyph List (Sept/02) # <control>
 0x0002 ; caron                               ; 1    # Substitution Candidate

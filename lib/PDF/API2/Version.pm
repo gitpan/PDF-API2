@@ -9,18 +9,18 @@
 package PDF::API2::Version;
 BEGIN {
     use vars qw( $VERSION %CVersion );
-    $VERSION = '0.40_80';
+    $VERSION = '0.40_83';
     %CVersion = (
-        'vFredo' => 'PDF::API2 0.40_80 (gamma-1360 / 2004-12-20)',
-        'vGNU' => 'PDF::API2 0.40c80 (2004-12-20 13:12:00)',
-        'vHex' => '0x00028550',
-        'vLong' => '0.40c80 (2004-12-20 13:12:00)',
-        'vPerl' => '0.40_80',
-        'vShort' => '0.40c80',
-        'vSquid' => '0.40-gamma-1360',
-        'vTeX' => 'This is PDF::API2, Version 0.40c80 (2004-12-20 13:12:00)',
-        'vWeb' => 'PDF::API2/0.40c80',
-        'vWin' => '0.40 build 1360',
+        'vFredo' => 'PDF::API2 0.40_83 (gamma-1363 / 2005-01-03)',
+        'vGNU' => 'PDF::API2 0.40c83 (2005-01-03 06:03:26)',
+        'vHex' => '0x00028553',
+        'vLong' => '0.40c83 (2005-01-03 06:03:26)',
+        'vPerl' => '0.40_83',
+        'vShort' => '0.40c83',
+        'vSquid' => '0.40-gamma-1363',
+        'vTeX' => 'This is PDF::API2, Version 0.40c83 (2005-01-03 06:03:26)',
+        'vWeb' => 'PDF::API2/0.40c83',
+        'vWin' => '0.40 build 1363',
     );
 }
 1;
@@ -36,16 +36,16 @@ PDF::API2::Version
 
 =head1 VERSION
 
-  vFredo: PDF::API2 0.40_80 (gamma-1360 / 2004-12-20) 
-    vGNU: PDF::API2 0.40c80 (2004-12-20 13:12:00) 
-    vHex: 0x00028550 
-   vLong: 0.40c80 (2004-12-20 13:12:00) 
-   vPerl: 0.40_80 
-  vShort: 0.40c80 
-  vSquid: 0.40-gamma-1360 
-    vTeX: This is PDF::API2, Version 0.40c80 (2004-12-20 13:12:00) 
-    vWeb: PDF::API2/0.40c80 
-    vWin: 0.40 build 1360 
+  vFredo: PDF::API2 0.40_83 (gamma-1363 / 2005-01-03) 
+    vGNU: PDF::API2 0.40c83 (2005-01-03 06:03:26) 
+    vHex: 0x00028553 
+   vLong: 0.40c83 (2005-01-03 06:03:26) 
+   vPerl: 0.40_83 
+  vShort: 0.40c83 
+  vSquid: 0.40-gamma-1363 
+    vTeX: This is PDF::API2, Version 0.40c83 (2005-01-03 06:03:26) 
+    vWeb: PDF::API2/0.40c83 
+    vWin: 0.40 build 1363 
 
 =cut
 

@@ -27,12 +27,12 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Util.pm,v 1.14 2004/12/16 00:30:52 fredo Exp $
+#   $Id: Util.pm,v 1.16 2004/12/31 03:12:46 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Util;
 
-no warnings qw[ deprecated recursion uninitialized ];
+no warnings qw[ recursion uninitialized ];
 
 BEGIN {
 
@@ -85,9 +85,9 @@ BEGIN {
         page_size
     );
 
-no warnings qw[ deprecated recursion uninitialized ];
+no warnings qw[ recursion uninitialized ];
 
-    ( $VERSION ) = '$Revision: 1.14 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:52 $
+    ( $VERSION ) = '$Revision: 1.16 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/31 03:12:46 $
 
     $key_var='BAAAAA';
 
@@ -1726,6 +1726,12 @@ specification sets have been included to enable interoperability towards PDF.
 =head1 HISTORY
 
     $Log: Util.pm,v $
+    Revision 1.16  2004/12/31 03:12:46  fredo
+    no message
+
+    Revision 1.15  2004/12/29 01:14:01  fredo
+    fixed no warn for recursion
+
     Revision 1.14  2004/12/16 00:30:52  fredo
     added no warn for recursion
 

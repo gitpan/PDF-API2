@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: SynFont.pm,v 1.13 2004/12/16 00:30:54 fredo Exp $
+#   $Id: SynFont.pm,v 1.14 2004/12/29 01:13:21 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::SynFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:54 $
+    ( $VERSION ) = '$Revision: 1.14 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/29 01:13:21 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -96,14 +96,18 @@ I<-oblique>
 ... italic angle (+/-)
 
 I<-bold>
-... embolding factor (0.1+, bold=1, heavy=2, ...)
+... embolding factor (0.1+, bold=1, heavy=2, ...).
 
 I<-space>
-... additional charspacing in em (0-1000)
+... additional charspacing in em (0-1000).
+
+I<-caps>
+... create synthetic small-caps.
 
 =cut
 
-sub new {
+sub new 
+{
     my ($class,$pdf,$font,@opts) = @_;
     my ($self,$data);
     my %opts=@opts;
@@ -121,7 +125,12 @@ sub new {
     $self->{' space'}=$space;
 
     $class = ref $class if ref $class;
-    $self = $class->SUPER::new($pdf, pdfkey.'+'.($font->name));
+    $self = $class->SUPER::new($pdf, 
+        pdfkey()
+        .'+'.($font->name)
+        .($opts{-caps} ? '+Caps' : '')
+        .($opts{-vname} ? '+'.$opts{-vname} : '')
+    );
     $pdf->new_obj($self) unless($self->is_obj($pdf));
     $self->{' font'}=$font;
     $self->{' data'}={
@@ -145,9 +154,12 @@ sub new {
         'wx' => { 'space' => '600' },
     };
 
-    if(ref($font->fontbbox)) {
+    if(ref($font->fontbbox)) 
+    {
         $self->data->{fontbbox}=[ @{$font->fontbbox} ];
-    } else {
+    } 
+    else 
+    {
         $self->data->{fontbbox}=[ $font->fontbbox ];
     }
     $self->data->{fontbbox}->[0]*=$slant;
@@ -166,11 +178,12 @@ sub new {
     $self->{'CharProcs'} = $procs;
 
     $self->{Resources}=PDFDict();
-    $self->{Resources}->{ProcSet}=PDFArray(map { PDFName($_) } qw(PDF Text ImageB ImageC ImageI));
+    $self->{Resources}->{ProcSet}=PDFArray(map { PDFName($_) } qw[ PDF Text ImageB ImageC ImageI ]);
     my $xo=PDFDict();
     $self->{Resources}->{Font}=$xo;
     $self->{Resources}->{Font}->{FSN}=$font;
-    foreach my $w ($first..$last) {
+    foreach my $w ($first..$last) 
+    {
         $self->data->{char}->[$w]=$font->glyphByEnc($w);
         $self->data->{uni}->[$w]=uniByName($self->data->{char}->[$w]);
         $self->data->{u2e}->{$self->data->{uni}->[$w]}=$w;
@@ -178,8 +191,10 @@ sub new {
     #use Data::Dumper;
     #print Dumper($self->data);
     my @widths=();
-    foreach my $w ($first..$last) {
-        if($self->data->{char}->[$w] eq '.notdef') {
+    foreach my $w ($first..$last) 
+    {
+        if($self->data->{char}->[$w] eq '.notdef') 
+        {
             push @widths,$self->missingwidth;
             next;
         }
@@ -192,14 +207,17 @@ sub new {
         $char->{' stream'}.=join(' ',1,0,tan(deg2rad($oblique)),1,0,0)." Tm\n" if($oblique);
         $char->{' stream'}.="2 Tr ".($bold)." w\n" if($bold);
         my $ci = charinfo($self->data->{uni}->[$w]);
-        if($opts{-caps} && $ci->{upper}) {
+        if($opts{-caps} && $ci->{upper}) 
+        {
             $char->{' stream'}.="/FSN 800 Tf\n";
             $char->{' stream'}.=($slant*110)." Tz\n";
             $char->{' stream'}.=" [ -$space ] TJ\n" if($space);
             my $ch=$self->encByUni(hex($ci->{upper}));
             $wth=int($font->width(chr($ch))*800*$slant*1.1+2*$space);
             $char->{' stream'}.=$self->text(chr($ch));
-        } else {
+        } 
+        else 
+        {
             $char->{' stream'}.="/FSN 1000 Tf\n";
             $char->{' stream'}.=($slant*100)." Tz\n" if($slant!=1);
             $char->{' stream'}.=" [ -$space ] TJ\n" if($space);
@@ -210,6 +228,7 @@ sub new {
         $self->data->{wx}->{$font->glyphByEnc($w)}=$wth;
         $pdf->new_obj($char);
     }
+
     $procs->{'.notdef'}=$procs->{$font->data->{char}->[32]};
     $self->{Widths}=PDFArray(map { PDFNum($_) } @widths);
     $self->data->{e2n}=$self->data->{char};
@@ -222,7 +241,8 @@ sub new {
     $self->data->{n2e}={};
     $self->data->{n2u}={};
 
-    foreach my $n (reverse 0..255) {
+    foreach my $n (reverse 0..255) 
+    {
         $self->data->{n2c}->{$self->data->{char}->[$n] || '.notdef'}=$n unless(defined $self->data->{n2c}->{$self->data->{char}->[$n] || '.notdef'});
         $self->data->{n2e}->{$self->data->{e2n}->[$n] || '.notdef'}=$n unless(defined $self->data->{n2e}->{$self->data->{e2n}->[$n] || '.notdef'});
 
@@ -247,7 +267,8 @@ it needs an PDF::API2-object rather than a PDF::API2::PDF::File-object.
 
 =cut
 
-sub new_api {
+sub new_api 
+{
   my ($class,$api,@opts)=@_;
 
   my $obj=$class->new($api->{pdf},@opts);
@@ -271,6 +292,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: SynFont.pm,v $
+    Revision 1.14  2004/12/29 01:13:21  fredo
+    documented -caps option
+
     Revision 1.13  2004/12/16 00:30:54  fredo
     added no warn for recursion
 

@@ -27,14 +27,14 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Win32.pm,v 1.7 2004/12/16 00:30:52 fredo Exp $
+#   $Id: Win32.pm,v 1.8 2004/12/29 01:45:41 fredo Exp $
 #
 #=======================================================================
 
 package PDF::API2::Win32;
 
     use vars qw($VERSION);
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:52 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/29 01:45:41 $
 
     no warnings qw[ deprecated recursion uninitialized ];
 
@@ -43,7 +43,7 @@ package PDF::API2;
 use vars qw( $wf );
 use Win32::TieRegistry;
 
-no warnings qw[ deprecated recursion uninitialized ];
+no warnings qw[ recursion uninitialized ];
 
 $wf={};
 
@@ -120,6 +120,9 @@ __END__
 =head1 HISTORY
 
     $Log: Win32.pm,v $
+    Revision 1.8  2004/12/29 01:45:41  fredo
+    fixed no warn for recursion
+
     Revision 1.7  2004/12/16 00:30:52  fredo
     added no warn for recursion
 

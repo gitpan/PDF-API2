@@ -16,6 +16,7 @@ lib/PDF/API2/HOWTO.pod
 lib/PDF/API2/IOString.pm
 lib/PDF/API2/Lite.pm
 lib/PDF/API2/Matrix.pm
+lib/PDF/API2/NamedDestination.pm
 lib/PDF/API2/Outline.pm
 lib/PDF/API2/Outlines.pm
 lib/PDF/API2/Page.pm
@@ -177,9 +178,15 @@ lib/PDF/API2/Basic/PDF/String.pm
 lib/PDF/API2/Basic/PDF/Utils.pm
 t/00use.t
 examples/020_corefonts
+examples/020_textrise
+examples/020_textunderline
 examples/021_synfonts
 examples/022_truefonts
 examples/023_cjkfonts
+examples/024_bmpfonts
+examples/025_unifonts
+examples/026_unifont2
+examples/027_winfont
 examples/030_colorspecs
 examples/031_color_hsv
 examples/032_separation

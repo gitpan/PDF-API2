@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: zapfdingbats.pm,v 1.6 2004/12/16 01:09:24 fredo Exp $
+#   $Id: zapfdingbats.pm,v 1.7 2004/12/28 17:24:10 fredo Exp $
 #
 #=======================================================================
 
@@ -525,6 +525,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: zapfdingbats.pm,v $
+    Revision 1.7  2004/12/28 17:24:10  fredo
+    updated to new adobe afm
+
     Revision 1.6  2004/12/16 01:09:24  fredo
     updated to new adobe afm
 

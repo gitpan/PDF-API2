@@ -31,7 +31,7 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: 023_cjkfonts,v 1.1 2004/04/06 23:08:57 fredo Exp $
+#   $Id: 023_cjkfonts,v 1.2 2004/12/31 02:59:35 fredo Exp $
 #
 #=======================================================================
 
@@ -141,6 +141,9 @@ __END__
 =head1 HISTORY
 
     $Log: 023_cjkfonts,v $
+    Revision 1.2  2004/12/31 02:59:35  fredo
+    no message
+
     Revision 1.1  2004/04/06 23:08:57  fredo
     genesis
 
