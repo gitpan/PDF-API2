@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Font.pm,v 1.7 2004/06/15 09:14:41 fredo Exp $
+#   $Id: Font.pm,v 1.8 2004/10/17 03:46:20 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font;
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:41 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/10/17 03:46:20 $
 
 }
 
@@ -84,17 +84,63 @@ sub encodeByData {
     $self->data->{n2u}={};
 
     foreach my $n (0..255) {
-        $self->data->{n2c}->{$self->data->{char}->[$n] || '.notdef'}=$n unless(defined $self->data->{n2c}->{$self->data->{char}->[$n] || '.notdef'});
-        $self->data->{n2e}->{$self->data->{e2n}->[$n] || '.notdef'}=$n unless(defined $self->data->{n2e}->{$self->data->{e2n}->[$n] || '.notdef'});
+        my $xchar=undef;
+        my $xuni=undef;
+        if(defined $self->data->{char}->[$n]) {
+            $xchar=$self->data->{char}->[$n];
+        } else {
+            $xchar='.notdef';
+        }
+        $self->data->{n2c}->{$xchar}=$n unless(defined $self->data->{n2c}->{$xchar});
 
-        $self->data->{n2u}->{$self->data->{e2n}->[$n] || '.notdef'}=$self->data->{e2u}->[$n] unless(defined $self->data->{n2u}->{$self->data->{e2n}->[$n] || '.notdef'});
-        $self->data->{n2u}->{$self->data->{char}->[$n] || '.notdef'}=$self->data->{uni}->[$n] unless(defined $self->data->{n2u}->{$self->data->{char}->[$n] || '.notdef'});
+        if(defined $self->data->{e2n}->[$n]) {
+            $xchar=$self->data->{e2n}->[$n];
+        } else {
+            $xchar='.notdef';
+        }
+        $self->data->{n2e}->{$xchar}=$n unless(defined $self->data->{n2e}->{$xchar});
 
-        $self->data->{u2c}->{$self->data->{uni}->[$n]}||=$n unless(defined $self->data->{u2c}->{$self->data->{uni}->[$n]});
-        $self->data->{u2e}->{$self->data->{e2u}->[$n]}||=$n unless(defined $self->data->{u2e}->{$self->data->{e2u}->[$n]});
+        $self->data->{n2u}->{$xchar}=$self->data->{e2u}->[$n] unless(defined $self->data->{n2u}->{$xchar});
 
-        $self->data->{u2n}->{$self->data->{e2u}->[$n]}=($self->data->{e2n}->[$n] || '.notdef') unless(defined $self->data->{u2n}->{$self->data->{e2u}->[$n]});
-        $self->data->{u2n}->{$self->data->{uni}->[$n]}=($self->data->{char}->[$n] || '.notdef') unless(defined $self->data->{u2n}->{$self->data->{uni}->[$n]});
+        if(defined $self->data->{char}->[$n]) {
+            $xchar=$self->data->{char}->[$n];
+        } else {
+            $xchar='.notdef';
+        }
+        if(defined $self->data->{uni}->[$n]) {
+            $xuni=$self->data->{uni}->[$n];
+        } else {
+            $xuni=0;
+        }
+        $self->data->{n2u}->{$xchar}=$xuni unless(defined $self->data->{n2u}->{$xchar});
+
+        $self->data->{u2c}->{$xuni}||=$n unless(defined $self->data->{u2c}->{$xuni});
+        
+        if(defined $self->data->{e2u}->[$n]) {
+            $xuni=$self->data->{e2u}->[$n];
+        } else {
+            $xuni=0;
+        }
+        $self->data->{u2e}->{$xuni}||=$n unless(defined $self->data->{u2e}->{$xuni});
+
+        if(defined $self->data->{e2n}->[$n]) {
+            $xchar=$self->data->{e2n}->[$n];
+        } else {
+            $xchar='.notdef';
+        }
+        $self->data->{u2n}->{$xuni}=$xchar unless(defined $self->data->{u2n}->{$xuni});
+
+        if(defined $self->data->{char}->[$n]) {
+            $xchar=$self->data->{char}->[$n];
+        } else {
+            $xchar='.notdef';
+        }
+        if(defined $self->data->{uni}->[$n]) {
+            $xuni=$self->data->{uni}->[$n];
+        } else {
+            $xuni=0;
+        }
+        $self->data->{u2n}->{$xuni}=$xchar unless(defined $self->data->{u2n}->{$xuni});
     }
 
     my $en = PDFDict();
@@ -203,6 +249,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Font.pm,v $
+    Revision 1.8  2004/10/17 03:46:20  fredo
+    restructured encoding vs. unicode vs. glyph-name lookup
+
     Revision 1.7  2004/06/15 09:14:41  fredo
     removed cr+lf
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.64 2004/10/01 01:39:24 fredo Exp $
+#   $Id: API2.pm,v 1.65 2004/10/17 03:57:21 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = ('$Revision: 1.64 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/10/01 01:39:24 $
+    ($VERSION) = ('$Revision: 1.65 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/10/17 03:57:21 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -1275,6 +1275,7 @@ sub corefont {
     my $obj=PDF::API2::Resource::Font::CoreFont->new_api($self,$name,@opts);
     $self->resource('Font',$obj->name,$obj);
     $self->{pdf}->out_obj($self->{pages});
+    $obj->tounicodemap;
     return($obj);
 }
 
@@ -1319,6 +1320,7 @@ sub psfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
+    $obj->tounicodemap;
     return($obj);
 }
 
@@ -1352,6 +1354,7 @@ sub ttfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
+    $obj->tounicodemap;
     return($obj);
 }
 
@@ -1384,6 +1387,7 @@ sub cjkfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
+    $obj->tounicodemap;
     return($obj);
 }
 
@@ -1395,6 +1399,7 @@ sub synfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
+    $obj->tounicodemap;
     return($obj);
 }
 
@@ -1406,6 +1411,7 @@ sub bdfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
+    ## $obj->tounicodemap; # does not support unicode!
     return($obj);
 }
 
@@ -2033,6 +2039,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.65  2004/10/17 03:57:21  fredo
+    added ToUnicode call for supported fonts
+
     Revision 1.64  2004/10/01 01:39:24  fredo
     reverted annotations import fix
 

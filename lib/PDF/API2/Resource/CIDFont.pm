@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CIDFont.pm,v 1.6 2004/06/15 09:14:41 fredo Exp $
+#   $Id: CIDFont.pm,v 1.8 2004/11/21 02:57:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:41 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/21 02:57:53 $
 
 }
 
@@ -105,8 +105,11 @@ sub new_api {
 }
 
 sub glyphByCId { return( $_[0]->data->{g2n}->[$_[1]] ); }
+
 sub uniByCId { return( $_[0]->data->{g2u}->[$_[1]] ); }
+
 sub cidByUni { return( $_[0]->data->{u2g}->{$_[1]} ); }
+
 sub cidByEnc { return( $_[0]->data->{e2g}->[$_[1]] ); }
 
 sub wxByCId {
@@ -114,8 +117,10 @@ sub wxByCId {
     my $g=shift @_;
     my $w;
 
-    if(defined $self->data->{wx}->[$g]) {
+    if(ref($self->data->{wx}) eq 'ARRAY' && defined $self->data->{wx}->[$g]) {
         $w = int($self->data->{wx}->[$g]);
+    } elsif(ref($self->data->{wx}) eq 'HASH' && defined $self->data->{wx}->{$g}) {
+        $w = int($self->data->{wx}->{$g});
     } else {
         $w = $self->missingwidth;
     }
@@ -224,7 +229,13 @@ sub subvec {
     return(1);
 }
 
-sub glyphNum { return ( scalar @{$_[0]->data->{wx}} ); }
+sub glyphNum { 
+    my $self=shift @_;
+    if(defined $self->data->{glyphs}) {
+        return ( $self->data->{glyphs} ); 
+    }
+    return ( scalar @{$self->data->{wx}} ); 
+}
 
 sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
@@ -246,6 +257,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CIDFont.pm,v $
+    Revision 1.8  2004/11/21 02:57:53  fredo
+    cosmetic change
+
+    Revision 1.7  2004/10/26 14:42:49  fredo
+    added alternative glyph-width storage/retrieval
+
     Revision 1.6  2004/06/15 09:14:41  fredo
     removed cr+lf
 

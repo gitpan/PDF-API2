@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: String.pm,v 1.8 2004/06/15 09:13:13 fredo Exp $
+#   $Id: String.pm,v 1.9 2004/11/22 02:31:04 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::String;
@@ -166,7 +166,7 @@ sub as_pdf
         $str = join( '', map { sprintf('%04X',$_) } unpack('U*',$str) );
         return "<FEFF$str>";
     } elsif($self->{' ishex'}) { # imported as hex ?
-        $str = join( '', map { sprintf('%02X',$_) } unpack('C*',$str) );
+        $str = unpack('H*',$str);
         return "<$str>";
     } else {
         if ($str =~ m/[^\n\r\t\b\f\040-\176\200-\377]/oi)

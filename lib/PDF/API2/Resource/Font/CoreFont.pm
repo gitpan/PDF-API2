@@ -12,22 +12,33 @@
 #
 #=======================================================================
 #
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
+#   THIS LIBRARY IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
+#   MODIFY IT UNDER THE TERMS OF THE GNU LESSER GENERAL PUBLIC
+#   LICENSE AS PUBLISHED BY THE FREE SOFTWARE FOUNDATION; EITHER
+#   VERSION 2 OF THE LICENSE, OR (AT YOUR OPTION) ANY LATER VERSION.
 #
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
+#   THIS FILE IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
+#   AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+#   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+#   FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+#   SHALL THE AUTHORS AND COPYRIGHT HOLDERS AND THEIR CONTRIBUTORS 
+#   BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+#   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+#   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
+#   OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
+#   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+#   ARISING IN ANY WAY OUT OF THE USE OF THIS FILE, EVEN IF 
+#   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
+#   SEE THE GNU LESSER GENERAL PUBLIC LICENSE FOR MORE DETAILS.
 #
-#   $Id: CoreFont.pm,v 1.6 2004/06/21 22:25:44 fredo Exp $
+#   YOU SHOULD HAVE RECEIVED A COPY OF THE GNU LESSER GENERAL PUBLIC
+#   LICENSE ALONG WITH THIS LIBRARY; IF NOT, WRITE TO THE
+#   FREE SOFTWARE FOUNDATION, INC., 59 TEMPLE PLACE - SUITE 330,
+#   BOSTON, MA 02111-1307, USA.
+#
+#   $Id: CoreFont.pm,v 1.7 2004/11/22 02:08:42 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::CoreFont;
@@ -65,7 +76,7 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/21 22:25:44 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:08:42 $
 
 }
 
@@ -417,6 +428,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CoreFont.pm,v $
+    Revision 1.7  2004/11/22 02:08:42  fredo
+    aaa
+
     Revision 1.6  2004/06/21 22:25:44  fredo
     added custom corefont handling
 

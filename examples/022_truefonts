@@ -35,8 +35,10 @@
 #
 #=======================================================================
 
+use File::Basename;
 use PDF::API2;
 use PDF::API2::Util;
+use Unicode::UCD 'charinfo';
 
 my $sx=33;
 my $sy=45;
@@ -44,9 +46,10 @@ my $fx=20;
 
 foreach $fn (@ARGV) {
 
-    $pdf=PDF::API2->new(-file => "$0.$fn.pdf");
+    $pdf=PDF::API2->new(-file => "$0.".basename($fn).".pdf");
 
-    $f1=$pdf->corefont('Helvetica');
+    $f1=$pdf->corefont('Helvetica', -encode => 'latin1');
+    $f2=$pdf->corefont('Helvetica-Bold', -encode => 'latin1');
 
     print STDERR "\n$fn\n";
 
@@ -71,6 +74,7 @@ foreach $fn (@ARGV) {
             foreach my $x (50,100,150,200,250,300,350,400,450,500) {
                 my $xo=shift @cids;
                 $gfx->save;
+                $gfx->fillcolor('black');
                 $gfx->transform(-translate => [$x, $y], -scale => [0.045, 0.045]);
 
                 $gfx->linewidth(10);
@@ -97,7 +101,7 @@ foreach $fn (@ARGV) {
 
                 $gfx->font($f1,100);
                 $gfx->hspace(80);
-                $gfx->translate(25,910);
+                $gfx->translate(25,860);
                 $gfx->text("G+$xo"); 
                 $gfx->translate(25,10);
                 $gfx->text(sprintf('U+0x%04X',$font->uniByCId($xo)));
@@ -109,12 +113,21 @@ foreach $fn (@ARGV) {
                 } else {
                     $gfx->fillcolor('blue');
                 }
-                $gfx->translate(975,910);
+
+                $gfx->hspace(70);
+                $gfx->translate(975,860);
                 $gfx->text_right($name);
 
                 $gfx->fillcolor('black');
                 $gfx->translate(975,10);
                 $gfx->text_right('wx='.$font->wxByCId($xo));
+
+                $gfx->fillcolor('#008000');
+                $gfx->translate(500,950);
+                $gfx->hspace(70);
+                my $ci = charinfo($font->uniByCId($xo) || 0);
+                $gfx->font($f2,50);
+                $gfx->text_center($ci->{name});
 
                 $gfx->textend;
                 $gfx->restore;

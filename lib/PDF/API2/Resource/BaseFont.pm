@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 1.7 2004/06/15 09:14:41 fredo Exp $
+#   $Id: BaseFont.pm,v 1.11 2004/11/22 02:05:32 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:41 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:05:32 $
 
 }
 
@@ -116,14 +116,76 @@ sub descrByData {
         $des->{'CapHeight'}=PDFNum($self->capheight || ($self->fontbbox)[3] || 800);
         $des->{'StemV'}=PDFNum($self->stemv || 0);
         $des->{'StemH'}=PDFNum($self->stemh || 0);
-#        $des->{'AvgWidth'}=PDFNum($self->missingwidth || 300);
         $des->{'AvgWidth'}=PDFNum($self->avgwidth || 300);
         $des->{'MissingWidth'}=PDFNum($self->missingwidth || 300);
         $des->{'MaxWidth'}=PDFNum($self->maxwidth || $self->missingwidth || ($self->fontbbox)[2]);
         $des->{'Flags'}=PDFNum($self->flags || 0) unless($self->data->{iscore});
+        if(defined $self->data->{panose}) {
+            $des->{Style}=PDFDict();
+            $des->{Style}->{Panose}=PDFStrHex($self->data->{panose});
+        }
+        $des->{FontFamily}=PDFStr($self->data->{fontfamily}) 
+            if(defined $self->data->{fontfamily});
+        $des->{FontWeight}=PDFNum($self->data->{fontweight}) 
+            if(defined $self->data->{fontweight});
+        $des->{FontStretch}=PDFName($self->data->{fontstretch}) 
+            if(defined $self->data->{fontstretch});
  #   }
 
     return($des);
+}
+
+sub tounicodemap {
+    my $self=shift @_;
+    
+    return($self) if(defined $self->{ToUnicode});
+
+    my $cmap=qq|\%\% Custom\n\%\% CMap\n\%\%\n/CIDInit /ProcSet findresource begin\n|;
+    $cmap.=qq|12 dict begin begincmap\n|;
+    $cmap.=qq|/CIDSystemInfo <<\n|;
+    $cmap.=sprintf(qq|   /Registry (%s)\n|,$self->name);
+    $cmap.=qq|   /Ordering (XYZ)\n|;
+    $cmap.=qq|   /Supplement 0\n|;
+    $cmap.=qq|>> def\n|;
+    $cmap.=sprintf(qq|/CMapName /pdfapi2-%s+0 def\n|,$self->name);
+    if(UNIVERSAL::can($self,'uniByCId') && UNIVERSAL::can($self,'glyphNum')) {
+        # this is a type0 font
+        $cmap.=sprintf(qq|1 begincodespacerange <0000> <%04X> endcodespacerange\n|,$self->glyphNum-1);
+        for(my $j=0;$j<$self->glyphNum;$j++) {
+            my $i = $self->glyphNum - $j > 100 ? 100 : $self->glyphNum - $j;
+            if($j==0) {
+                $cmap.=qq|$i beginbfrange\n|;
+            } elsif($j%100 == 0) {
+                $cmap.=qq|endbfrange\n|;
+                $cmap.=qq|$i beginbfrange\n|;
+            }
+            $cmap.=sprintf(qq|<%04x> <%04x> <%04x>\n|,$j,$j,$self->uniByCId($j));
+        }
+        $cmap.="endbfrange\n";
+    } else {
+        # everything else is single byte font
+        $cmap.=qq|1 begincodespacerange\n<00> <FF>\nendcodespacerange\n|;
+        $cmap.=qq|256 beginbfchar\n|; 
+        for(my $j=0; $j<256;$j++) {
+            $cmap.=sprintf(qq|<%02X> <%04X>\n|,$j,$self->uniByMap($j));
+        }
+        $cmap.=qq|endbfchar\n|;
+    }
+    $cmap.=qq|endcmap CMapName currendict /CMap defineresource pop end end\n|;
+
+    my $tuni=PDFDict();
+    $tuni->{Type}=PDFName('CMap');
+    $tuni->{CMapName}=PDFName(sprintf(qq|pdfapi2-%s+0|,$self->name));
+    $tuni->{CIDSystemInfo}=PDFDict();
+    $tuni->{CIDSystemInfo}->{Registry}=PDFStr($self->name);
+    $tuni->{CIDSystemInfo}->{Ordering}=PDFStr('XYZ');
+    $tuni->{CIDSystemInfo}->{Supplement}=PDFNum(0);
+    
+    $self->{' apipdf'}->new_obj($tuni);
+    $tuni->{' stream'}=$cmap;
+    $tuni->{Filter}=PDFArray(PDFName('FlateDecode'));
+    $self->{ToUnicode}=$tuni;
+    return($self);
 }
 
 
@@ -638,6 +700,18 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 1.11  2004/11/22 02:05:32  fredo
+    added pdf-1.5 font param specs
+
+    Revision 1.10  2004/10/26 14:41:37  fredo
+    added panose identification style entry
+
+    Revision 1.9  2004/10/17 03:55:00  fredo
+    simplified ToUnicode associated CMap for single-byte fonts
+
+    Revision 1.8  2004/10/17 03:47:36  fredo
+    fixed inclusion of ToUnicode compatible key and associated CMap
+
     Revision 1.7  2004/06/15 09:14:41  fredo
     removed cr+lf
 

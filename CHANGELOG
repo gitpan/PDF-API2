@@ -1,3 +1,127 @@
+2004-11-22 03:34  fredo
+
+	* lib/PDF/API2/Util.pm: moved unicode+glyphs to better maintainable
+	  uniglyph.txt
+
+2004-11-22 03:31  fredo
+
+	* lib/PDF/API2/Basic/PDF/Utils.pm: added hexstring shortcut
+
+2004-11-22 03:31  fredo
+
+	* lib/PDF/API2/Basic/PDF/String.pm: speed fix
+
+2004-11-22 03:25  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/TrueType/FontFile.pm: added
+	  advanced attributes
+
+2004-11-22 03:08  fredo
+
+	* lib/PDF/API2/Resource/Font/CoreFont.pm: aaa
+
+2004-11-22 03:05  fredo
+
+	* lib/PDF/API2/Resource/BaseFont.pm: added pdf-1.5 font param specs
+
+2004-11-22 03:04  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont.pm: added missing
+	  substitutes
+
+2004-11-22 03:02  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont/: kozminproregularacro.pm,
+	  kozgopromediumacro.pm: deleted obsolete character widths
+
+2004-11-22 02:05  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CMap/korean.pm: updated to korea1-2
+	  spec
+
+2004-11-22 02:04  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont/:
+	  adobemyungjostdmediumacro.pm, kozminproregularacro.pm: added
+	  advanced attributes
+
+2004-11-22 02:03  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont.pm: fixed supplement set,
+	  added substitute handling
+
+2004-11-21 04:20  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CMap/japanese.pm: fixed cidmap to
+	  adobe japan1 supl 6
+
+2004-11-21 03:58  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont.pm: fixed multibyte
+	  encoding issues
+
+2004-11-21 03:58  fredo
+
+	* lib/PDF/API2/Resource/uniglyph.txt: genesis
+
+2004-11-21 03:57  fredo
+
+	* lib/PDF/API2/Resource/CIDFont.pm: cosmetic change
+
+2004-10-26 16:46  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont/: adobemingstdlightacro.pm,
+	  adobemyungjostdmediumacro.pm, adobesongstdlightacro.pm,
+	  kozgopromediumacro.pm, kozminproregularacro.pm: added alternative
+	  glyph-width storage
+
+2004-10-26 16:42  fredo
+
+	* lib/PDF/API2/Resource/: CIDFont.pm, CIDFont/CJKFont.pm: added
+	  alternative glyph-width storage/retrieval
+
+2004-10-26 16:41  fredo
+
+	* lib/PDF/API2/Resource/BaseFont.pm: added panose identification
+	  style entry
+
+2004-10-26 13:34  fredo
+
+	* lib/PDF/API2/Content.pm: reworked text_fill for paragraph, but
+	  still being development
+
+2004-10-24 22:31  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CMap/japanese.pm: updated to
+	  Adobe-Japan1 rev 4
+
+2004-10-17 06:07  fredo
+
+	* Makefile.PL: added option shorts and usage
+
+2004-10-17 05:58  fredo
+
+	* Makefile.PL: removed version fuss
+
+2004-10-17 05:57  fredo
+
+	* lib/PDF/API2.pm: added ToUnicode call for supported fonts
+
+2004-10-17 05:55  fredo
+
+	* lib/PDF/API2/Resource/BaseFont.pm: simplified ToUnicode
+	  associated CMap for single-byte fonts
+
+2004-10-17 05:47  fredo
+
+	* lib/PDF/API2/Resource/BaseFont.pm: fixed inclusion of ToUnicode
+	  compatible key and associated CMap
+
+2004-10-17 05:46  fredo
+
+	* lib/PDF/API2/Resource/Font.pm: restructured encoding vs. unicode
+	  vs. glyph-name lookup
+
 2004-10-13 20:30  fredo
 
 	* lib/PDF/API2/Annotation.pm: fixed pdfile method from utf8 back to

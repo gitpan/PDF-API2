@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: FontFile.pm,v 1.7 2004/08/25 03:03:27 fredo Exp $
+#   $Id: FontFile.pm,v 1.8 2004/11/22 02:25:05 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -49,7 +49,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/08/25 03:03:27 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:25:05 $
 
 }
 
@@ -72,7 +72,33 @@ sub new {
 
     $self->{Subtype}=PDFName('Type1C') if($data->{iscff});
 
+    $data->{fontfamily}=$font->{'name'}->read->find_name(1);
     $data->{fontname}=$font->{'name'}->read->find_name(4);
+
+    $font->{'OS/2'}->read;
+    my @stretch=qw[
+        Normal
+        UltraCondensed
+        ExtraCondensed
+        Condensed
+        SemiCondensed
+        Normal
+        SemiExpanded
+        Expanded
+        ExtraExpanded
+        UltraExpanded
+    ];
+    $data->{fontstretch}=$stretch[$font->{'OS/2'}->{usWidthClass}] || 'Normal';
+
+    $data->{fontweight}=$font->{'OS/2'}->{usWeightClass};
+    
+    $data->{panose}=pack('n',$font->{'OS/2'}->{sFamilyClass});
+
+    foreach my $p (qw[bFamilyType bSerifStyle bWeight bProportion bContrast bStrokeVariation bArmStyle bLetterform bMidline bXheight])
+    {
+        $data->{panose}.=pack('C',$font->{'OS/2'}->{$p});
+    }
+    
     $data->{apiname}=$data->{fontname};
     $data->{apiname}=~s/[^A-Za-z0-9]+/ /og;
     $data->{apiname}=join('',map { $_=~s/[^A-Za-z0-9]+//og; $_=ucfirst(lc(substr($_,0,2))); $_; } split(/\s+/,$data->{apiname}));
@@ -240,6 +266,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: FontFile.pm,v $
+    Revision 1.8  2004/11/22 02:25:05  fredo
+    added advanced attributes
+
     Revision 1.7  2004/08/25 03:03:27  fredo
     removed fuss
 

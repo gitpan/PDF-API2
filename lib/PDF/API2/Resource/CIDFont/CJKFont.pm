@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CJKFont.pm,v 1.6 2004/06/15 09:14:42 fredo Exp $
+#   $Id: CJKFont.pm,v 1.10 2004/11/22 02:04:27 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::CJKFont;
@@ -46,11 +46,11 @@ BEGIN {
 
     use POSIX;
 
-    use vars qw( @ISA $fonts $cmap $alias $VERSION );
+    use vars qw( @ISA $fonts $cmap $alias $subs $VERSION );
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:42 $
+    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:04:27 $
 
     $fonts = { };
     $cmap = { };
@@ -70,7 +70,18 @@ sub _look_for_font ($) {
     my $fname=lc(shift);
     $fname=~s/[^a-z0-9]+//gi;
     $fname=$alias->{$fname} if(defined $alias->{$fname});
-    return(%{$fonts->{$fname}}) if(defined $fonts->{$fname});
+    return({%{$fonts->{$fname}}}) if(defined $fonts->{$fname});
+
+    if(defined $subs->{$fname}) {
+        $data=_look_for_font($subs->{$fname}->{-alias});
+        foreach my $k (keys %{$subs->{$fname}}) {
+          next if($k=~/^\-/);
+          $data->{$k}=$subs->{$fname}->{$k};
+        }
+        $fonts->{$fname}=$data;
+        return({%{$data}})
+    }
+
     eval "require PDF::API2::Resource::CIDFont::CJKFont::$fname; ";
     unless($@){
         return({%{$fonts->{$fname}}});
@@ -78,10 +89,11 @@ sub _look_for_font ($) {
         die "requested font '$fname' not installed ";
     }
 }
+
 sub _look_for_cmap ($) {
     my $fname=lc(shift);
     $fname=~s/[^a-z0-9]+//gi;
-    return(%{$cmap->{$fname}}) if(defined $cmap->{$fname});
+    return({%{$cmap->{$fname}}}) if(defined $cmap->{$fname});
     eval "require PDF::API2::Resource::CIDFont::CMap::$fname; ";
     unless($@){
         return({%{$cmap->{$fname}}});
@@ -93,7 +105,8 @@ sub new {
     my ($class,$pdf,$name,@opts) = @_;
     my %opts=();
     %opts=@opts if((scalar @opts)%2 == 0);
-
+    $opts{-encode}||='ident';
+    
     my $data = _look_for_font($name);
 
     my $cmap = _look_for_cmap($data->{cmap});
@@ -109,18 +122,48 @@ sub new {
 
     my $des=$self->descrByData;
 
-    $self->{'BaseFont'} = PDFName($self->fontname.'-Identity-H');
-
     my $de=$self->{' de'};
+
+    if(defined $opts{-encode} && $opts{-encode} ne 'ident') {
+        $self->data->{encode}=$opts{-encode};
+    }
+
+    my $emap={
+        'reg'=>'Adobe',
+        'ord'=>'Identity',
+        'sup'=> 0,
+        'map'=>'Identity',
+        'dir'=>'H',
+        'dec'=>'ident',
+    };
+    
+    if(defined $cmap->{ccs}) {
+        $emap->{reg}=$cmap->{ccs}->[0];
+        $emap->{ord}=$cmap->{ccs}->[1];
+        $emap->{sup}=$cmap->{ccs}->[2];
+    }
+
+    #if(defined $cmap->{cmap} && defined $cmap->{cmap}->{$opts{-encode}} ) {
+    #    $emap->{dec}=$cmap->{cmap}->{$opts{-encode}}->[0];
+    #    $emap->{map}=$cmap->{cmap}->{$opts{-encode}}->[1];
+    #} elsif(defined $cmap->{cmap} && defined $cmap->{cmap}->{'utf8'} ) {
+    #    $emap->{dec}=$cmap->{cmap}->{'utf8'}->[0];
+    #    $emap->{map}=$cmap->{cmap}->{'utf8'}->[1];
+    #}
+
+    $self->data->{decode}=$emap->{dec};
+
+    $self->{'BaseFont'} = PDFName($self->fontname."-$emap->{map}-$emap->{dir}");
+    $self->{'Encoding'} = PDFName("$emap->{map}-$emap->{dir}");
 
     $de->{'FontDescriptor'} = $des;
     $de->{'Subtype'} = PDFName('CIDFontType0');
     $de->{'BaseFont'} = PDFName($self->fontname);
     $de->{'DW'} = PDFNum($self->missingwidth);
-
-    if(defined $opts{-encode}) {
-        $self->data->{encode}=$opts{-encode};
-    }
+    $de->{'CIDSystemInfo'}->{Registry} = PDFStr($emap->{reg});
+    $de->{'CIDSystemInfo'}->{Ordering} = PDFStr($emap->{ord});
+    $de->{'CIDSystemInfo'}->{Supplement} = PDFNum($emap->{sup});
+    ## $de->{'CIDToGIDMap'} = PDFName($emap->{map}); # ttf only
 
     return($self);
 }
@@ -142,24 +185,28 @@ sub new_api {
     return($obj);
 }
 
-sub text_cid {
-    my ($self,$text)=@_;
-    my $newtext='';
-    foreach my $g (unpack('n*',$text)) {
-        $newtext.=substr(sprintf('%04X',$g),0,4);
-    }
-    return("<$newtext>");
+sub tounicodemap {
+    my $self=shift @_;
+    # noop since pdf knows its char-collection
+    return($self);
 }
+
 
 sub cidsByStr {
     my ($self,$s)=@_;
-    if($self->data->{encode}) {
-        $s=pack('n*',map { $self->cidByUni($_) } unpack('U*',decode($self->data->{encode},$s)));
+    my $out='';
+    if(defined $self->data->{encode}) {
+        foreach my $ch ( unpack('U*',decode($self->data->{encode},$s)) )
+        {   
+            my $cid=$self->cidByUni($ch);
+            $out.=pack('n*', $cid );
+        }
     } else {
-        $s=pack('n*',map { $self->cidByUni($_) } unpack('U*',$s));
+        $out=pack('n*',map { $self->cidByUni($_) } unpack('U*',$s));
     }
-    return($s);
+    return($out);
 }
+
 
 sub width {
     my ($self,$text)=@_;
@@ -176,6 +223,38 @@ sub width {
 }
 
 
+sub text_cid {
+    my ($self,$text)=@_;
+    my $newtext='';
+    foreach my $g (unpack('n*',$text)) {
+        $newtext.=substr(sprintf('%04X',$g),0,4);
+    }
+    return("<$newtext>");
+}
+
+
+sub textByStr {
+    my ($self,$text)=@_;
+    my $newtext='';
+    if(is_utf8($text) && $self->data->{decode} ne 'ident') {
+        $newtext=unpack('H*',encode($self->data->{decode},$text));
+    } elsif(is_utf8($text) && $self->data->{decode} eq 'ident') {
+        $newtext=unpack('H*',$self->cidsByUtf($text));
+    } elsif(defined $self->data->{encode} && $self->data->{decode} eq 'ident') {
+        $newtext=unpack('H*',$self->cidsByUtf(encode($self->data->{encode},$text)));
+    } else {
+        $newtext=unpack('H*',$text);
+    }
+    return("<$newtext>");
+}
+
+sub glyphByCId
+{ 
+    my ($self,$cid)=@_;
+    my $uni = $self->uniByCId($cid);
+    return( nameByUni($uni) ); 
+}
+
 sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
@@ -188,15 +267,44 @@ sub outobjdeep {
     my $ml;
 
     foreach my $w (0..(scalar @{$self->data->{g2u}} - 1 )) {
-        if((defined $self->data->{wx}->[$w]) && $notdefbefore==1) {
+        if(ref($self->data->{wx}) eq 'ARRAY' 
+            && (defined $self->data->{wx}->[$w])
+            && ($self->data->{wx}->[$w] != $self->missingwidth)
+            && $notdefbefore==1) 
+        {
             $notdefbefore=0;
             $ml=PDFArray();
             $wx->add_elements(PDFNum($w),$ml);
             $ml->add_elements(PDFNum($self->data->{wx}->[$w]));
-        } elsif((defined $self->data->{wx}->[$w]) && $notdefbefore==0) {
+        } 
+        elsif(ref($self->data->{wx}) eq 'HASH' 
+            && (defined $self->data->{wx}->{$w}) 
+            && ($self->data->{wx}->{$w} != $self->missingwidth)
+            && $notdefbefore==1) 
+        {
+            $notdefbefore=0;
+            $ml=PDFArray();
+            $wx->add_elements(PDFNum($w),$ml);
+            $ml->add_elements(PDFNum($self->data->{wx}->{$w}));
+        } 
+        elsif(ref($self->data->{wx}) eq 'ARRAY' 
+            && (defined $self->data->{wx}->[$w]) 
+            && ($self->data->{wx}->[$w] != $self->missingwidth)
+            && $notdefbefore==0) 
+        {
             $notdefbefore=0;
             $ml->add_elements(PDFNum($self->data->{wx}->[$w]));
-        } else {
+        } 
+        elsif(ref($self->data->{wx}) eq 'HASH' 
+            && (defined $self->data->{wx}->{$w}) 
+            && ($self->data->{wx}->{$w} != $self->missingwidth)
+            && $notdefbefore==0) 
+        {
+            $notdefbefore=0;
+            $ml->add_elements(PDFNum($self->data->{wx}->{$w}));
+        } 
+        else 
+        {
             $notdefbefore=1;
         }
     }
@@ -207,11 +315,123 @@ sub outobjdeep {
 BEGIN {
 
     $alias={
-        'traditional'   => 'adobemingstdlightacro',
-        'simplified'    => 'adobesongstdlightacro',
-        'korean'        => 'adobemyungjostdmediumacro',
-        'japanese'      => 'kozgopromediumacro',
-        'japanese2'     => 'kozminproregularacro',
+        'traditional'           => 'adobemingstdlightacro',
+        'ming'                  => 'adobemingstdlightacro',
+        
+        'simplified'            => 'adobesongstdlightacro',
+        'song'                  => 'adobesongstdlightacro',
+
+        'korean'                => 'adobemyungjostdmediumacro',
+        'myungjostdmedium'      => 'adobemyungjostdmediumacro',
+        'hysmyeongjomedium'     => 'adobemyungjostdmediumacro',
+
+        'japanese'              => 'kozgopromediumacro',
+        'kozgopromedium'        => 'kozgopromediumacro',
+        'gothicbbbmedium'       => 'kozgopromediumacro',
+        'heiseikakugow5'        => 'kozgopromediumacro',
+
+        'japanese2'             => 'kozminproregularacro',
+        'kozminproregular'      => 'kozminproregularacro',
+        'ryuminlight'           => 'kozminproregularacro',
+        'heiseiminw3'           => 'kozminproregularacro',
+    };
+    $subs={
+        'minchow3' => {
+            '-alias'            => 'kozminproregularacro',
+            'fontname'          => 'SerifMincho-W3', 
+            'fontfamily'        => 'SerifMincho',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '300',
+            'altname'           => 'SerifMinchoW3',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x01\x05\x02\x0b\x04\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'minchow5' => {
+            '-alias'            => 'kozminproregularacro',
+            'fontname'          => 'SerifMincho-W5', 
+            'fontfamily'        => 'SerifMincho',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '500',
+            'altname'           => 'SerifMinchoW5',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x01\x05\x02\x0b\x06\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'minchow7' => {
+            '-alias'            => 'kozminproregularacro',
+            'fontname'          => 'SerifMincho-W7', 
+            'fontfamily'        => 'SerifMincho',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '700',
+            'altname'           => 'SerifMinchoW7',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x01\x05\x02\x0b\x08\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'minchow9' => {
+            '-alias'            => 'kozminproregularacro',
+            'fontname'          => 'SerifMincho-W9', 
+            'fontfamily'        => 'SerifMincho',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '900',
+            'altname'           => 'SerifMinchoW9',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x01\x05\x02\x0b\x0a\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'gothicw3' => {
+            '-alias'            => 'kozgopromediumacro',
+            'fontname'          => 'SansGothic-W3', 
+            'fontfamily'        => 'SansGothic',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '300',
+            'altname'           => 'SansGothicW3',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x08\x01\x02\x0b\x03\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'gothicw5' => {
+            '-alias'            => 'kozgopromediumacro',
+            'fontname'          => 'SansGothic-W5', 
+            'fontfamily'        => 'SansGothic',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '500',
+            'altname'           => 'SansGothicW5',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x08\x01\x02\x0b\x05\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'gothicw7' => {
+            '-alias'            => 'kozgopromediumacro',
+            'fontname'          => 'SansGothic-W7', 
+            'fontfamily'        => 'SansGothic',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '700',
+            'altname'           => 'SansGothicW7',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x08\x01\x02\x0b\x07\x00\x00\x00\x00\x00\x00\x00",
+        },
+        'gothicw9' => {
+            '-alias'            => 'kozgopromediumacro',
+            'fontname'          => 'SansGothic-W9', 
+            'fontfamily'        => 'SansGothic',
+            'fontstretch'       => 'Normal',
+            'fontweight'        => '900',
+            'altname'           => 'SansGothicW9',
+            'subname'           => 'Regular',
+            'cmap'              => 'japanese',
+            'encode'            => 'euc-jp',
+            'panose'            => "\x08\x01\x02\x0b\x09\x00\x00\x00\x00\x00\x00\x00",
+        },
     };
 
 }
@@ -226,6 +446,18 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CJKFont.pm,v $
+    Revision 1.10  2004/11/22 02:04:27  fredo
+    added missing substitutes
+
+    Revision 1.9  2004/11/22 01:03:24  fredo
+    fixed supplement set, added substitute handling
+
+    Revision 1.8  2004/11/21 02:58:51  fredo
+    fixed multibyte encoding issues
+
+    Revision 1.7  2004/10/26 14:43:25  fredo
+    added alternative glyph-width storage/retrieval
+
     Revision 1.6  2004/06/15 09:14:42  fredo
     removed cr+lf
 
@@ -249,6 +481,8 @@ alfred reibenschuh
 
 
 =cut
+
+
 
             ------- Chinese -------
     Traditional                 Simplified                  Japanese                Korean

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Utils.pm,v 1.8 2004/07/29 10:48:10 fredo Exp $
+#   $Id: Utils.pm,v 1.9 2004/11/22 02:31:46 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Utils;
@@ -52,7 +52,7 @@ use PDF::API2::Basic::PDF::Literal;
 use Exporter;
 use vars qw(@EXPORT @ISA);
 @ISA = qw(Exporter);
-@EXPORT = qw(PDFBool PDFArray PDFDict PDFLiteral PDFName PDFNull PDFNum PDFStr PDFUtf
+@EXPORT = qw(PDFBool PDFArray PDFDict PDFLiteral PDFName PDFNull PDFNum PDFStr PDFStrHex PDFUtf
              asPDFBool asPDFName asPDFNum asPDFStr);
 # no warnings qw(uninitialized);
 
@@ -125,6 +125,15 @@ Creates a string via PDF::API2::Basic::PDF::String->new
 
 sub PDFStr
 { PDF::API2::Basic::PDF::String->new(@_); }
+
+=head2 PDFStrHex
+
+Creates a hex-string via PDF::API2::Basic::PDF::String->new
+
+=cut
+
+sub PDFStrHex
+{ my $x=PDF::API2::Basic::PDF::String->new(@_); $x->{' ishex'}=1; return($x); }
 
 =head2 PDFUtf
 

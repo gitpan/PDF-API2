@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.15 2004/08/31 13:50:09 fredo Exp $
+#   $Id: Content.pm,v 1.16 2004/10/26 11:34:22 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.15 $' =~ /Revision: (\S+)\s/; # $Date: 2004/08/31 13:50:09 $
+    ( $VERSION ) = '$Revision: 1.16 $' =~ /Revision: (\S+)\s/; # $Date: 2004/10/26 11:34:22 $
 
 }
 
@@ -1362,6 +1362,25 @@ sub text_justified {
     return($width);
 }
 
+sub _text_fill_line {
+    my ($self,$text,$width,$over)=@_;
+    my @txt=split(/\x20/,$text);
+    my @line=();
+    my $save=$";
+    $"=' ';
+    while($self->advancewidth("@line")<$width) {
+        push @line,(shift @txt);
+    }
+    if(!$over && (scalar @line > 1) && ($self->advancewidth("@line") > $width)) {
+        unshift @txt,pop @line;
+    }
+    my $ret="@txt";
+    my $text="@line";
+    $"=$save;
+    return($line,$ret);
+}
+
+
 =item ($width,$chunktext) = $txt->text_fill_left $text, $width
 
 ** DEVELOPER METHOD **
@@ -1370,19 +1389,8 @@ sub text_justified {
 
 sub text_fill_left {
     my ($self,$text,$width)=@_;
-    my @txt=split(/\x20/,$text);
-    my @line=();
-    my $save=$";
-    $"=' ';
-    while($self->advancewidth("@line")<$width) {
-        push @line,(shift @txt);
-    }
-    if((scalar @line > 1) && ($self->advancewidth("@line") > $width)) {
-        unshift @txt,pop @line;
-    }
-    $width=$self->text("@line");
-    my $ret="@txt";
-    $"=$save;
+    my ($line,$ret)=$self->_text_fill_line($text,$width);
+    $width=$self->text($line);
     return($width,$ret);
 }
 
@@ -1394,19 +1402,8 @@ sub text_fill_left {
 
 sub text_fill_right {
     my ($self,$text,$width)=@_;
-    my @txt=split(/\x20/,$text);
-    my @line=();
-    my $save=$";
-    $"=' ';
-    while($self->advancewidth("@line")<$width) {
-        push @line,(shift @txt);
-    }
-    if((scalar @line > 1) && ($self->advancewidth("@line") > $width)) {
-        unshift @txt,pop @line;
-    }
-    $width=$self->text_right("@line");
-    my $ret="@txt";
-    $"=$save;
+    my ($line,$ret)=$self->_text_fill_line($text,$width);
+    $width=$self->text_right($line);
     return($width,$ret);
 }
 
@@ -1418,21 +1415,11 @@ sub text_fill_right {
 
 sub text_fill_justified {
     my ($self,$text,$width)=@_;
-    my @txt=split(/\x20/,$text);
-    my @line=();
+    my ($line,$ret)=$self->_text_fill_line($text,$width,1);
     my $hs=$self->hspace;
-    my $save=$";
-    $"=' ';
-    while($self->advancewidth("@line")<$width) {
-        push @line,(shift @txt);
-    }
-    if((scalar @txt > 0) || ($self->advancewidth("@line") > $width)) {
-        $self->hspace($hs*($width/$self->advancewidth("@line")));
-    }
-    $width=$self->text("@line");
+    $self->hspace($hs*($width/$self->advancewidth($line)));
+    $width=$self->text($line);
     $self->hspace($hs);
-    my $ret="@txt";
-    $"=$save;
     return($width,$ret);
 }
 
@@ -1573,6 +1560,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.16  2004/10/26 11:34:22  fredo
+    reworked text_fill for paragraph, but still being development
+
     Revision 1.15  2004/08/31 13:50:09  fredo
     fixed space vs. whitespace split bug
 

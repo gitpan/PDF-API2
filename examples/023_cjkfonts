@@ -42,8 +42,8 @@ use Unicode::UCD 'charinfo';
 my $sx=33;
 my $sy=45;
 my $fx=20;
-
-foreach $fn (qw( japanese korean simplified traditional )) {
+#japanese2 korean simplified traditional
+foreach $fn (qw( korean )) {
 
     $pdf=PDF::API2->new(-file => "$0.$fn.pdf");
 
@@ -52,7 +52,7 @@ foreach $fn (qw( japanese korean simplified traditional )) {
     print STDERR "\n$fn\n";
 
     my $font=$pdf->cjkfont($fn);
-
+    $font->tounicodemap;
     my @cids=(0 .. $font->glyphNum-1);
     my @fbbx = $font->fontbbox;
     my $xw = int(($fbbx[2]-$fbbx[0])/20)*20;
@@ -109,7 +109,7 @@ foreach $fn (qw( japanese korean simplified traditional )) {
                 my $ci = charinfo($font->uniByCId($xo) || 0);
                 my $name=$font->glyphByCId($xo);
 
-                if($name eq '') {
+                if($name=~m|^uni[0-9a-f]{4}$|io) {
                     $gfx->fillcolor('red');
                     $name=$ci->{name} || "NONE";
                 } else {
@@ -131,6 +131,7 @@ foreach $fn (qw( japanese korean simplified traditional )) {
     }
     $pdf->save;
     $pdf->end;
+    last;
 }
 
 exit;

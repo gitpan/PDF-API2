@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 1.19 2004/10/01 01:06:35 fredo Exp $
+#   $Id: Makefile.PL,v 1.21 2004/10/17 04:07:14 fredo Exp $
 #
 #=======================================================================
 
@@ -137,19 +137,41 @@ my $gamma=undef;
 my $stable=undef;
 my $fix=undef;
 my $remake=undef;
+my $usage=undef;
 
 GetOptions(
     "override=s" => \$overide,
-    "version" => \$version,
-    "build" => \$build,
-    "release" => \$release,
-    "alpha" => \$alpha,
-    "beta" => \$beta,
-    "gamma" => \$gamma,
-    "stable" => \$stable,
-    "fix" => \$fix,
-    "remake" => \$remake,
+    "version|v" => \$version,
+    "build|q" => \$build,
+    "release|r" => \$release,
+    "alpha|a" => \$alpha,
+    "beta|b" => \$beta,
+    "gamma|g" => \$gamma,
+    "stable|s" => \$stable,
+    "fix|f" => \$fix,
+    "remake|m" => \$remake,
+    "help|usage|h" => \$usage,
 );
+
+if($usage) {
+    print <<EOT;
+help for makefile.pl
+
+    --override .version.    specify version
+    --version/-v            increment version part
+    --release/-r            increment release part
+    --build/-q              increment build part
+    --alpha/-a              increment to next alpha
+    --beta/-b               increment to next beta
+    --gamma/-g              increment to next gamma
+    --stable/-s             increment to next stable
+    --fix/-f                increment to next fix
+    --remake/-m             remake version file
+    --help/--usage/-h       print this
+    
+EOT
+    exit(0);
+}
 
 if($overide) {
     write_version(hex($overide));
