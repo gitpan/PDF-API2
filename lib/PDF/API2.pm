@@ -423,6 +423,8 @@ sub importpage {
 	$s_page=$s_pdf->openpage($s_idx);
 	$t_page=$self->page($t_idx);
 
+	$t_page->gfx()->save();
+
 	$self->{apiimportcache}=$self->{apiimportcache}||{};
 	$self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
 
@@ -430,11 +432,13 @@ sub importpage {
 		next unless(defined $s_page->{$k});
 		$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
 	}
-#	foreach my $k (qw( Thumb Annots )) {
+
+
 	foreach my $k (qw( Thumb )) {
 		next unless(defined $s_page->{$k});
 		$t_page->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
 	}
+
 	foreach my $k (qw( Resources )) {
 		$s_page->{$k}=$s_page->find_prop($k);
 		next unless(defined $s_page->{$k});
@@ -451,6 +455,7 @@ sub importpage {
 			}
 		}
 	}
+
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
 		$t_page->{Contents}=PDFArray();
@@ -473,6 +478,9 @@ sub importpage {
 			
 		}
 	}
+
+	$t_page->gfx()->restore();
+
 	$self->{pdf}->out_obj($t_page);
 	$self->{pdf}->out_obj($self->{pages});
 	return($t_page);
