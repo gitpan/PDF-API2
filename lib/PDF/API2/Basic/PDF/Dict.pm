@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Dict.pm,v 1.6 2004/06/15 09:13:13 fredo Exp $
+#   $Id: Dict.pm,v 1.7 2004/09/22 14:12:49 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
@@ -107,7 +107,9 @@ sub outobjdeep
             $self->{'Length'} = PDF::API2::Basic::PDF::Number->new(0) unless (defined $self->{'Length'});
             $pdf->new_obj($self->{'Length'}) unless ($self->{'Length'}->is_obj($pdf));
         } else {
-            $self->{'Length'} = PDF::API2::Basic::PDF::Number->new(length($self->{' stream'}) + 1);
+            $self->{'Length'} = PDF::API2::Basic::PDF::Number->new(length($self->{' stream'}));
+            ## $self->{'Length'} = PDF::API2::Basic::PDF::Number->new(length($self->{' stream'}) + 1);
+            ## this old code seams to burp acro6, lets see what breaks next -- fredo
         }
     }
 
@@ -170,7 +172,6 @@ sub outobjdeep
 
     if (defined $self->{' stream'}) {
 
-    #    $fh->print("\nstream\n");
         $fh->print(" stream\n");
         $loc = $fh->tell;
         $str = $self->{' stream'};
@@ -180,13 +181,13 @@ sub outobjdeep
             { $str = $f->outfilt($str, 1); }
         }
         $fh->print($str);
-        $fh->print("\n");
+        ## $fh->print("\n"); # newline goes into endstream
 
     } elsif (defined $self->{' streamfile'}) {
 
         open(DICTFH, $self->{' streamfile'}) || die "Unable to open $self->{' streamfile'}";
         binmode(DICTFH,':raw');
-    #    $fh->print("\nstream\n");
+
         $fh->print(" stream\n");
         $loc = $fh->tell;
         while (read(DICTFH, $str, 4096))
@@ -206,7 +207,7 @@ sub outobjdeep
             { $str = $f->outfilt($str, 1); }
             $fh->print($str);
         }
-        $fh->print("\n");
+        ## $fh->print("\n"); # newline goes into endstream
 
     }
 
@@ -219,7 +220,7 @@ sub outobjdeep
            $pdf->out_obj($self->{'Length'}) if ($self->{'Length'}->is_obj($pdf));
        }
 
-        $fh->print("endstream"); # next is endobj which has the final cr
+        $fh->print("\nendstream"); # next is endobj which has the final cr
     }
 
 }
