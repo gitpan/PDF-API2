@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.24 2004/04/07 10:48:53 fredo Exp $
+#   $Id: API2.pm,v 1.27 2004/05/21 10:12:29 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $RELEASEVERSION $seq @FontDirs );
 
-    ( $VERSION ) = '$Revision: 1.24 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/07 10:48:53 $
+    ( $VERSION ) = '$Revision: 1.27 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/21 10:12:29 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -157,6 +157,7 @@ sub new {
         $self->{' filed'}=$opt{-file};
         $self->{pdf}->create_file($opt{-file});
     }
+    $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
     $self->info( 'Producer' => "PDF::API2 v=$RELEASEVERSION($VERSION) os=$^O" );
     return $self;
 }
@@ -195,6 +196,7 @@ sub open {
     $self->{time}='_'.pdfkey(time());
     $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
     $self->{fonts}={};
+    $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
     return $self;
 }
 
@@ -230,6 +232,7 @@ sub openScalar {
     $self->{time}='_'.pdfkey(time());
     $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
     $self->{fonts}={};
+    $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
     return $self;
 }
 
@@ -527,12 +530,12 @@ sub info {
     }
 
     if(scalar @_) {
-      foreach my $k (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
+      foreach my $k (@{$self->{infoMeta}}) {
         next unless(defined $opt{$k});
         if(is_utf8($opt{$k}) || utf8::valid($opt{$k})) {
-            $self->{pdf}->{'Info'}->{$k}=PDFUtf($opt{$k}||'')
+            $self->{pdf}->{'Info'}->{$k}=PDFUtf($opt{$k}||'NONE');
         } else {
-            $self->{pdf}->{'Info'}->{$k}=PDFStr($opt{$k}||'')
+            $self->{pdf}->{'Info'}->{$k}=PDFStr($opt{$k}||'NONE');
         }
       }
       $self->{pdf}->out_obj($self->{pdf}->{'Info'});
@@ -541,7 +544,7 @@ sub info {
 
     if(defined $self->{pdf}->{'Info'}) {
       %opt=();
-      foreach my $k (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
+      foreach my $k (@{$self->{infoMeta}}) {
         next unless(defined $self->{pdf}->{'Info'}->{$k});
         $opt{$k}=$self->{pdf}->{'Info'}->{$k}->val;
         if(unpack('n',$opt{$_})==0xfffe) {
@@ -554,6 +557,21 @@ sub info {
       }
   }
   return(%opt);
+}
+
+=item @meta_data_attribs = $pdf->infoMetaAttributes @meta_data_attribs
+
+Sets/Gets the supported info-structure tags.
+
+=cut
+
+sub infoMetaAttributes {
+    my ($self,@attr) = @_;
+    if(scalar @attr > 0) {
+        my %at = map { $_ = $_ } (@{$self->{infoMeta}},@attr);
+        @{$self->{infoMeta}}=(keys %at);
+    }
+    return(@{$self->{infoMeta}});
 }
 
 =item $pdf->finishobjects @objects
@@ -1004,8 +1022,11 @@ sub importpage {
     if(ref($t_idx) eq 'PDF::API2::Page') {
         $t_page=$t_idx;
     } else {
-        $t_idx=0 if($self->pages<$t_idx);
-        $t_page=$self->page($t_idx);
+        if($self->pages<$t_idx) {
+            $t_page=$self->page;
+        } else {
+            $t_page=$self->page($t_idx);
+        }
     }
 
     $self->{apiimportcache}=$self->{apiimportcache}||{};
@@ -1199,7 +1220,7 @@ sub addFontDirs {
     return( @FontDirs );
 }
 
-sub __findFont {
+sub _findFont {
     my $font=shift @_;
     my @fonts=($font,map { "$_/$font" } @FontDirs);
     while((scalar @fonts > 0) && (! -f $fonts[0])) { shift @fonts; }
@@ -1802,6 +1823,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.27  2004/05/21 10:12:29  fredo
+    fixed slight importpage quirk
+
+    Revision 1.26  2004/04/18 18:07:19  fredo
+    fixed _findFont method
+
+    Revision 1.25  2004/04/07 17:38:00  fredo
+    added infoMetaAttributes and support code
+
     Revision 1.24  2004/04/07 10:48:53  fredo
     fixed handling of ColorSpace/Separation
 

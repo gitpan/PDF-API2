@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Font.pm,v 1.4 2003/12/08 13:05:33 Administrator Exp $
+#   $Id: Font.pm,v 1.5 2004/05/21 15:10:29 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font;
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:33 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/21 15:10:29 $
 
 }
 
@@ -83,15 +83,15 @@ sub encodeByData {
     $self->data->{n2e}={};
     $self->data->{n2u}={};
 
-    foreach my $n (reverse 0..255) {
+    foreach my $n (0..255) {
         $self->data->{n2c}->{$self->data->{char}->[$n] || '.notdef'}=$n unless(defined $self->data->{n2c}->{$self->data->{char}->[$n] || '.notdef'});
         $self->data->{n2e}->{$self->data->{e2n}->[$n] || '.notdef'}=$n unless(defined $self->data->{n2e}->{$self->data->{e2n}->[$n] || '.notdef'});
 
         $self->data->{n2u}->{$self->data->{e2n}->[$n] || '.notdef'}=$self->data->{e2u}->[$n] unless(defined $self->data->{n2u}->{$self->data->{e2n}->[$n] || '.notdef'});
         $self->data->{n2u}->{$self->data->{char}->[$n] || '.notdef'}=$self->data->{uni}->[$n] unless(defined $self->data->{n2u}->{$self->data->{char}->[$n] || '.notdef'});
 
-        $self->data->{u2c}->{$self->data->{uni}->[$n]}=$n unless(defined $self->data->{u2c}->{$self->data->{uni}->[$n]});
-        $self->data->{u2e}->{$self->data->{e2u}->[$n]}=$n unless(defined $self->data->{u2e}->{$self->data->{e2u}->[$n]});
+        $self->data->{u2c}->{$self->data->{uni}->[$n]}||=$n unless(defined $self->data->{u2c}->{$self->data->{uni}->[$n]});
+        $self->data->{u2e}->{$self->data->{e2u}->[$n]}||=$n unless(defined $self->data->{u2e}->{$self->data->{e2u}->[$n]});
 
         $self->data->{u2n}->{$self->data->{e2u}->[$n]}=($self->data->{e2n}->[$n] || '.notdef') unless(defined $self->data->{u2n}->{$self->data->{e2u}->[$n]});
         $self->data->{u2n}->{$self->data->{uni}->[$n]}=($self->data->{char}->[$n] || '.notdef') unless(defined $self->data->{u2n}->{$self->data->{uni}->[$n]});
@@ -203,6 +203,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Font.pm,v $
+    Revision 1.5  2004/05/21 15:10:29  fredo
+    worked around some unicode probs
+
     Revision 1.4  2003/12/08 13:05:33  Administrator
     corrected to proper licencing statement
 

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Glyph.pm,v 1.3 2003/12/08 13:05:23 Administrator Exp $
+#   $Id: Glyph.pm,v 1.4 2004/04/18 17:56:33 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Glyph;
@@ -667,6 +667,7 @@ sub update_bbox
             my ($gnx, $gny, $gxx, $gxy);
             my ($sxx, $sxy, $syx, $syy);
 
+            next unless(defined $self->{' PARENT'}{'loca'}{'glyphs'}[$comp->{'glyph'}]);
             $compg = $self->{' PARENT'}{'loca'}{'glyphs'}[$comp->{'glyph'}]->read->update_bbox;
             ($gnx, $gny, $gxx, $gxy) = @{$compg}{'xMin', 'yMin', 'xMax', 'yMax'};
             if (defined $comp->{'scale'})
@@ -809,6 +810,7 @@ sub get_refs
     return unless ($self->{'numberOfContours'} < 0);
     foreach $g (@{$self->{'comps'}})
     {
+        next unless(defined $self->{' PARENT'}{'loca'}{'glyphs'}[$g->{'glyph'}]);
         my (@list) = $self->{' PARENT'}{'loca'}{'glyphs'}[$g->{'glyph'}]->get_points;
         push (@res, $g->{'glyph'});
         push (@res, @list) if ($list[0]);

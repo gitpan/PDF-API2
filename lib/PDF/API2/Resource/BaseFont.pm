@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 1.4 2003/12/08 13:05:32 Administrator Exp $
+#   $Id: BaseFont.pm,v 1.5 2004/04/20 09:47:34 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:32 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/20 09:47:34 $
 
 }
 
@@ -426,7 +426,7 @@ Returns the character by the given unicode of the fonts encoding map.
 
 =cut
 
-sub encByUni { return( $_[0]->data->{u2e}->{$_[1]} || 0 ); }
+sub encByUni { return( $_[0]->data->{u2c}->{$_[1]} || $_[0]->data->{u2e}->{$_[1]} || 0 ); }
 
 =item $char = $font->mapByGlyph $glyph
 
@@ -638,6 +638,9 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 1.5  2004/04/20 09:47:34  fredo
+    fixed unicode to font-encoding-vector conversion
+
     Revision 1.4  2003/12/08 13:05:32  Administrator
     corrected to proper licencing statement
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: FontFile.pm,v 1.3 2003/12/08 13:06:01 Administrator Exp $
+#   $Id: FontFile.pm,v 1.4 2004/04/20 09:46:25 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -49,7 +49,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:01 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/20 09:46:25 $
 
 }
 
@@ -185,8 +185,9 @@ sub subsetByCId {
     $self->data->{subset}=1;
     vec($self->data->{subvec},$g,1)=1;
     return if($self->iscff);
-    if($self->font->{loca}->read->{glyphs}[$g]) {
-        map { vec($self->data->{subvec},$_,1)=1; } $self->font->{loca}->{glyphs}[$g]->get_refs;
+    if(defined $self->font->{loca}->read->{glyphs}->[$g]) {
+        $self->font->{loca}->read->{glyphs}->[$g]->read;
+        map { vec($self->data->{subvec},$_,1)=1; } $self->font->{loca}->{glyphs}->[$g]->get_refs;
     }
 }
 
@@ -214,7 +215,7 @@ sub outobjdeep {
             $f->{'glyf'}->read;
             for (my $i = 0; $i < $self->glyphNum; $i++) {
                 next if($self->subvec($i));
-                $f->{'loca'}{'glyphs'}[$i] = undef;
+                $f->{'loca'}{'glyphs'}->[$i] = undef;
             #    print STDERR "$i,";
             }
         }
@@ -240,6 +241,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: FontFile.pm,v $
+    Revision 1.4  2004/04/20 09:46:25  fredo
+    added glyph->read fix for subset-vector
+
     Revision 1.3  2003/12/08 13:06:01  Administrator
     corrected to proper licencing statement
 

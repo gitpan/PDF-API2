@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TIFF.pm,v 1.3 2003/12/08 13:06:11 Administrator Exp $
+#   $Id: TIFF.pm,v 1.4 2004/04/19 22:01:33 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::TIFF;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:11 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/19 22:01:33 $
 
 }
 
@@ -248,9 +248,26 @@ sub read_tiff {
             vec($self->{' stream'},$n,8)=$bl[vec($self->{' stream'},$n,8)];
         }
     }
-
+    $self->{' tiff'}=$tif;
     $tif->close;
     return($self);
+}
+
+=item $value = $tif->tiffTag $tag
+
+returns the value of the internal tiff-tag.
+
+B<Useful Tags:>
+
+    imageDescription, imageId (strings)
+    xRes, yRes (dpi)
+
+=cut
+
+sub tiffTag {
+    my $self=shift @_;
+    my $tag=shift @_;
+    return($self->{' tiff'}->{$tag});
 }
 
 package TiffFile;
@@ -280,7 +297,7 @@ sub new {
   $self->{byte}='C';
   $self->{short}=(($self->{byteOrder} eq 'MM') ? 'n' : 'v' );
   $self->{long}=(($self->{byteOrder} eq 'MM') ? 'N' : 'V' );
-  $self->{rational}='NN';
+  $self->{rational}=(($self->{byteOrder} eq 'MM') ? 'NN' : 'VV' );;
 
   # get/check version id
   $fh->read( $self->{version}, 2 );
@@ -350,7 +367,7 @@ sub close {
   my $self = shift @_;
   my $fh = $self->{fh};
   $fh->close;
-  %{$self}=();
+#  %{$self}=();
 }
 
 sub readTags {
@@ -431,6 +448,28 @@ sub readTags {
         }
       } elsif($valTag==266) {
         $self->{fillOrder}=$valOffset;
+      } elsif($valTag==270) {
+        # ImageDescription
+        my $here=$fh->tell;
+        $fh->seek($valOffset,0);
+        $fh->read($self->{imageDescription},$valLen);
+        $fh->seek($here,0);
+      } elsif($valTag==282) {
+        # xRes
+        my $here=$fh->tell;
+        $fh->seek($valOffset,0);
+        $fh->read($self->{xRes},$valLen);
+        $fh->seek($here,0);
+        $self->{xRes}=[unpack($self->{rational},$self->{xRes})];
+        $self->{xRes}=($self->{xRes}->[0]/$self->{xRes}->[1]);
+      } elsif($valTag==283) {
+        # yRes
+        my $here=$fh->tell;
+        $fh->seek($valOffset,0);
+        $fh->read($self->{yRes},$valLen);
+        $fh->seek($here,0);
+        $self->{yRes}=[unpack($self->{rational},$self->{yRes})];
+        $self->{yRes}=($self->{yRes}->[0]/$self->{yRes}->[1]);
       } elsif($valTag==273) {
         # image data offset/strip offsets
         if($valCount==1) {
@@ -470,11 +509,18 @@ sub readTags {
       } elsif($valTag==317) {
         # lzwPredictor
         $self->{lzwPredictor}=$valOffset;
+      } elsif($valTag==0x800d) {
+        # imageID
+        my $here=$fh->tell;
+        $fh->seek($valOffset,0);
+        $fh->read($self->{imageId},$valLen);
+        $fh->seek($here,0);
 #      } elsif($valTag==) {
 #      } elsif($valTag==) {
 #      } elsif($valTag==) {
 #      } elsif($valTag==) {
-#      } elsif($valTag==) {
+#      } else {
+#        print "tag=$valTag, type=$valType, len=$valLen\n";
       }
     }
     $fh->read( $self->{ifd}, 4 );
@@ -493,6 +539,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TIFF.pm,v $
+    Revision 1.4  2004/04/19 22:01:33  fredo
+    additional tag handling and tag-accessor
+
     Revision 1.3  2003/12/08 13:06:11  Administrator
     corrected to proper licencing statement
 

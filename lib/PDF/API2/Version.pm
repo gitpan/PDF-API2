@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Version.pm,v 1.4 2004/04/07 10:51:27 fredo Exp $
+#   $Id: Version.pm,v 1.5 2004/05/21 16:36:02 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION );
 
-    ( $VERSION ) = '0.40_18b';
+    ( $VERSION ) = '0.40_20';
 
 }
 
@@ -61,6 +61,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Version.pm,v $
+    Revision 1.5  2004/05/21 16:36:02  fredo
+    update to 0.40_20
+
     Revision 1.4  2004/04/07 10:51:27  fredo
     updated to 0.40_18b quick-fix release
 

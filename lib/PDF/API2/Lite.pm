@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Lite.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#   $Id: Lite.pm,v 1.5 2004/05/21 15:04:43 fredo Exp $
 #
 #=======================================================================
 
@@ -43,9 +43,13 @@ BEGIN {
 
     use vars qw( $VERSION $hasWeakRef );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/21 15:04:43 $
 
 }
+
+=head1 NAME 
+
+PDF::API2::Lite - lite pdf creation
 
 =head1 SYNOPSIS
 
@@ -663,6 +667,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Lite.pm,v $
+    Revision 1.5  2004/05/21 15:04:43  fredo
+    fixed NAME pod bug for cpan indexer
+
     Revision 1.4  2003/12/08 13:05:19  Administrator
     corrected to proper licencing statement
 
