@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3b40 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -724,8 +724,12 @@ sub importpage {
 	$content->{Length}=PDFNum(length($content->{' stream'}));
 	## if we like compress we will do it now to do quicker saves
 	if($self->{forcecompress}>0){
+		# since we compress the stream without
+		# calling back at the content/.. methods
+		# which corrrect the streams Q's we have 
+		# to add them here
 		$content->compress;
-		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'}."\n Q \n");
 		$content->{' nofilt'}=1;
 		$content->{Length}=PDFNum(length($content->{' stream'}));
 	}

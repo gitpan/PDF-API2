@@ -20,7 +20,7 @@ use strict;
 use PDF::API2::Util;
 use PDF::API2::PDF::Utils;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3b40 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::ImageGD;
 use PDF::API2::PDF::ImageJPEG;

@@ -23,7 +23,7 @@ BEGIN {
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	@ISA = qw(PDF::API2::PDF::Dict);
-	( $VERSION ) = '$Revisioning: 0.3b40 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 }
 
