@@ -391,22 +391,24 @@ Returns the width of the string based on all currently set text-attributes.
 =cut
 
 sub advancewidth {
-	my ($self,@txt)=@_;
-	my $text=join(' ',@txt);
-	@txt=split(/\s+/,$text);
+	my ($self,$text,%opts)=@_;
+	my @txt=split(/\s+/,$text);
 	my $num_space=(scalar @txt)-1;
 	$text=join(' ',@txt);
 	my $num_char=length($text);
-	my $glyph_width=$self->{' font'}->width($text)*$self->{' fontsize'};
+	my $glyph_width=0;
+	$glyph_width=$self->{' font'}->width($text,%opts)*$self->{' fontsize'};
 	my $word_spaces=$self->wordspace*$num_space;
 	my $char_spaces=$self->charspace*$num_char;
 	my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->{' hspace'}/100;
 	return $advance;
 }
 
-=item $width = $txt->text $string, %options
+=item $width = $txt->text $text, %options
 
 Applys text to the content and optionally returns the width of the given text.
+
+You can use the -utf8 option to give the text in utf8.
 
 =cut
 
@@ -438,7 +440,7 @@ sub text {
 				$self->matrix_update($opt{-indent},0);
 			}
 			my ($x1,$y1)=$self->textpos;
-			my $wd=$self->advancewidth($text);
+			my $wd=$self->advancewidth($text,%opt);
 			$self->matrix_update($wd,0);
 			my ($x2,$y2)=$self->textpos;
 			
@@ -460,11 +462,19 @@ sub text {
 		}
 	}
 	if(defined $opt{-indent}) {
-		$self->add('[',(-$opt{-indent}*1000/$self->{' fontsize'}),$self->{' font'}->text($text),']','TJ');
-		$wd=$self->advancewidth($text)+$opt{-indent};
+		if($opt{-utf8}){
+			$self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text_utf8($text),']','TJ');
+		} else {
+			$self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text($text),']','TJ');
+		}
+		$wd=$self->advancewidth($text,%opt)+$opt{-indent};
 	} else {
-		$self->add($self->{' font'}->text($text),'Tj');
-		$wd=$self->advancewidth($text);
+		if($opt{-utf8}){
+			$self->add($self->{' font'}->text_utf8($text),'Tj');
+		} else {
+			$self->add($self->{' font'}->text($text),'Tj');
+		}
+		$wd=$self->advancewidth($text,%opt);
 	}
 	$self->textstate(%state1);
 
@@ -473,37 +483,43 @@ sub text {
 
 }
 
-=item $txt->text_center $string, %options
+=item $txt->text_center $text, %options
+
+You can use the -utf8 option to give the text in utf8.
 
 =cut
 
 sub text_center {
 	my ($self,$text,%opt)=@_;
-	my $width=$self->advancewidth($text);
+	my $width=$self->advancewidth($text,%opt);
 	$self->distance(float(-($width/2)),0);
 	$self->text($text,%opt);
 ##	$self->distance(float($width/2),0);
 }
 
-=item $txt->text_right $string, %options
+=item $txt->text_right $text, %options
+
+You can use the -utf8 option to give the text in utf8.
 
 =cut
 
 sub text_right {
 	my ($self,$text,%opt)=@_;
-	my $width=$self->advancewidth($text);
+	my $width=$self->advancewidth($text,%opt);
 	$self->distance(float(-$width),0);
 	$self->text($text,%opt);
 ##	$self->distance(float($width),0);
 }
 
-=item ($flowwidth, $overflow) = $txt->text_justify $string , -width => $width [, -overflow => 1 ] [, -underflow => 1 ]
+=item ($flowwidth, $overflow) = $txt->text_justify $text , -width => $width [, -overflow => 1 ] [, -underflow => 1 ] [, %options ]
 
 If -overflow is given, $overflow will contain any text, which wont 
 fit into width without exessive scaling and $flowwidth will be 0. 
 
 If -underflow is given, and $text is smaller than $width, $flowwidth will contain the delta between
 $width and the text-advancewidth AND text will typeset using $txt->text. 
+
+You can use the -utf8 option to give the text in utf8.
 
 =cut
 
@@ -513,11 +529,11 @@ sub text_justify {
 	my @texts=split(/\s+/,$text);
 	$text=join(' ',@texts);
 	my ($overflow,$ofw);
-
+	my $indent=$opts{-indent}||0;
 	if($opts{-overflow}) {
 		my @linetext=();
 		
-		while(($self->advancewidth(join(' ',@linetext)) < $opts{-width}) && scalar @texts){
+		while(($self->advancewidth(join(' ',@linetext),%opts) < ($opts{-width}-$indent)) && scalar @texts){
 			push @linetext, shift @texts;
 		}
 		$overflow=join(' ',@texts);
@@ -526,105 +542,56 @@ sub text_justify {
 		$text=join(' ',@texts);
 	}
 
-	if($opts{-underflow} && ($self->advancewidth($text) < $opts{-width})) {
-		$ofw=$opts{-width}-$self->advancewidth($text);
-		$self->text($text);
+	if($opts{-underflow} && ($self->advancewidth($text,%opts) < ($opts{-width}-$indent))) {
+		$ofw=($opts{-width}-$indent)-$self->advancewidth($text,%opts);
+		$self->text($text,%opts);
 		return ($ofw,$overflow);
 	} else {
 		$ofw=0;
 	}
 
-	my @wds=$self->{' font'}->width_array($text);
+	my @wds=$self->{' font'}->width_array($text,%opts);
 	my $swt=$self->{' font'}->width(' ');
-	my $wth=$self->advancewidth($text);
+	my $wth=$self->advancewidth($text,%opts);
 
 	my $hs=$self->hspace;
-	$self->hspace($hs*$opts{-width}/$wth);
+	$self->hspace($hs*($opts{-width}-$indent)/$wth);
 	$self->text($text,%opts);
 	$self->hspace($hs);
 
 	return ($ofw,$overflow);
 }
 
-=item $txt->text_utf8 $utf8string
+=item $txt->paragraph $x, $y, $width, $heigth, $indent, $text, %options
 
-=cut
-
-sub text_utf8 {
-	my ($self,@txt)=@_;
-	my ($text);
-	while(scalar @txt > 0) {
-		$text=shift @txt;
-		$self->add($self->{' font'}->text_utf8($text),'Tj');
-	}
-}
-
-=item $txt->textln $string1, ..., $stringn
-
-B<Example:>
-
-	$txt->lead(-10);
-	$txt->textln($line1,$line2,$line3);
-
-=cut
-
-sub textln {
-	my ($self,@txt)=@_;
-	my ($text);
-	while(scalar @txt > 0) {
-		$text=shift @txt;
-		$self->text($text);
-		$self->nl;
-	}
-}
-
-=item $txt->paragraph $x, $y, $width, $heigth, $indent, @text
+You can use the -utf8 option to give the text in utf8.
 
 =cut
 
 sub paragraph {
-	my ($self,$x,$y,$wd,$ht,$idt,@txt)=@_;
-	my $text=join(' ',@txt);
+	my ($self,$x,$y,$wd,$ht,$idt,$text,%opt)=@_;
 	my $h=$ht;
 	my $sz=$self->{' fontsize'};
-	@txt=split(/\s+/,$text);
+	my @txt=split(/\s+/,$text);
 	$self->lead($sz) if not defined $self->lead();
 
 	my @line=();
 	while((defined $txt[0]) && ($ht>0)) {
 		$self->translate($x+$idt,$y+$ht-$h);
 		@line=();
-		while( (defined $txt[0]) && ($self->{' font'}->width(join(' ',@line,$txt[0]))*($self->{' hspace'}/100)*$sz<($wd-$idt)) ) {
+		while( (defined $txt[0]) && ($self->{' font'}->width(join(' ',@line,$txt[0]),%opt)*($self->{' hspace'}/100)*$sz<($wd-$idt)) ) {
 			push(@line, shift @txt);
 		}
-		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0])*($self->{' hspace'}/100)*$sz>($wd-$idt) );
-		my $l=$self->{' font'}->width(join(' ',@line))*$sz*($self->{' hspace'}/100);
+		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0],%opt)*($self->{' hspace'}/100)*$sz>($wd-$idt) );
+		my $l=$self->{' font'}->width(join(' ',@line),%opt)*$sz*($self->{' hspace'}/100;
 		$self->wordspace(($wd-$idt-$l)/(scalar @line -1)) if(defined $txt[0] && scalar @line>0);
 		$idt=$l+$self->{' font'}->width(' ')*$sz;
-		$self->text(join(' ',@line));
+		$self->text(join(' ',@line),%opt);
 		if(defined $txt[0]) { $ht-= $self->lead(); $idt=0; }
 		$self->wordspace(0);
 	}
 	return($idt,$y+$ht-$h,@txt);
 }
-
-#sub paragraphformat {
-#	my ($self,$x,$y,$wd,$ht,$idt,@txtobj)=@_;
-#	my $yy=$y-$ht;
-#	my @t;
-#	while(scalar @txtobj>0 && $y>$yy) {
-#		my $text=shift @txtobj;
-#		if(ref($text)=~/Font/i) {
-#			$self->font($text,$self->{' fontsize'});
-#			next; 
-#		}
-#		while(ref($text) ? scalar @{$text}>0 : (defined $text) && ($text ne '')) {
-#			($idt,$y,@t)=$self->paragraph($x,$y,$wd,$y-$yy,$idt,ref($text) ? @{$text} : $text);
-#			$text=[@t];
-#		}
-#	}
-#	return($idt,$y,@txtobj);
-#}
 
 sub fillcolor {
 	my $self=shift @_;

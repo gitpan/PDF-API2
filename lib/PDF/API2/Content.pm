@@ -51,7 +51,7 @@ Adds @content to the object.
 
 sub add {
 	my $self=shift @_;
-	$self->{' stream'}.=join(' ',@_)."\n";
+	$self->{' stream'}.=" ".join(' ',@_)."\n";
 }
 
 =item $co->save

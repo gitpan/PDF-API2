@@ -104,15 +104,50 @@ for use in the PDF.
 =cut
 
 sub text {
-	my ($font,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my $newtext='';
-	foreach my $g (0..length($text)-1) {
-		$newtext.=
-			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
-			? sprintf('\%03lo',vec($text,$g,8))
-			: substr($text,$g,1) ;
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			$newtext.=pack("C",vec($text,$x,16) & 0xff);
+		}
+	} else {
+		foreach my $g (0..length($text)-1) {
+			$newtext.=
+				(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
+				? sprintf('\%03lo',vec($text,$g,8))
+				: substr($text,$g,1) ;
+		}
 	}
 	return("($newtext)");
+}
+
+sub text_utf8 {
+	my ($self,$text,%opts)=@_;
+	return($self->text($text,-utf8=>1));
+}
+
+=item $pdfstring = $font->text_hex $text
+
+Returns a properly formated hex-representation of $text
+for use in the PDF.
+
+=cut
+
+sub text_hex {
+	my ($font,$text,%opts)=@_;
+	my $newtext='';
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			$newtext.=sprintf('%02X',vec($text,$x,16) & 0xff);
+		}
+	} else {
+		foreach (unpack("C*", $text)) {
+			$newtext.= sprintf('%02X',$_);
+		}
+	}
+	return('<'.$newtext.'>');
 }
 
 =item $wd = $font->width $text
@@ -122,10 +157,18 @@ Returns the width of $text as if it were at size 1.
 =cut
 
 sub width {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my $width=0;
-	foreach (unpack("C*", $text)) {
-		$width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]||'space'}||0;
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			my $ch=vec($text,$x,16) & 0xff;
+			$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$ch] || 'space'} || $self->{' data'}{'wx'}{space};
+		}
+	} else {
+		foreach (unpack("C*", $text)) {
+			$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$_] || 'space'} || $self->{' data'}{'wx'}{space};
+		}
 	}
 	$width/=1000;
 	return($width);
@@ -138,9 +181,9 @@ Returns the widths of the words in $text as if they were at size 1.
 =cut
 
 sub width_array {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my @text=split(/\s+/,$text);
-	my @widths=map {$self->width($_)} @text;
+	my @widths=map {$self->width($_,%opts)} @text;
 	return(@widths);
 }
 

@@ -161,11 +161,18 @@ Returns the width of $text as if it were at size 1.
 =cut
 
 sub width {
-	my ($self,$text,$enc)=@_;
-	$enc=$enc||$self->{' encoding'};
+	my ($self,$text,%opts)=@_;
+	my $enc=$opts{-encode}||$self->{' encoding'};
 	my $width=0;
-	foreach (unpack("C*", $text)) {
-		$width += $self->{' chrwidth'}{$enc}{$_||0};
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			$width += $self->{' uniwidth'}{vec($text,$x,16)};
+		}
+	} else {
+		foreach (unpack("C*", $text)) {
+			$width += $self->{' chrwidth'}{$enc}{$_||0};
+		}
 	}
 	$width/=1000;
 	return($width);
@@ -178,9 +185,9 @@ Returns the widths of the words in $text as if they were at size 1.
 =cut
 
 sub width_array {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my @text=split(/\s+/,$text);
-	my @widths=map {$self->width($_)} @text;
+	my @widths=map {$self->width($_,%opts)} @text;
 	return(@widths);
 }
 
@@ -192,7 +199,7 @@ but requires $text to be in UTF8.
 =cut
 
 sub width_utf8 {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	$text=utf8_to_ucs2($text);
 	my ($width);
 	foreach my $x (0..(length($text)>>1)-1) {
@@ -209,8 +216,8 @@ Returns the texts bounding-box as if it were at size 1.
 =cut
 
 sub bbox {
-	my ($self,$text,$enc)=@_;
-	$enc=$enc||$self->{' encoding'};
+	my ($self,$text,%opts)=@_;
+	my $enc=$opts{-encode}||$self->{' encoding'};
 	my $width=$self->width(substr($text,0,length($text)-1),$enc);
 	my @f=@{$self->{' chrbbx'}{$enc}{unpack("C",substr($text,0,1))}};
 	my @l=@{$self->{' chrbbx'}{$enc}{unpack("C",substr($text,-1,1))}};

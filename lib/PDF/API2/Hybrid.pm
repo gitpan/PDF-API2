@@ -78,7 +78,7 @@ sub matrix {
 sub outobjdeep {
 	my ($self) = @_;
 #	if($self->{' apiistext'} != 1) {
-#		$self->add('ET');
+#		$self->add(' ET ');
 #	}
 	foreach my $k (qw/ api apipdf apipage font fontsize charspace hspace wordspace lead rise render matrix fillcolor strokecolor translate scale skew rotate /) {
 		$self->{" $k"}=undef;
@@ -104,7 +104,7 @@ sub transform {
 sub textstart {
 	my ($self)=@_;
 	if(!defined($self->{' apiistext'}) || $self->{' apiistext'} != 1) {
-		$self->add('BT');
+		$self->add(' BT ');
 		$self->{' apiistext'}=1;
 		$self->{' font'}=undef;
 		$self->{' fontsize'}=0;
@@ -132,7 +132,7 @@ sub textstart {
 sub textend {
 	my ($self)=@_;
 	if($self->{' apiistext'} == 1) {
-		$self->add('ET');
+		$self->add(' ET ');
 		$self->{' apiistext'}=0;
 	}
 	return($self);

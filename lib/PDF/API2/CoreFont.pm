@@ -19,7 +19,7 @@ package PDF::API2::CoreFont;
 
 BEGIN {
 	use vars qw( @ISA $fonts $alias $subs @latin1 @macroman @winansi @adobestd $VERSION );
-	( $VERSION ) = '$Revisioning: 0.3a1 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a2 $' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 use strict;
@@ -216,15 +216,27 @@ for use in the PDF.
 =cut
 
 sub text {
-	my ($font,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my $newtext='';
-	foreach my $g (0..length($text)-1) {
-		$newtext.=
-			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
-			? sprintf('\%03lo',vec($text,$g,8))
-			: substr($text,$g,1) ;
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			$newtext.=pack("C",vec($text,$x,16) & 0xff);
+		}
+	} else {
+		foreach my $g (0..length($text)-1) {
+			$newtext.=
+				(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
+				? sprintf('\%03lo',vec($text,$g,8))
+				: substr($text,$g,1) ;
+		}
 	}
 	return("($newtext)");
+}
+
+sub text_utf8 {
+	my ($self,$text,%opts)=@_;
+	return($self->text($text,-utf8=>1));
 }
 
 =item $pdfstring = $font->text_hex $text
@@ -235,10 +247,17 @@ for use in the PDF.
 =cut
 
 sub text_hex {
-	my ($font,$text)=@_;
+	my ($font,$text,%opts)=@_;
 	my $newtext='';
-	foreach (unpack("C*", $text)) {
-		$newtext.= sprintf('%02X',$_);
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			$newtext.=sprintf('%02X',vec($text,$x,16) & 0xff);
+		}
+	} else {
+		foreach (unpack("C*", $text)) {
+			$newtext.= sprintf('%02X',$_);
+		}
 	}
 	return('<'.$newtext.'>');
 }
@@ -250,10 +269,18 @@ Returns the width of $text as if it were at size 1.
 =cut
 
 sub width {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my $width=0;
-	foreach (unpack("C*", $text)) {
-		$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$_] || 'space'} || $self->{' data'}{'wx'}{space};
+	if($opts{-utf8}) {
+		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			my $ch=vec($text,$x,16) & 0xff;
+			$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$ch] || 'space'} || $self->{' data'}{'wx'}{space};
+		}
+	} else {
+		foreach (unpack("C*", $text)) {
+			$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$_] || 'space'} || $self->{' data'}{'wx'}{space};
+		}
 	}
 	$width/=1000;
 	return($width);
@@ -266,9 +293,9 @@ Returns the widths of the words in $text as if they were at size 1.
 =cut
 
 sub width_array {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my @text=split(/\s+/,$text);
-	my @widths=map {$self->width($_)} @text;
+	my @widths=map {$self->width($_,%opts)} @text;
 	return(@widths);
 }
 
@@ -279,7 +306,7 @@ Returns the texts bounding-box as if it were at size 1.
 =cut
 
 sub bbox {
-	my ($self,$text)=@_;
+	my ($self,$text,%opts)=@_;
 	my $width=$self->width(substr($text,0,length($text)-1));
 	my @f=@{$self->{' data'}{'bbox'}{$self->{' data'}{'char'}[unpack("C",substr($text,0,1))] || 'space'}};
 	my @l=@{$self->{' data'}{'bbox'}{$self->{' data'}{'char'}[unpack("C",substr($text,-1,1))] || 'space'}};
