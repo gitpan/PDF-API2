@@ -10,7 +10,7 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3b41 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b49 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -73,7 +73,7 @@ sub page {
 	$self->{page}=$self->{api}->page;
 	$self->{page}->mediabox(@_) if($_[0]);
 	$self->{hybrid}=$self->{page}->hybrid;
-	$self->{hybrid}->compress;
+#	$self->{hybrid}->compress;
 	return $self;
 }
 

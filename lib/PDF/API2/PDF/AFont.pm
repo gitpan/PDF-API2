@@ -4,7 +4,7 @@ package PDF::API2::PDF::AFont;
 # use strict;
 use vars qw(@ISA $VERSION );
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 use PDF::API2::PDF::Utils;

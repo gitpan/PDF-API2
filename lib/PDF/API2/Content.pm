@@ -21,7 +21,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::PDF::Dict);
 
-( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Dict;
 use PDF::API2::PDF::Utils;
@@ -92,7 +92,8 @@ sub compress {
 
 sub outobjdeep {
 	my ($self, @opts) = @_;
-	$self->restore;
+	$self->restore unless( $self->{' nofilt'});
+#  $self->{Length}=PDFNum(length($self->{' stream'})) unless( $self->{' nofilt'});
 	foreach my $k (qw/ api apipdf apipage /) {
 		$self->{" $k"}=undef;
 		delete($self->{" $k"});
@@ -500,8 +501,26 @@ methods.
 =cut
 
 sub resource {
-	my ($self, $type, $key, $obj) = @_;
-	$self->{' apipage'}->resource($type, $key, $obj);
+	my ($self, $type, $key, $obj, $force) = @_;
+	if($self->{' apipage'}) { 
+	  # we are a content stream on a page.
+  	$self->{' apipage'}->resource($type, $key, $obj, $force);
+	} else {
+	  # we are a self-contained content stream.
+  	$self->{Resources}||=PDFDict();
+  
+  	my $dict=$self->{Resources};
+  	$dict->realise if(ref($dict)=~/Objind$/);
+  
+  	$dict->{$type}||= PDFDict();
+  	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
+  
+  	if($force) {
+  		$dict->{$type}->{$key}=$obj;
+  	} else {
+  		$dict->{$type}->{$key}||= $obj;
+  	}
+	}
 	return($self);
 }
 

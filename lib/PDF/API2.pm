@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -238,6 +238,7 @@ sub preferences {
 	}
 
 	$self->{catalog}->{ViewerPreferences}||=PDFDict();
+	$self->{catalog}->{ViewerPreferences}->realise;
 
 	if($opt{-hidetoolbar}) {
 		$self->{catalog}->{ViewerPreferences}->{HideToolbar}=PDFBool(1);
@@ -294,6 +295,7 @@ sub preferences {
 			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$o{-xyz}});
 		}
 	}
+	$self->{pdf}->out_obj($self->{catalog});
 
 	return $self;
 }
@@ -357,6 +359,7 @@ sub open {
 	$self->{pdf}->{' version'} = 3;
 	my @pages=proc_pages($self->{pdf},$self->{pages});
 	$self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
+	$self->{catalog}=$self->{pdf}->{Root};
 	$self->{reopened}=1;
 	$self->{time}='_'.pdfkey(time());
 	my $dig=digest16(digest32($class,$file,%opt));
@@ -489,25 +492,28 @@ sub openpage {
 		} else {
 			$self->{pagestack}->[$index-1]=$page;
 		}
-		if(defined $page->{Contents}) {
+		if(defined $page->{Contents} && (!defined($page->{' fixed'}) || $page->{' fixed'}<1) ) {
 			$page->fixcontents;
 			my $uncontent=$page->{Contents};
 			delete $page->{Contents};
 			my $content=$page->hybrid();
-			$content->add(" q ");
+			# we already have a 'q' in the hybrid stream ## $content->{' stream'}="\n q \n";
 			foreach my $k ($uncontent->elementsof) {
 				$k->realise;
-				$content->add(" ".unfilter($k->{Filter}, $k->{' stream'})." ");
+				$content->{' stream'}.=" ".unfilter($k->{Filter}, $k->{' stream'})." ";
 			}
-			$content->add(" Q ");
-			$content->{Length}=PDFNum(length($content->{' stream'}));
+			## $content->{Length}=PDFNum(length($content->{' stream'}));
+			# this  will be fixed by the following code or content or filters 
+			
 			## if we like compress we will do it now to do quicker saves
 			if($self->{forcecompress}>0){
+  			$content->{' stream'}.="\n Q \n";
 				$content->compress;
 				$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
 				$content->{' nofilt'}=1;
 				$content->{Length}=PDFNum(length($content->{' stream'}));
 			}
+			$page->{' fixed'}=1;
 		}
 	}
 
@@ -590,16 +596,18 @@ sub walk_obj {
 
 	my $tobj;
 
-	return($objs->{$obj}) if(defined $objs->{$obj});
 
 	if(ref($obj)=~/Objind$/) {
 		$obj->realise;
 	}
 
+	return($objs->{scalar $obj}) if(defined $objs->{scalar $obj});
+##  die "infinite loop while copying objects" if($obj->{' copied'});
 	$tobj=$obj->copy;
+##	$obj->{' copied'}=1;
 	$tpdf->new_obj($tobj) if($obj->is_obj($spdf));
 
-	$objs->{$obj}=$tobj;
+	$objs->{scalar $obj}=$tobj;
 
 	if(ref($obj)=~/Array$/) {
 		$tobj->{' val'}=[];
@@ -666,8 +674,12 @@ sub importpage {
 	$self->{apiimportcache}=$self->{apiimportcache}||{};
 	$self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
 
+	foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate )) {
+		next unless(defined $s_page->{$k});
+		$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+	}
 	if($t_page!=$t_idx) {
-		foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
+		foreach my $k (qw( B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
 			next unless(defined $s_page->{$k});
 			$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
 		}
@@ -704,32 +716,59 @@ sub importpage {
 	}
 
 	# create a whole content stream
+	## tecnically it is possible to submit an unfinished 
+	## (eg. newly created) source-page, but thats non-sense,
+	## so we expect a page fixed by openpage and die otherwise
+	die "page not processed via openpage ... " unless($s_page->{' fixed'}==1);
 	my $content=$t_page->hybrid();
-	
+
+  # since the source page comes from openpage it may already 
+  # contain the required starting 'q' without the final 'Q'
+  # if forcecompress is in effect
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
-    # since the source page comes from openpage it already 
-    # contains the required starting 'q' without the final 'Q'
-    # which is also added by hybrid so we clear the content stream
+		
     $content->{' stream'}='';
-		foreach my $k ($s_page->{Contents}->elementsof) {
-			$k->realise;
-			my $stream=unfilter($k->{Filter}, $k->{' stream'});
-			foreach my $r (keys %resmod) {
-				$stream=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
-			}
-			$content->add(" $stream ");
+    # openpage pages only contain one stream
+		my ($k)=$s_page->{Contents}->elementsof;
+		$k->realise;
+		if($k->{' nofilt'}) {
+		  # we have a finished stream here 
+		  # so we unfilter
+		  $content->{' stream'}=unfilter($k->{Filter}, $k->{' stream'});
+		} else {
+		  # stream is an unfinished/unfiltered hybrid
+		  # so we just copy it
+			$content->{' stream'}=$k->{' stream'};
+		}
+	  # and modify resources
+		foreach my $r (keys %resmod) {
+			$content->{' stream'}=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
+		}
+		if($k->{' nofilt'} && $self->{forcecompress}>0) {
+	    # standardize filters and refilter
+  	  # since forcecompress was in effect
+			$content->compress;
+		  $content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+		  $content->{' nofilt'}=1;
+      $content->{Length}=PDFNum(length($content->{' stream'}));
+		} elsif($k->{' nofilt'} && $self->{forcecompress}<1) {
+		  # this means that the terminal "Q" will be added so we
+		  # have to add a 'q' to balance things
+			$content->{' stream'}.=' q ';
+		} else {
+		  # unfinished hybrid (do nothing)
 		}
 	}
-	$content->{Length}=PDFNum(length($content->{' stream'}));
 	## if we like compress we will do it now to do quicker saves
-	if($self->{forcecompress}>0){
+	if($self->{forcecompress}>0 && $content->{' nofilt'}<0){
 		# since we compress the stream without
 		# calling back at the content/.. methods
 		# which corrrect the streams Q's we have 
 		# to add them here
 		$content->compress;
-		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'}."\n Q \n");
+		$content->add(' Q ');
+		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
 		$content->{' nofilt'}=1;
 		$content->{Length}=PDFNum(length($content->{' stream'}));
 	}
@@ -977,15 +1016,18 @@ sub info {
 	if(!defined($self->{pdf}->{'Info'})) {
         	$self->{pdf}->{'Info'}=PDFDict();
         	$self->{pdf}->new_obj($self->{'pdf'}->{'Info'});
+	} else {
+	    $self->{pdf}->{'Info'}->realise;
 	}
 
 	if(scalar @_) {
 	        map { 
 	        	$self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}||'') 
 	        } qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  );
+
+        $self->{pdf}->out_obj($self->{pdf}->{'Info'});
 	}
         
-        $self->{pdf}->out_obj($self->{pdf}->{'Info'});
 
 	if(defined $self->{pdf}->{'Info'}) {
 		%opt=map {
@@ -1143,7 +1185,7 @@ B<Examples:>
 B<Important Note:>
 
 This is an unmaintained function, please use one of the following
-for proper support: imagejpeg, imagepng, imagegd, imagepnm.
+for proper support: image_jpeg, image_png, image_gd, image_pnm.
 
 =cut
 
@@ -1164,10 +1206,124 @@ sub image {
 	return($obj);
 }
 
-sub imagejpeg {
+=item $img = $pdf->image_jpeg $file
+
+Returns a new image object from a jpeg-file.
+
+B<Examples:>
+
+	$img = $pdf->image_jpeg('yetanotherfun.jpg');
+
+=cut
+
+sub image_jpeg {
 	my ($self,$file,%opts)=@_;
-	my $objname='IMGxJPEGx'.pdfkey($file.time());
-	my $obj=PDF::API2::PDF::ImageJPEG->new($pdf,$objname,$file);
+	my $objname='JPEGx'.pdfkey($file.time());
+	my $obj=PDF::API2::Image->new_jpeg($self->{pdf},$objname,$file);
+	$obj->{' apiname'}=$objname;
+
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
+}
+
+=item $img = $pdf->image_png $file
+
+Returns a new image object from a png-file.
+
+B<Examples:>
+
+	$img = $pdf->image_png('yetanotherfun.png');
+
+=cut
+
+sub image_png {
+	my ($self,$file,%opts)=@_;
+	my $objname='PNGx'.pdfkey($file.time());
+	my $obj=PDF::API2::Image->new_png($self->{pdf},$objname,$file);
+	$obj->{' apiname'}=$objname;
+
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
+}
+
+#=item $img = $pdf->image_gif $file
+#
+#Returns a new image object from a gif-file.
+#
+#B<Examples:>
+#
+#	$img = $pdf->image_gif('yetanotherfun.gif');
+#
+#=cut
+#
+#sub image_gif {
+#	my ($self,$file,%opts)=@_;
+#	my $objname='GIFx'.pdfkey($file.time());
+#	my $obj=PDF::API2::Image->new_gif($self->{pdf},$objname,$file);
+#	$obj->{' apiname'}=$objname;
+#
+#	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+#
+#	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+#
+#	$self->{pdf}->out_obj($self->{pages});
+#	return($obj);
+#}
+
+=item $img = $pdf->image_tiff $file
+
+Returns a new image object from a tiff-file.
+
+B<Examples:>
+
+	$img = $pdf->image_tiff('yetanotherfun.TIF');
+
+B<Please Note:>
+
+Currently supported are any combination of the following tiff-features:
+white-is-zero, black-is-zero, rgb, palette, cmyk, packbits, ccittfax g3-1d,
+ccittfax g4, lzw and flate, as-long-as the image is not striped !!!
+
+=cut
+
+sub image_tiff {
+	my ($self,$file,%opts)=@_;
+	my $objname='TIFFx'.pdfkey($file.time());
+	my $obj=PDF::API2::Image->new_tiff($self->{pdf},$objname,$file);
+	$obj->{' apiname'}=$objname;
+
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
+}
+
+=item $img = $pdf->image_pnm $file
+
+Returns a new image object from a portable anymap (aka. netpbm).
+
+B<Examples:>
+
+	$img = $pdf->image_pnm('yetanotherfun.pbm');
+	$img = $pdf->image_pnm('yetanotherfun.pgm');
+	$img = $pdf->image_pnm('yetanotherfun.ppm');
+
+=cut
+
+sub image_pnm {
+	my ($self,$file,%opts)=@_;
+	my $objname='PNMx'.pdfkey($file.time());
+	my $obj=PDF::API2::Image->new_pnm($self->{pdf},$objname,$file);
 	$obj->{' apiname'}=$objname;
 
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));

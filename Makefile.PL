@@ -51,14 +51,16 @@ require 'version.p';
 $tag='_'.(defined($opts{-tag}) ? $opts{-tag} : 'dev') if(defined $opts{-tag});
 
 print <<'EOT';
-	 ____  ____  _____              _    ____ ___   ____
-	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+   ____  ____  _____              _    ____ ___   ____
+  |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+  | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+  |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+  |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 EOT
 print <<"EOT";
-						($version$tag)
+                                      ($version$tag)
+  please look at http://www.penguin.at0.net/~fredo/files/
+  for examples and contrib.
 EOT
 
 
@@ -92,6 +94,9 @@ ppdist: all ppd pm_to_blib
 
 distme: all dist ppd ppdist
 
+ecddist:
+	tar zcvf examples+contrib+docs-$version$tag.tar.gz `cat MANIFEST.examples`
+
 EOT
 }
 
@@ -99,43 +104,4 @@ print "anything else ? NO.\n";
 exit;
 
 __END__
-
-Date:  Mon, 15 Jul 2002 23:55:08 +0200
-To: alfredreibenschuh@yahoo.com
-From: "HERMIER Christophe" <proxima-cd@pelnet.com> | This is Spam | Add to Address Book
-Subject: [PDF::API2] bug in PDF::API2::Text::paragraph
-
-Hello,
-
-I found out a bug in PDF::API2::Text::paragraph concerning the repartition 
-of space in a line :
-There is one space less than the number of words in a line.
-
-Here is the fix :
-
-4177c4177
-< $self->wordspace(($wd-$idt-$l)/(scalar @line)) if(defined 
-$txt[0] && scalar @line>0);
----
- > $self->wordspace(($wd-$idt-$l)/((scalar @line)-1)) 
-if(defined $txt[0] && scalar @line>0);
-
-
-By the way, I am working on a better version using a hyphenator object (ie 
-:  TeX::Hyphen).
-I plan to use the object without creating a dependency in the PDF::API2 
-module : the object just has to "->can ( )" the right function.
-That way other hyphenation objects could be used if they exist (there could 
-be a "crude_hyphenator" that cut a word anywhere to act as a minimalist 
-example).
-
-If you're interested, I'll send it to put it in the PDF:API2 module.
-
-bye : christophe.
-
-
---
-Proxima CD SARL
-40 rue damrémont
-75018 PARIS
 

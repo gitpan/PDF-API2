@@ -11,7 +11,7 @@ use vars qw(@ISA $VERSION );
 
 @ISA = qw(PDF::API2::PDF::Image);
 
-( $VERSION ) = '$Revisioning: 0.3b41 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head2 PDF::API2::PDF::ImageGD
 

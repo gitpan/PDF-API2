@@ -1,6 +1,6 @@
 package PDF::API2::UniMap;
 
-require 5.006001;
+require 5.006;
 use vars qw ($VERSION @EXPORT @EXPORT_OK @EXPORT_TAGS @ISA);
 
 BEGIN {
@@ -8,7 +8,7 @@ BEGIN {
 	@EXPORT      = qw ();
 	@EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
 	@EXPORT_TAGS = qw ();
-	( $VERSION ) = '$Revisioning: 0.3b41 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b49 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 sub utf8_to_ucs2 {
