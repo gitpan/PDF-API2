@@ -20,6 +20,7 @@ lib/PDF/API2/Outline.pm
 lib/PDF/API2/Outlines.pm
 lib/PDF/API2/Page.pm
 lib/PDF/API2/Resource.pm
+lib/PDF/API2/UniWrap.pm
 lib/PDF/API2/Util.pm
 lib/PDF/API2/Win32.pm
 lib/PDF/API2/Version.pm

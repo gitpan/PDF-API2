@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: SynFont.pm,v 1.9 2004/06/15 09:14:53 fredo Exp $
+#   $Id: SynFont.pm,v 1.11 2004/11/26 15:14:59 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::SynFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:53 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/26 15:14:59 $
 
 }
 
@@ -83,9 +83,19 @@ I<-encode>
 ... changes the encoding of the font from its default.
 See I<perl's Encode> for the supported values.
 
-I<-pdfname> ... changes the reference-name of the font from its default.
+I<-pdfname> 
+... changes the reference-name of the font from its default.
 The reference-name is normally generated automatically and can be
 retrived via $pdfname=$font->name.
+
+I<-slant>
+... slant/expansion factor (0.1-0.9 = slant, 1.1+ = expansion).
+
+I<-oblique>
+... italic angle (+/-)
+
+I<-bold>
+... embolding factor (0.1+, bold=1, heavy=2, ...)
 
 =cut
 
@@ -97,12 +107,14 @@ sub new {
     my $last=255;
     my $slant=$opts{-slant}||1;
     my $oblique=$opts{-oblique}||0;
+    my $space=$opts{-space}||'0';
     my $bold=($opts{-bold}||0)*10; # convert to em
 
     $self->{' slant'}=$slant;
     $self->{' oblique'}=$oblique;
     $self->{' bold'}=$bold;
     $self->{' boldmove'}=0.001;
+    $self->{' space'}=$space;
 
     $class = ref $class if ref $class;
     $self = $class->SUPER::new($pdf, pdfkey.'+'.($font->name));
@@ -168,7 +180,7 @@ sub new {
             next;
         }
         my $char=PDFDict();
-        my $wth=int($font->width(chr($w))*1000*$slant);
+        my $wth=int($font->width(chr($w))*1000*$slant+2*$space);
         $procs->{$font->glyphByEnc($w)}=$char;
         $char->{Filter}=PDFArray(PDFName('FlateDecode'));
         $char->{' stream'}=$wth." 0 ".join(' ',map { int($_) } $self->fontbbox)." d1\n";
@@ -179,12 +191,14 @@ sub new {
         if($opts{-caps} && $ci->{upper}) {
             $char->{' stream'}.="/FSN 800 Tf\n";
             $char->{' stream'}.=($slant*110)." Tz\n";
+            $char->{' stream'}.=" [ -$space ] TJ\n" if($space);
             my $ch=$self->encByUni(hex($ci->{upper}));
-            $wth=int($font->width(chr($ch))*800*$slant*1.1);
+            $wth=int($font->width(chr($ch))*800*$slant*1.1+2*$space);
             $char->{' stream'}.=$self->text(chr($ch));
         } else {
             $char->{' stream'}.="/FSN 1000 Tf\n";
             $char->{' stream'}.=($slant*100)." Tz\n" if($slant!=1);
+            $char->{' stream'}.=" [ -$space ] TJ\n" if($space);
             $char->{' stream'}.=$self->text(chr($w));
         }
         $char->{' stream'}.=" Tj\nET\n";
@@ -253,6 +267,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: SynFont.pm,v $
+    Revision 1.11  2004/11/26 15:14:59  fredo
+    fixed docs
+
+    Revision 1.10  2004/11/26 15:10:38  fredo
+    added spacer mod option
+
     Revision 1.9  2004/06/15 09:14:53  fredo
     removed cr+lf
 

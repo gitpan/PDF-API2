@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Font.pm,v 1.9 2004/11/24 20:11:10 fredo Exp $
+#   $Id: Font.pm,v 1.11 2004/11/26 01:25:28 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font;
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:11:10 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/26 01:25:28 $
 
 }
 
@@ -67,12 +67,25 @@ sub encodeByData {
         $encoding=undef;
     }
 
-    if(defined $encoding) {
+    if(defined $encoding && $encoding=~m|^uni(\d+)$|o) 
+    {
+        my $blk=$1;
+        $self->data->{e2u}=[ map { $blk*256+$_ } (0..255) ];
+        $self->data->{e2n}=[ map { nameByUni($_) || '.notdef' } @{$self->data->{e2u}} ];
+    }
+    elsif(defined $encoding) 
+    {
         $self->data->{e2u}=[ unpack('U*',decode($encoding,pack('C*',(0..255)))) ];
         $self->data->{e2n}=[ map { nameByUni($_) || '.notdef' } @{$self->data->{e2u}} ];
-    #    print STDERR "did encode.\n";
-    } else {
+    } 
+    elsif(defined $self->data->{uni}) 
+    {
         $self->data->{e2u}=[ @{$self->data->{uni}} ];
+        $self->data->{e2n}=[ map { $_ || '.notdef' } @{$self->data->{char}} ];
+    } 
+    else 
+    {
+        $self->data->{e2u}=[ map { uniByName($_) } @{$self->data->{char}} ];
         $self->data->{e2n}=[ map { $_ || '.notdef' } @{$self->data->{char}} ];
     }
 
@@ -241,6 +254,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Font.pm,v $
+    Revision 1.11  2004/11/26 01:25:28  fredo
+    added unicode block mapping
+
+    Revision 1.10  2004/11/25 23:50:26  fredo
+    fixed unicode maps for unmapped corefonts
+
     Revision 1.9  2004/11/24 20:11:10  fredo
     added virtual font handling
 

@@ -1,3 +1,42 @@
+2004-11-26 16:14  fredo
+
+	* lib/PDF/API2/Resource/Font/SynFont.pm: fixed docs
+
+2004-11-26 16:10  fredo
+
+	* lib/PDF/API2/Resource/Font/SynFont.pm: added spacer mod option
+
+2004-11-26 02:25  fredo
+
+	* lib/PDF/API2/Resource/Font.pm: added unicode block mapping
+
+2004-11-26 02:24  fredo
+
+	* lib/PDF/API2/Resource/Font/CoreFont/webdings.pm: fixed unicode
+	  mapping
+
+2004-11-26 00:51  fredo
+
+	* lib/PDF/API2/Resource/UniFont.pm: added -encode option and
+	  handling
+
+2004-11-26 00:50  fredo
+
+	* lib/PDF/API2/Resource/Font.pm: fixed unicode maps for unmapped
+	  corefonts
+
+2004-11-25 21:53  fredo
+
+	* lib/PDF/API2/Content.pm: fixed unifont registration
+
+2004-11-25 20:56  fredo
+
+	* lib/PDF/API2/UniWrap.pm: genesis
+
+2004-11-25 20:55  fredo
+
+	* MANIFEST: added uniwrap
+
 2004-11-25 16:30  fredo
 
 	* lib/PDF/API2/Basic/: PDF/File.pm, PDF/Filter.pm, PDF/Objind.pm,

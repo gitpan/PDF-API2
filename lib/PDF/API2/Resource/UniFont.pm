@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniFont.pm,v 1.1 2004/11/24 20:11:31 fredo Exp $
+#   $Id: UniFont.pm,v 1.2 2004/11/25 23:51:16 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::UniFont;
@@ -43,7 +43,7 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = '$Revision: 1.1 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:11:31 $
+    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/25 23:51:16 $
 
 }
 
@@ -68,8 +68,9 @@ sub new {
     
     # look at all fonts
     my $fn=0;
-    foreach my $font (@fonts)
+    while (ref $fonts[0])
     {
+        my $font=shift @fonts;
         if(ref($font) eq 'ARRAY')
         {
             push @{$self->{fonts}},$font->[0];
@@ -94,6 +95,46 @@ sub new {
                 }
             }
         }
+        elsif(ref($font) eq 'HASH')
+        {
+            push @{$self->{fonts}},$font->{font};
+            
+            if(defined $font->{blocks} && ref($font->{blocks}) eq 'ARRAY')
+            {
+                foreach my $r0 (@{$font->{blocks}})
+                {
+                    if(ref $r0)
+                    {
+                        foreach my $b ($r0->[0]..$r0->[-1])
+                        {
+                            $self->{block}->{$b}=$fn;
+                        }
+                    }
+                    else
+                    {
+                        $self->{block}->{$r0}=$fn;
+                    }
+                }
+            }
+            
+            if(defined $font->{codes} && ref($font->{codes}) eq 'ARRAY')
+            {
+                foreach my $r0 (@{$font->{codes}})
+                {
+                    if(ref $r0)
+                    {
+                        foreach my $b ($r0->[0]..$r0->[-1])
+                        {
+                            $self->{code}->{$b}=$fn;
+                        }
+                    }
+                    else
+                    {
+                        $self->{code}->{$r0}=$fn;
+                    }
+                }
+            }
+        }
         else
         {
             push @{$self->{fonts}},$font;
@@ -104,6 +145,10 @@ sub new {
         }
         $fn++;
     }
+    
+    my %opts=@fonts;
+    
+    $self->{encode}=$opts{-encode} if(defined $opts{-encode});
     
     return($self);
 }
@@ -134,7 +179,7 @@ sub fontlist
 
 sub width {
     my ($self,$text)=@_;
-    die 'text not in utf8 format' unless(is_utf8($text));
+    $text=decode($self->{encode},$text) unless(is_utf8($text));
     my $width=0;
     foreach my $u (unpack('U*',$text))
     {
@@ -157,7 +202,7 @@ sub width {
 sub text 
 { 
     my ($self,$text,$size)=@_;
-    die 'text not in utf8 format' unless(is_utf8($text));
+    $text=decode($self->{encode},$text) unless(is_utf8($text));
     die 'textsize not specified' unless(defined $size);
     my $newtext='';
     my $lastfont=-1;

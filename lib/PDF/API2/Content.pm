@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.17 2004/11/24 20:10:31 fredo Exp $
+#   $Id: Content.pm,v 1.18 2004/11/25 20:53:59 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.17 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:10:31 $
+    ( $VERSION ) = '$Revision: 1.18 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/25 20:53:59 $
 
 }
 
@@ -1169,7 +1169,7 @@ sub font {
 
   if($font->isvirtual)
   {
-    $self->add("/".$font->fontlist->[0]->name,float($size),'Tf');
+    ## $self->add("/".$font->fontlist->[0]->name,float($size),'Tf');
     foreach my $f (@{$font->fontlist})
     {
         $self->resource('Font',$f->name,$f);
@@ -1586,6 +1586,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.18  2004/11/25 20:53:59  fredo
+    fixed unifont registration
+
     Revision 1.17  2004/11/24 20:10:31  fredo
     added virtual font handling, fixed var shadow bug
 
