@@ -380,9 +380,12 @@ sub importpage {
 	foreach my $k (qw( Resources )) {
 		$s_page->{$k}=$s_page->find_prop($k);
 		next unless(defined $s_page->{$k});
+		$s_page->{$k}->realise if(ref($s_page->{$k})=~/Objind$/);
+
 		$t_page->{$k}=PDFDict();
 		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
 			next unless(defined $s_page->{$k}->{$sk});
+			$s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
 			$t_page->{$k}->{$sk}=PDFDict();
 			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
 				next if($ssk=~/^ /);
