@@ -5,35 +5,57 @@
 #   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
 #   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#   Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   A Perl Module Chain to faciliate the Creation and Modification
+#   of High-Quality "Portable Document Format (PDF)" Files.
 #
-#   This library is free software; you can redistribute it 
-#   and/or modify it under the same terms as Perl itself.
+#   Copyright 1999-2004 Alfred Reibenschuh <areibens@cpan.org>.
 #
 #=======================================================================
 #
-#   PDF::API2::Page
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the
+#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+#   Boston, MA 02111-1307, USA.
+#
+#   $Id: Page.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
 #
 #=======================================================================
 package PDF::API2::Page;
 
-use strict;
-use vars qw(@ISA %pgsz $VERSION);
-@ISA = qw(PDF::API2::PDF::Pages);
-use PDF::API2::PDF::Pages;
-use PDF::API2::PDF::Utils;
+BEGIN {
 
-use PDF::API2::Util;
+    use strict;
+    use vars qw(@ISA %pgsz $VERSION);
 
-use Math::Trig;
-( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+    @ISA = qw(PDF::API2::Basic::PDF::Pages);
+    use PDF::API2::Basic::PDF::Pages;
+    use PDF::API2::Basic::PDF::Utils;
+    use PDF::API2::Util;
 
+    use PDF::API2::Annotation;
 
-=head2 PDF::API2::Page
+    use PDF::API2::Content;
+    use PDF::API2::Content::Text;
 
-Subclassed from PDF::API2::PDF::Pages
+    use PDF::API2::Util;
 
-=item $page = PDF::API2::Page->new $pdf, $parent, $index
+    use Math::Trig;
+
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+
+}
+
+=head1 $page = PDF::API2::Page->new $pdf, $parent, $index
 
 Returns a page object (called from $pdf->page).
 
@@ -46,49 +68,11 @@ sub new {
     $class = ref $class if ref $class;
     $self = $class->SUPER::new($pdf, $parent);
     $self->{'Type'} = PDFName('Page');
+    $self->proc_set(qw( PDF Text ImageB ImageC ImageI ));
     delete $self->{'Count'};
     delete $self->{'Kids'};
     $parent->add_page($self, $index);
     $self;
-}
-
-%pgsz=(
-    '4a'        =>  [ 4760  , 6716  ],
-    '2a'        =>  [ 3368  , 4760  ],
-    'a0'        =>  [ 2380  , 3368  ],
-    'a1'        =>  [ 1684  , 2380  ],
-    'a2'        =>  [ 1190  , 1684  ],
-    'a3'        =>  [ 842   , 1190  ],
-    'a4'        =>  [ 595   , 842   ],
-    'a5'        =>  [ 421   , 595   ],
-    'a6'        =>  [ 297   , 421   ],
-    '4b'        =>  [ 5656  , 8000  ],
-    '2b'        =>  [ 4000  , 5656  ],
-    'b0'        =>  [ 2828  , 4000  ],
-    'b1'        =>  [ 2000  , 2828  ],
-    'b2'        =>  [ 1414  , 2000  ],
-    'b3'        =>  [ 1000  , 1414  ],
-    'b4'        =>  [ 707   , 1000  ],
-    'b5'        =>  [ 500   , 707   ],
-    'b6'        =>  [ 353   , 500   ],
-    'letter'    =>  [ 612   , 792   ],
-    'broadsheet'    =>  [ 1296  , 1584  ],
-    'ledger'    =>  [ 1224  , 792   ],
-    'tabloid'   =>  [ 792   , 1224  ],
-    'legal'     =>  [ 612   , 1008  ],
-    'executive' =>  [ 522   , 756   ],
-    '36x36'     =>  [ 2592  , 2592  ],
-);
-
-sub _pagesize {
-    my $s=shift @_;
-    if($pgsz{lc($s)}) {
-        return @{$pgsz{lc($s)}};
-    } elsif($s=~/^[\d\.]+$/) {
-        return($s,$s);
-    } else {
-        return(595,842);
-    }
 }
 
 =item $page = PDF::API2::Page->coerce $pdf, $pdfpage
@@ -99,11 +83,8 @@ Returns a page object converted from $pdfpage (called from $pdf->openpage).
 
 sub coerce {
     my ($class, $pdf, $page) = @_;
-    my ($self) = {};
+    my $self = $page;
     bless($self,$class);
-    foreach my $k (keys %{$page}) {
-        $self->{$k}=$page->{$k};
-    }
     $self->{' apipdf'}=$pdf;
     return($self);
 }
@@ -126,10 +107,10 @@ sub update {
 
 =item $page->mediabox $alias
 
-Sets the mediabox.  This method supports the following aliases: 
-'4A', '2A', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 
-'4B', '2B', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 
-'LETTER', 'BROADSHEET', 'LEDGER', 'TABLOID', 'LEGAL', 
+Sets the mediabox.  This method supports the following aliases:
+'4A', '2A', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6',
+'4B', '2B', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6',
+'LETTER', 'BROADSHEET', 'LEDGER', 'TABLOID', 'LEGAL',
 'EXECUTIVE', and '36X36'.
 
 =cut
@@ -146,10 +127,32 @@ sub mediabox {
         );
     } else {
         $self->{'MediaBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,_pagesize($x1))
+            map { PDFNum(float($_)) } (0,0,page_size($x1))
         );
     }
     return($self);
+}
+
+=item ($llx, $lly, $urx, $ury) = $page->get_mediabox
+
+Gets the mediabox based one best estimates or the default.
+
+=cut
+
+sub get_mediabox {
+    my ($self) = @_;
+    my $media = [ 0, 0, 612, 792 ];
+    foreach my $mediatype (
+        qw( MediaBox CropBox BleedBox TrimBox ArtBox )
+    ) {
+        my $mediaobj = undef;
+        if($mediaobj = $self->find_prop($mediatype)) {
+            $media = [ map{ $_->val } $mediaobj->elementsof ];
+            last;
+        }
+    }
+
+    return(@{$media});
 }
 
 =item $page->cropbox $w, $h
@@ -174,7 +177,7 @@ sub cropbox {
         );
     } else {
         $self->{'CropBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,_pagesize($x1))
+            map { PDFNum(float($_)) } (0,0,page_size($x1))
         );
     }
     $self;
@@ -202,7 +205,7 @@ sub bleedbox {
         );
     } else {
         $self->{'BleedBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,_pagesize($x1))
+            map { PDFNum(float($_)) } (0,0,page_size($x1))
         );
     }
     $self;
@@ -228,7 +231,7 @@ sub trimbox {
         );
     } else {
         $self->{'TrimBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,_pagesize($x1))
+            map { PDFNum(float($_)) } (0,0,page_size($x1))
         );
     }
     $self;
@@ -256,15 +259,16 @@ sub artbox {
         );
     } else {
         $self->{'ArtBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,_pagesize($x1))
+            map { PDFNum(float($_)) } (0,0,page_size($x1))
         );
     }
     $self;
 }
 
-=item $gfx = $page->gfx
+=item $gfx = $page->gfx $prepend
 
-Returns a graphics content object.
+Returns a graphics content object. If $prepend is true the content
+will be prepended to the page description.
 
 =cut
 
@@ -279,6 +283,20 @@ sub fixcontents {
     }
 }
 
+sub content {
+    my ($self,$obj,$dir) = @_;
+    if(defined($dir) && $dir>0) {
+        $self->precontent($obj);
+    } else {
+        $self->addcontent($obj);
+    }
+    $self->{' apipdf'}->new_obj($obj) unless($obj->is_obj($self->{' apipdf'}));
+    $obj->{' apipdf'}=$self->{' apipdf'};
+    $obj->{' api'}=$self->{' api'};
+    $obj->{' apipage'}=$self;
+    return($obj);
+}
+
 sub addcontent {
     my ($self,@objs) = @_;
         $self->fixcontents;
@@ -291,83 +309,48 @@ sub precontent {
 }
 
 sub gfx {
-    use PDF::API2::Gfx;
     my ($self,$dir) = @_;
-    my $gfx=PDF::API2::Gfx->new();
-    if(defined($dir) && $dir>0) {
-        $self->precontent($gfx);
-    } else {
-        $self->addcontent($gfx);
-    }
-    $self->{' apipdf'}->new_obj($gfx);
-    $gfx->{' apipdf'}=$self->{' apipdf'};
-    $gfx->{' apipage'}=$self;
+    my $gfx=PDF::API2::Content->new();
+    $self->content($gfx,$dir);
     $gfx->compress() if($self->{' api'}->{forcecompress});
     return($gfx);
 }
 
-=item $txt = $page->text
+=item $txt = $page->text $prepend
 
-Returns a text content object.
+Returns a text content object. If $prepend is true the content
+will be prepended to the page description.
 
 =cut
 
 sub text {
-    use PDF::API2::Text;
     my ($self,$dir) = @_;
-    my $text=PDF::API2::Text->new();
-    if(defined($dir) && $dir>0) {
-        $self->precontent($text);
-    } else {
-        $self->addcontent($text);
-    }
-    $self->{' apipdf'}->new_obj($text);
-    $text->{' apipdf'}=$self->{' apipdf'};
-    $text->{' apipage'}=$self;
+    my $text=PDF::API2::Content::Text->new();
+    $self->content($text,$dir);
     $text->compress() if($self->{' api'}->{forcecompress});
     return($text);
 }
 
-=item $hyb = $page->hybrid
-
-Returns a hybrid content object.
-
-=cut
-
-sub hybrid {
-    use PDF::API2::Hybrid;
-    my ($self,$dir) = @_;
-    my $hyb=PDF::API2::Hybrid->new();
-    if(defined($dir) && $dir>0) {
-        $self->precontent($hyb);
-    } else {
-        $self->addcontent($hyb);
-    }
-    $self->{' apipdf'}->new_obj($hyb);
-    $hyb->{' apipdf'}=$self->{' apipdf'};
-    $hyb->{' apipage'}=$self;
-    $hyb->compress() if($self->{' api'}->{forcecompress});
-    return($hyb);
-}
-
 =item $ant = $page->annotation
 
-Returns a annotation object.
+Returns a new annotation object.
 
 =cut
 
 sub annotation {
-    use PDF::API2::Annotation;
     my ($self, $type, $key, $obj) = @_;
-        $self->{'Annots'}||=PDFArray();
-        $self->update if(ref($self->{'Annots'})=~/Objind/);
-        $self->{'Annots'}->realise if(ref($self->{'Annots'})=~/Objind/);
+
+    $self->{'Annots'}||=PDFArray();
+    $self->update if(ref($self->{'Annots'})=~/Objind/);
+    $self->{'Annots'}->realise if(ref($self->{'Annots'})=~/Objind/);
+
     my $ant=PDF::API2::Annotation->new;
-        $self->{'Annots'}->add_elements($ant);
-        $self->{' apipdf'}->new_obj($ant);
-        $ant->{' apipdf'}=$self->{' apipdf'};
-        $ant->{' apipage'}=$self;
-        return($ant);
+    $self->{'Annots'}->add_elements($ant);
+    $self->{' apipdf'}->new_obj($ant);
+    $ant->{' apipdf'}=$self->{' apipdf'};
+    $ant->{' apipage'}=$self;
+
+    return($ant);
 }
 
 =item $page->resource $type, $key, $obj
@@ -391,63 +374,29 @@ sub resource {
     my ($self, $type, $key, $obj, $force) = @_;
     my ($dict) = $self->find_prop('Resources');
 
-    $dict= $dict || $self->{Resources} || PDFDict();
+    $dict = $dict || $self->{Resources} || PDFDict();
 
     $dict->realise if(ref($dict)=~/Objind$/);
 
-    $dict->{$type}=$dict->{$type} || PDFDict();
+    $dict->{$type} = $dict->{$type} || PDFDict();
     $dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
 
-  unless(defined $obj) {
-    return($dict->{$type}->{$key} || undef);
-  } else {
-    if($force) {
-        $dict->{$type}->{$key}=$obj;
+    unless(defined $obj) {
+        return($dict->{$type}->{$key} || undef);
     } else {
-        $dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
+        if($force) {
+            $dict->{$type}->{$key} = $obj;
+        } else {
+            $dict->{$type}->{$key} = $dict->{$type}->{$key} || $obj;
+        }
+
+        $self->{' apipdf'}->out_obj($dict) if($dict->is_obj($self->{' apipdf'}));
+        $self->{' apipdf'}->out_obj($dict->{$type}) if($dict->{$type}->is_obj($self->{' apipdf'}));
+        $self->{' apipdf'}->out_obj($obj) if($obj->is_obj($self->{' apipdf'}));
+        $self->{' apipdf'}->out_obj($self);
+
+        return($dict);
     }
-  
-    $self->{' apipdf'}->out_obj($dict)
-        if($dict->is_obj($self->{' apipdf'}));
-  
-    $self->{' apipdf'}->out_obj($dict->{$type})
-        if($dict->{$type}->is_obj($self->{' apipdf'}));
-  
-    $self->{' apipdf'}->out_obj($obj)
-        if($obj->is_obj($self->{' apipdf'}));
-  
-          $self->{' apipdf'}->out_obj($self);
-  
-    return($dict);
-  }
-}
-
-sub content {
-    my ($self,$obj,$dir) = @_;
-    if(defined($dir) && $dir>0) {
-        $self->precontent($obj);
-    } else {
-        $self->addcontent($obj);
-    }
-    $self->{' apipdf'}->new_obj($obj) unless($obj->is_obj($self->{' apipdf'}));
-    $obj->{' apipdf'}=$self->{' apipdf'};
-    $obj->{' apipage'}=$self;
-    return($obj);
-}
-
-=item $pie = $page->piechart @options
-
-Returns a pie-chart object (see PDF::API2::Chart::Pie for details).
-
-=cut
-
-sub piechart {
-    use PDF::API2::Chart::Pie;
-    my $self = shift @_;
-    my $pie=PDF::API2::Chart::Pie->new(@_);
-  $self->content($pie);
-  $pie->compress() if($self->{' api'}->{forcecompress});
-  return($pie);
 }
 
 sub ship_out
@@ -476,5 +425,21 @@ __END__
 =head1 AUTHOR
 
 alfred reibenschuh
+
+=head1 HISTORY
+
+    $Log: Page.pm,v $
+    Revision 1.4  2003/12/08 13:05:19  Administrator
+    corrected to proper licencing statement
+
+    Revision 1.3  2003/11/30 17:17:37  Administrator
+    merged into default
+
+    Revision 1.2.2.1  2003/11/30 16:56:22  Administrator
+    merged into default
+
+    Revision 1.2  2003/11/30 11:32:33  Administrator
+    added CVS id/log
+
 
 =cut

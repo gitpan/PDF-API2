@@ -1,33 +1,50 @@
 #=======================================================================
-#	 ____  ____  _____              _    ____ ___   ____
-#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#    ____  ____  _____              _    ____ ___   ____
+#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   A Perl Module Chain to faciliate the Creation and Modification
+#   of High-Quality "Portable Document Format (PDF)" Files.
 #
-#	This library is free software; you can redistribute it 
-#	and/or modify it under the same terms as Perl itself.
+#   Copyright 1999-2004 Alfred Reibenschuh <areibens@cpan.org>.
 #
 #=======================================================================
 #
-#	PDF::API2::IOString
-#	Original Copyright 1998-2000 Gisle Aas.
-#	modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the
+#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+#   Boston, MA 02111-1307, USA.
+#
+#=======================================================================
+#
+#   PDF::API2::IOString
+#   Original Copyright 1998-2000 Gisle Aas.
+#   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
+#
+#   $Id: IOString.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
 #
 #=======================================================================
 package PDF::API2::IOString;
 
 require 5.006;
-use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
-
+    use vars qw($VERSION $DEBUG $IO_CONSTANTS);
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
 use Symbol ();
 use FileHandle;
 
-sub new
-{
+sub new  {
     my $class = shift;
     my $self = bless Symbol::gensym(), ref($class) || $class;
     tie *$self, $self;
@@ -36,28 +53,28 @@ sub new
 }
 
 sub import_from_file {
-	my $self = shift @_;
-	my $file = shift @_;
-	my $buf = "";
-	*$self->{buf} = \$buf;
-	*$self->{pos} = 0;
-	*$self->{lno} = 0;
-	return unless($file);
-	
-	my $in;
-	my $inf = new FileHandle;
-	open($inf,$file);
-	binmode($inf);
+    my $self = shift @_;
+    my $file = shift @_;
+    my $buf = "";
+    *$self->{buf} = \$buf;
+    *$self->{pos} = 0;
+    *$self->{lno} = 0;
+    return unless($file);
 
-	$inf->seek(0,0);
-	while(!$inf->eof) {
-		$inf->read($in,512);
-		$self->print($in);
-	}
-	$inf->close;
-	$self->seek(0,0);
+    my $in;
+    my $inf = new FileHandle;
+    open($inf,$file);
+    binmode($inf,':raw');
 
-	$self;
+    $inf->seek(0,0);
+    while(!$inf->eof) {
+        $inf->read($in,512);
+        $self->print($in);
+    }
+    $inf->close;
+    $self->seek(0,0);
+
+    $self;
 }
 
 sub open
@@ -66,12 +83,12 @@ sub open
     return $self->new(@_) unless ref($self);
 
     if (@_) {
-	my $bufref = ref($_[0]) ? $_[0] : \$_[0];
-	$$bufref = "" unless defined $$bufref;
-	*$self->{buf} = $bufref;
+    my $bufref = ref($_[0]) ? $_[0] : \$_[0];
+    $$bufref = "" unless defined $$bufref;
+    *$self->{buf} = $bufref;
     } else {
-	my $buf = "";
-	*$self->{buf} = \$buf;
+    my $buf = "";
+    *$self->{buf} = \$buf;
     }
     *$self->{pos} = 0;
     *$self->{lno} = 0;
@@ -154,17 +171,17 @@ sub print
 {
     my $self = shift;
     if (defined $\) {
-	if (defined $,) {
-	    $self->write(join($,, @_).$\);
-	} else {
-	    $self->write(join("",@_).$\);
-	}
+    if (defined $,) {
+        $self->write(join($,, @_).$\);
     } else {
-	if (defined $,) {
-	    $self->write(join($,, @_));
-	} else {
-	    $self->write(join("",@_));
-	}
+        $self->write(join("",@_).$\);
+    }
+    } else {
+    if (defined $,) {
+        $self->write(join($,, @_));
+    } else {
+        $self->write(join("",@_));
+    }
     }
 }
 *printflush = \*print;
@@ -183,14 +200,14 @@ my($SEEK_SET, $SEEK_CUR, $SEEK_END);
 sub _init_seek_constants
 {
     if ($IO_CONSTANTS) {
-	require IO::Handle;
-	$SEEK_SET = &IO::Handle::SEEK_SET;
-	$SEEK_CUR = &IO::Handle::SEEK_CUR;
-	$SEEK_END = &IO::Handle::SEEK_END;
+    require IO::Handle;
+    $SEEK_SET = &IO::Handle::SEEK_SET;
+    $SEEK_CUR = &IO::Handle::SEEK_CUR;
+    $SEEK_END = &IO::Handle::SEEK_END;
     } else {
-	$SEEK_SET = 0;
-	$SEEK_CUR = 1;
-	$SEEK_END = 2;
+    $SEEK_SET = 0;
+    $SEEK_CUR = 1;
+    $SEEK_END = 2;
     }
 }
 
@@ -221,12 +238,12 @@ sub pos
     my $self = shift;
     my $old = *$self->{pos};
     if (@_) {
-	my $pos = shift || 0;
-	my $buf = *$self->{buf};
-	my $len = $buf ? length($$buf) : 0;
-	$pos = $len if $pos > $len;
-	*$self->{lno} = 0;
-	*$self->{pos} = $pos;
+    my $pos = shift || 0;
+    my $buf = *$self->{buf};
+    my $len = $buf ? length($$buf) : 0;
+    $pos = $len if $pos > $len;
+    *$self->{lno} = 0;
+    *$self->{pos} = $pos;
     }
     $old;
 }
@@ -248,33 +265,33 @@ sub getline
     return if $pos >= $len;
 
     unless (defined $/) {  # slurp
-	*$self->{pos} = $len;
-	return substr($$buf, $pos);
+    *$self->{pos} = $len;
+    return substr($$buf, $pos);
     }
 
     unless (length $/) {  # paragraph mode
-	# XXX slow&lazy implementation using getc()
-	my $para = "";
-	my $eol = 0;
-	my $c;
-	while (defined($c = $self->getc)) {
-	    if ($c eq "\n") {
-		$eol++;
-	    } elsif ($eol > 1) {
-		$self->ungetc($c);
-		last;
-	    }
-	    $para .= $c;
-	}
-	return $para;   # XXX wantarray
+    # XXX slow&lazy implementation using getc()
+    my $para = "";
+    my $eol = 0;
+    my $c;
+    while (defined($c = $self->getc)) {
+        if ($c eq "\n") {
+        $eol++;
+        } elsif ($eol > 1) {
+        $self->ungetc($c);
+        last;
+        }
+        $para .= $c;
+    }
+    return $para;   # XXX wantarray
     }
 
     my $idx = index($$buf,$/,$pos);
     if ($idx < 0) {
-	# return rest of it
-	*$self->{pos} = $len;
-	$. = ++ *$self->{lno};
-	return substr($$buf, $pos);
+    # return rest of it
+    *$self->{pos} = $len;
+    $. = ++ *$self->{lno};
+    return substr($$buf, $pos);
     }
     $len = $idx - $pos + length($/);
     *$self->{pos} += $len;
@@ -311,10 +328,10 @@ sub truncate
     my $len = shift || 0;
     my $buf = *$self->{buf};
     if (length($$buf) >= $len) {
-	substr($$buf, $len) = '';
-	*$self->{pos} = $len if $len < *$self->{pos};
+    substr($$buf, $len) = '';
+    *$self->{pos} = $len if $len < *$self->{pos};
     } else {
-	$$buf .= ($self->pad x ($len - length($$buf)));
+    $$buf .= ($self->pad x ($len - length($$buf)));
     }
     $self;
 }
@@ -330,9 +347,9 @@ sub read
     my $len = $_[1];
     $len = $rem if $len > $rem;
     if (@_ > 2) { # read offset
-	substr($_[0],$_[2]) = substr($$buf, $pos, $len);
+    substr($_[0],$_[2]) = substr($$buf, $pos, $len);
     } else {
-	$_[0] = substr($$buf, $pos, $len);
+    $_[0] = substr($$buf, $pos, $len);
     }
     *$self->{pos} += $len;
     return $len;
@@ -349,17 +366,17 @@ sub write
     my $len = $slen;
     my $off = 0;
     if (@_ > 1) {
-	$len = $_[1] if $_[1] < $len;
-	if (@_ > 2) {
-	    $off = $_[2] || 0;
-	    die "Offset outside string" if $off > $slen;
-	    if ($off < 0) {
-		$off += $slen;
-		die "Offset outside string" if $off < 0;
-	    }
-	    my $rem = $slen - $off;
-	    $len = $rem if $rem < $len;
-	}
+    $len = $_[1] if $_[1] < $len;
+    if (@_ > 2) {
+        $off = $_[2] || 0;
+        die "Offset outside string" if $off > $slen;
+        if ($off < 0) {
+        $off += $slen;
+        die "Offset outside string" if $off < 0;
+        }
+        my $rem = $slen - $off;
+        $len = $rem if $rem < $len;
+    }
     }
     substr($$buf, $pos, $len) = substr($_[0], $off, $len);
     *$self->{pos} += $len;

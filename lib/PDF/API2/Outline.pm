@@ -5,16 +5,32 @@
 #   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
 #   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#   Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   A Perl Module Chain to faciliate the Creation and Modification
+#   of High-Quality "Portable Document Format (PDF)" Files.
 #
-#   This library is free software; you can redistribute it
-#   and/or modify it under the same terms as Perl itself.
-#
-#=======================================================================
-#
-#   PDF::API2::Outline
+#   Copyright 1999-2004 Alfred Reibenschuh <areibens@cpan.org>.
 #
 #=======================================================================
+#
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the
+#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+#   Boston, MA 02111-1307, USA.
+#
+#   $Id: Outline.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#
+#=======================================================================
+
 package PDF::API2::Outline;
 
 BEGIN {
@@ -22,22 +38,17 @@ BEGIN {
     use vars qw( @ISA $hasWeakRef  $VERSION);
     eval " use WeakRef; ";
     $hasWeakRef= $@ ? 0 : 1;
-    @ISA = qw(PDF::API2::PDF::Dict);
-    ( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+    use PDF::API2::Util;
+    use PDF::API2::Basic::PDF::Utils;
+    use PDF::API2::Basic::PDF::Dict;
+
+    @ISA = qw(PDF::API2::Basic::PDF::Dict);
+
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
 
 }
 
-use PDF::API2::PDF::Dict;
-use PDF::API2::PDF::Utils;
-use PDF::API2::Util;
-
-=head2 PDF::API2::Outline
-
-Subclassed from PDF::API2::PDF::Dict.
-
-=over 4
-
-=item $otl = PDF::API2::Outline->new $api,$parent,$prev
+=head1 $otl = PDF::API2::Outline->new $api,$parent,$prev
 
 Returns a new outline object (called from $otls->outline).
 
@@ -341,5 +352,21 @@ __END__
 =head1 AUTHOR
 
 alfred reibenschuh
+
+=head1 HISTORY
+
+    $Log: Outline.pm,v $
+    Revision 1.4  2003/12/08 13:05:19  Administrator
+    corrected to proper licencing statement
+
+    Revision 1.3  2003/11/30 17:13:39  Administrator
+    merged into default
+
+    Revision 1.2.2.1  2003/11/30 16:56:21  Administrator
+    merged into default
+
+    Revision 1.2  2003/11/30 11:32:40  Administrator
+    added CVS id/log
+
 
 =cut

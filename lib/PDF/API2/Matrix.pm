@@ -1,25 +1,29 @@
 #=======================================================================
-#	 ____  ____  _____              _    ____ ___   ____
-#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#    ____  ____  _____              _    ____ ___   ____
+#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-#	This library is free software; you can redistribute it 
-#	and/or modify it under the same terms as Perl itself.
+#   This library is free software; you can redistribute it
+#   and/or modify it under the same terms as Perl itself.
 #
 #=======================================================================
 #
-#	PDF::API2::Matrix
-#	Original Copyright 1995-96 Ulrich Pfeifer.
-#	modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
+#   PDF::API2::Matrix
+#   Original Copyright 1995-96 Ulrich Pfeifer.
+#   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
+#
+#   $Id: Matrix.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
 #
 #=======================================================================
 package PDF::API2::Matrix;
-use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
+    use vars qw( $VERSION );
+
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
 
 sub new {
     my $type = shift;
@@ -39,7 +43,7 @@ sub concat {
 
     return undef if scalar(@{$self}) != scalar(@{$other});
     for my $i (0 .. $#{$self}) {
-	push @{$result->[$i]}, @{$other->[$i]};
+    push @{$result->[$i]}, @{$other->[$i]};
     }
     $result;
 }
@@ -80,7 +84,7 @@ sub multiply {
     return undef if $#{$self->[0]} != $#{$other->[0]};
     for my $row (@{$self}) {
         my $rescol = [];
-	for my $col (@{$other}) {
+    for my $col (@{$other}) {
             push(@{$rescol}, vekpro($row,$col));
         }
         push(@result, $rescol);
@@ -102,22 +106,22 @@ sub solve {
 
     return undef if $mc <= $mr;
     ROW: for($i = 0; $i <= $mr; $i++) {
-	$try=$i;
-	# make diagonal element nonzero if possible
-	while (abs($m->[$i]->[$i]) < $eps) {
-	    last ROW if $try++ > $mr;
-	    my $row = splice(@{$m},$i,1);
-	    push(@{$m}, $row);
-	}
+    $try=$i;
+    # make diagonal element nonzero if possible
+    while (abs($m->[$i]->[$i]) < $eps) {
+        last ROW if $try++ > $mr;
+        my $row = splice(@{$m},$i,1);
+        push(@{$m}, $row);
+    }
 
-	# normalize row
-	$f = $m->[$i]->[$i];
-	for($k = 0; $k <= $mc; $k++) {
+    # normalize row
+    $f = $m->[$i]->[$i];
+    for($k = 0; $k <= $mc; $k++) {
             $m->[$i]->[$k] /= $f;
-	}
-	# subtract multiple of designated row from other rows
+    }
+    # subtract multiple of designated row from other rows
         for($j = 0; $j <= $mr; $j++) {
-	    next if $i == $j;
+        next if $i == $j;
             $f = $m->[$j]->[$i];
             for($k = 0; $k <= $mc; $k++) {
                 $m->[$j]->[$k] -= $m->[$i]->[$k] * $f;

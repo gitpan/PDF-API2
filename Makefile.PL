@@ -1,108 +1,72 @@
 #!perl
+#=======================================================================
+#    ____  ____  _____              _    ____ ___   ____
+#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#   A Perl Module Chain to faciliate the Creation and Modification
+#   of High-Quality "Portable Document Format (PDF)" Files.
+#
+#   Copyright 1999-2004 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#=======================================================================
+#
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the
+#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+#   Boston, MA 02111-1307, USA.
+#
+#   $Id: Makefile.PL,v 1.8 2004/01/12 13:52:17 fredo Exp $
+#
+#=======================================================================
 
-BEGIN {
-	use ExtUtils::MakeMaker;
-	use File::Find;
-	use File::stat;
-
-	%opts=@ARGV;
-
-	if($opts{-version}) {
-		open(INF,">version.p");
-		print INF <<"EOT";
-# version file, generated from Makefile.PL
-
-\$version="$opts{-version}";
-1;
-
-EOT
-		close(INF);	
-
-		find( sub {
-			my $file=$_;
-			unlink($file) && return if($file=~/\.bak$/);
-			return if($file!~/\.pm$/);
-			open(INF,$file);
-			@lines=<INF>;
-			$l=join('',@lines);
-			close(INF);
-			$l=~/\$Revisioning:\s+([^\s]+)\s+/gm;
-			if($1) {
-				$t=scalar localtime();
-				$l=~s/(\$Revisioning:\s+)[^\s]+(\s*)[^\$]*\s+(\$)/$1$opts{-version}$2 $t $3/gm;
-				print "fixing version in file '$file'\n";
-				open(INF,">$file");
-				print INF $l;
-				close(INF);
-				print "fixing versioning in $file.\n";
-			}
-		}, './lib/PDF');
-
-	}
-}
-
-if($opts{-docs}) {
-	system(q# for x in `grep '.pm$' MANIFEST`; do y="`echo $x |tr '/' '_'|sed 's/^lib_//g'`"; ./contrib/pod_to_html.pl $x >docs/$y.html; done #);
-}
-
-require 'version.p';
-
-@ver=split(/\./,$version);
-
-$tag='_'.(defined($opts{-tag}) ? $opts{-tag} : 'dev') if(defined $opts{-tag});
-
-print <<'EOT';
-   ____  ____  _____              _    ____ ___   ____
-  |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-  | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-  |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-  |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-EOT
-print <<"EOT";
-                                      ($version$tag)
-  please look at http://www.penguin.at0.net/~fredo/files/
-  for examples and contrib.
-EOT
-
-
+require 5.008;
+use ExtUtils::MakeMaker;
 
 WriteMakefile (
-	NAME		=>	"PDF::API2",
-	VERSION		=>	"$version$tag",
-	AUTHOR		=>	"areibens\@cpan.org",
-	ABSTRACT	=>	"TNG PDF Generation API",
-	dist		=>	{
-		ZIP		=>	"zip ",
-		ZIPFLAGS	=>	" -v -o -r -9 ",
-		COMPRESS	=>	"gzip -9 -f ",
-	},
-	MAN1PODS	=>	{},
-	MAN3PODS	=>	{},
-	PREREQ_PM	=>	{
-					'Compress::Zlib'	=> 1.03,
-				},
-	BINARY_LOCATION	=>  "PDF-API2-$version$tag-ppd.tar.gz",
+    NAME         =>  "PDF::API2",
+    VERSION      =>  "0.40_14",
+    AUTHOR       =>  "areibens\@cpan.org",
+    ABSTRACT     =>  "TheNextGen PDF Create/Modify API",
+    dist         =>  {
+        ZIP         =>  "zip ",
+        ZIPFLAGS    =>  " -v -o -r -9 ",
+        COMPRESS    =>  "gzip -9 -f ",
+    },
+    MAN1PODS     =>  {},
+    MAN3PODS     =>  {},
+    PREREQ_PM    =>  {
+                    'Compress::Zlib'    => 1.0,
+                },
 );
 
-sub MY::postamble
-{
-    my $self = shift;
-    return <<"EOT";
-
-ppdist: all ppd pm_to_blib
-	tar zcvf PDF-API2-$version$tag-ppd.tar.gz blib
-	\$(MV) PDF-API2.ppd PDF-API2-$version$tag.ppd
-
-distme: all dist ppd ppdist
-
-ecddist:
-	tar zcvf examples+contrib+docs-$version$tag.tar.gz `cat MANIFEST.examples`
-
-EOT
-}
-
-print "anything else ? NO.\n";
 exit;
 
 __END__
 
+
+# $Log: Makefile.PL,v $
+# Revision 1.8  2004/01/12 13:52:17  fredo
+# update for 0.40_14
+#
+# Revision 1.7  2003/12/08 21:37:46  Administrator
+# updated  copyright date
+#
+# Revision 1.6  2003/12/08 11:39:47  Administrator
+# updated for req. perl >= 5.8 of 0.40_13 release
+#
+# Revision 1.5  2003/11/30 17:04:08  Administrator
+# merged into default
+#

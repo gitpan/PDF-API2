@@ -1,45 +1,59 @@
-#==================================================================
+#=======================================================================
+#    ____  ____  _____              _    ____ ___   ____
+#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-# Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   A Perl Module Chain to faciliate the Creation and Modification
+#   of High-Quality "Portable Document Format (PDF)" Files.
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+#   Copyright 1999-2004 Alfred Reibenschuh <areibens@cpan.org>.
 #
-#==================================================================
+#=======================================================================
+#
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this library; if not, write to the
+#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+#   Boston, MA 02111-1307, USA.
+#
+#   $Id: Lite.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#
+#=======================================================================
+
 package PDF::API2::Lite;
 
 BEGIN {
-	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
-	eval " use WeakRef; ";
-	$hasWeakRef= $@ ? 0 : 1;
+
+    use PDF::API2;
+    use PDF::API2::Util;
+    use PDF::API2::Basic::PDF::Utils;
+
+    use POSIX qw( ceil floor );
+
+    use vars qw( $VERSION $hasWeakRef );
+
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+
 }
-
-
-
-=head1 PDF::API2::Lite
-
-=head1 NAME
-
-PDF::API2:: - A lite high-level wrapper around PDF::API2 for pdf-creation only.
 
 =head1 SYNOPSIS
 
-	use PDF::API2::Lite;
-
-	$pdf = PDF::API2::Lite->new;
-	$pdf->page(595,842);
-	$img = $pdf->image('some.jpg');
-	$font = $pdf->corefont('Times-Roman');
-	$font = $pdf->ttfont('TimesNewRoman.ttf');
-
-=cut
-
-use PDF::API2;
-use PDF::API2::Util;
-use PDF::API2::PDF::Utils;
-
-use POSIX qw( ceil floor );
+    $pdf = PDF::API2::Lite->new;
+    $pdf->page(595,842);
+    $img = $pdf->image('some.jpg');
+    $font = $pdf->corefont('Times-Roman');
+    $font = $pdf->ttfont('TimesNewRoman.ttf');
 
 =head1 METHODS
 
@@ -50,12 +64,12 @@ use POSIX qw( ceil floor );
 =cut
 
 sub new {
-	my $class=shift(@_);
-	my %opt=@_;
-	my $self={};
-	bless($self,$class);
-	$self->{api}=PDF::API2->new(@_);
-	return $self;
+    my $class=shift(@_);
+    my %opt=@_;
+    my $self={};
+    bless($self,$class);
+    $self->{api}=PDF::API2->new(@_);
+    return $self;
 }
 
 =item $pdf->page
@@ -69,12 +83,12 @@ Opens a new page.
 =cut
 
 sub page {
-	my $self=shift;
-	$self->{page}=$self->{api}->page;
-	$self->{page}->mediabox(@_) if($_[0]);
-	$self->{hybrid}=$self->{page}->hybrid;
-#	$self->{hybrid}->compress;
-	return $self;
+    my $self=shift;
+    $self->{page}=$self->{api}->page;
+    $self->{page}->mediabox(@_) if($_[0]);
+    $self->{gfx}=$self->{page}->gfx;
+#   $self->{gfx}->compress;
+    return $self;
 }
 
 
@@ -87,13 +101,13 @@ Sets the global mediabox.
 =cut
 
 sub mediabox {
-	my ($self,$x1,$y1,$x2,$y2) = @_;
-	if(defined $x2) {
-		$self->{api}->mediabox($x1,$y1,$x2,$y2);
-	} else {
-		$self->{api}->mediabox($x1,$y1);
-	}
-	$self;
+    my ($self,$x1,$y1,$x2,$y2) = @_;
+    if(defined $x2) {
+        $self->{api}->mediabox($x1,$y1,$x2,$y2);
+    } else {
+        $self->{api}->mediabox($x1,$y1);
+    }
+    $self;
 }
 
 =item $pdf->saveas $file
@@ -104,24 +118,24 @@ deallocates the pdf-structures.
 =cut
 
 sub saveas {
-	my ($self,$file)=@_;
-	if($file eq '-') {
-		return $self->{api}->stringify;
-	} else {
-		$self->{api}->saveas($file);
-		return $self;
-	}
-	$self->{api}->end;
-	foreach my $k (keys %{$self}) {
-		if(UNIVERSAL::can($k,'release')) {
-			$k->release(1);
-		} elsif(UNIVERSAL::can($k,'end')) {
-			$k->end;
-		}
-		$self->{$k}=undef;
-		delete($self->{$k});
-	}
-	return undef;
+    my ($self,$file)=@_;
+    if($file eq '-') {
+        return $self->{api}->stringify;
+    } else {
+        $self->{api}->saveas($file);
+        return $self;
+    }
+    $self->{api}->end;
+    foreach my $k (keys %{$self}) {
+        if(UNIVERSAL::can($k,'release')) {
+            $k->release(1);
+        } elsif(UNIVERSAL::can($k,'end')) {
+            $k->end;
+        }
+        $self->{$k}=undef;
+        delete($self->{$k});
+    }
+    return undef;
 }
 
 
@@ -131,17 +145,17 @@ Returns a new or existing adobe core font object.
 
 B<Examples:>
 
-	$font = $pdf->corefont('Times-Roman');
-	$font = $pdf->corefont('Times-Bold');
-	$font = $pdf->corefont('Helvetica');
-	$font = $pdf->corefont('ZapfDingbats');
+    $font = $pdf->corefont('Times-Roman');
+    $font = $pdf->corefont('Times-Bold');
+    $font = $pdf->corefont('Helvetica');
+    $font = $pdf->corefont('ZapfDingbats');
 
 =cut
 
 sub corefont {
-	my ($self,$name,@opts)=@_;
-	my $obj=$self->{api}->corefont($name,@opts);
-	return $obj;
+    my ($self,$name,@opts)=@_;
+    my $obj=$self->{api}->corefont($name,@opts);
+    return $obj;
 }
 
 =item $font = $pdf->ttfont $ttfile
@@ -150,15 +164,15 @@ Returns a new or existing truetype font object.
 
 B<Examples:>
 
-	$font = $pdf->ttfont('TimesNewRoman.ttf');
-	$font = $pdf->ttfont('/fonts/Univers-Bold.ttf');
-	$font = $pdf->ttfont('../Democratica-SmallCaps.ttf');
+    $font = $pdf->ttfont('TimesNewRoman.ttf');
+    $font = $pdf->ttfont('/fonts/Univers-Bold.ttf');
+    $font = $pdf->ttfont('../Democratica-SmallCaps.ttf');
 
 =cut
 
 sub ttfont {
-	my ($self,$file,@opts)=@_;
-	return $self->{api}->ttfont($file,@opts);
+    my ($self,$file,@opts)=@_;
+    return $self->{api}->ttfont($file,@opts);
 }
 
 =item $font = $pdf->psfont $pfb, $afm, $encoding
@@ -167,14 +181,14 @@ Returns a new type1 font object.
 
 B<Examples:>
 
-	$font = $pdf->psfont('TimesRoman.pfb','TimesRoman.afm','latin1');
-	$font = $pdf->psfont('/fonts/Univers.pfb','/fonts/Univers.afm','latin2');
+    $font = $pdf->psfont('TimesRoman.pfb','TimesRoman.afm','latin1');
+    $font = $pdf->psfont('/fonts/Univers.pfb','/fonts/Univers.afm','latin2');
 
 =cut
 
 sub psfont {
-	my ($self,@args)=@_;
-	return $self->{api}->psfont(@args);
+    my ($self,@args)=@_;
+    return $self->{api}->psfont(@args);
 }
 
 =item @color = $pdf->color $colornumber [, $lightdark ]
@@ -185,18 +199,18 @@ Returns a color.
 
 B<Examples:>
 
-	@color = $pdf->color(0);		# 50% grey
-	@color = $pdf->color(0,+4);		# 10% grey
-	@color = $pdf->color(0,-3);		# 80% grey
-	@color = $pdf->color('yellow');		# yellow, fully saturated
-	@color = $pdf->color('red',+1);		# red, +10% white
-	@color = $pdf->color('green',-2);	# green, +20% black
+    @color = $pdf->color(0);        # 50% grey
+    @color = $pdf->color(0,+4);     # 10% grey
+    @color = $pdf->color(0,-3);     # 80% grey
+    @color = $pdf->color('yellow');     # yellow, fully saturated
+    @color = $pdf->color('red',+1);     # red, +10% white
+    @color = $pdf->color('green',-2);   # green, +20% black
 
 =cut
 
 sub color {
-	my $self=shift @_;
-	return $self->{api}->businesscolor(@_);
+    my $self=shift @_;
+    return $self->{api}->businesscolor(@_);
 }
 
 =item $egs = $pdf->create_egs
@@ -205,13 +219,13 @@ Returns a new extended-graphics-state object.
 
 B<Examples:>
 
-	$egs = $pdf->create_egs;
+    $egs = $pdf->create_egs;
 
 =cut
 
 sub create_egs {
-	my ($self)=@_;
-	return $self->{api}->extgstate;
+    my ($self)=@_;
+    return $self->{api}->extgstate;
 }
 
 =item $img = $pdf->image_jpeg $file
@@ -221,8 +235,8 @@ Returns a new jpeg-image object.
 =cut
 
 sub image_jpeg {
-	my ($self,$file)=@_;
-	return $self->{api}->image_jpeg($file);
+    my ($self,$file)=@_;
+    return $self->{api}->image_jpeg($file);
 }
 
 =item $img = $pdf->image_png $file
@@ -232,8 +246,8 @@ Returns a new png-image object.
 =cut
 
 sub image_png {
-	my ($self,$file)=@_;
-	return $self->{api}->image_png($file);
+    my ($self,$file)=@_;
+    return $self->{api}->image_png($file);
 }
 
 =item $img = $pdf->image_tiff $file
@@ -243,8 +257,8 @@ Returns a new tiff-image object.
 =cut
 
 sub image_tiff {
-	my ($self,$file)=@_;
-	return $self->{api}->image_tiff($file);
+    my ($self,$file)=@_;
+    return $self->{api}->image_tiff($file);
 }
 
 =item $img = $pdf->image_pnm $file
@@ -254,8 +268,8 @@ Returns a new pnm-image object.
 =cut
 
 sub image_pnm {
-	my ($self,$file)=@_;
-	return $self->{api}->image_pnm($file);
+    my ($self,$file)=@_;
+    return $self->{api}->image_pnm($file);
 }
 
 =item $pdf->savestate
@@ -265,8 +279,8 @@ Saves the state of the page.
 =cut
 
 sub savestate {
-	my $self=shift @_;
-	$self->{hybrid}->save;
+    my $self=shift @_;
+    $self->{gfx}->save;
 }
 
 =item $pdf->restorestate
@@ -276,8 +290,8 @@ Restores the state of the page.
 =cut
 
 sub restorestate {
-	my $self=shift @_;
-	$self->{hybrid}->restore;
+    my $self=shift @_;
+    $self->{gfx}->restore;
 }
 
 =item $pdf->egstate $egs
@@ -287,9 +301,9 @@ Sets extended-graphics-state.
 =cut
 
 sub egstate {
-	my $self=shift @_;
-	$self->{hybrid}->egstate(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->egstate(@_);
+    return($self);
 }
 
 =item $pdf->fillcolor $color
@@ -299,9 +313,9 @@ Sets fillcolor.
 =cut
 
 sub fillcolor {
-	my $self=shift @_;
-	$self->{hybrid}->fillcolor(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->fillcolor(@_);
+    return($self);
 }
 
 =item $pdf->strokecolor $color
@@ -310,47 +324,47 @@ Sets strokecolor.
 
 B<Defined color-names are:>
 
-	aliceblue, antiquewhite, aqua, aquamarine, azure, beige, bisque, black, blanchedalmond,
-	blue, blueviolet, brown, burlywood, cadetblue, chartreuse, chocolate, coral, cornflowerblue,
-	cornsilk, crimson, cyan, darkblue, darkcyan, darkgoldenrod, darkgray, darkgreen, darkgrey,
-	darkkhaki, darkmagenta, darkolivegreen, darkorange, darkorchid, darkred, darksalmon,
-	darkseagreen, darkslateblue, darkslategray, darkslategrey, darkturquoise, darkviolet,
-	deeppink, deepskyblue, dimgray, dimgrey, dodgerblue, firebrick, floralwhite, forestgreen,
-	fuchsia, gainsboro, ghostwhite, gold, goldenrod, gray, grey, green, greenyellow, honeydew,
-	hotpink, indianred, indigo, ivory, khaki, lavender, lavenderblush, lawngreen, lemonchiffon,
-	lightblue, lightcoral, lightcyan, lightgoldenrodyellow, lightgray, lightgreen, lightgrey,
-	lightpink, lightsalmon, lightseagreen, lightskyblue, lightslategray, lightslategrey,
-	lightsteelblue, lightyellow, lime, limegreen, linen, magenta, maroon, mediumaquamarine,
-	mediumblue, mediumorchid, mediumpurple, mediumseagreen, mediumslateblue, mediumspringgreen,
-	mediumturquoise, mediumvioletred, midnightblue, mintcream, mistyrose, moccasin, navajowhite,
-	navy, oldlace, olive, olivedrab, orange, orangered, orchid, palegoldenrod, palegreen,
-	paleturquoise, palevioletred, papayawhip, peachpuff, peru, pink, plum, powderblue, purple,
-	red, rosybrown, royalblue, saddlebrown, salmon, sandybrown, seagreen, seashell, sienna,
-	silver, skyblue, slateblue, slategray, slategrey, snow, springgreen, steelblue, tan, teal,
-	thistle, tomato, turquoise, violet, wheat, white, whitesmoke, yellow, yellowgreen
+    aliceblue, antiquewhite, aqua, aquamarine, azure, beige, bisque, black, blanchedalmond,
+    blue, blueviolet, brown, burlywood, cadetblue, chartreuse, chocolate, coral, cornflowerblue,
+    cornsilk, crimson, cyan, darkblue, darkcyan, darkgoldenrod, darkgray, darkgreen, darkgrey,
+    darkkhaki, darkmagenta, darkolivegreen, darkorange, darkorchid, darkred, darksalmon,
+    darkseagreen, darkslateblue, darkslategray, darkslategrey, darkturquoise, darkviolet,
+    deeppink, deepskyblue, dimgray, dimgrey, dodgerblue, firebrick, floralwhite, forestgreen,
+    fuchsia, gainsboro, ghostwhite, gold, goldenrod, gray, grey, green, greenyellow, honeydew,
+    hotpink, indianred, indigo, ivory, khaki, lavender, lavenderblush, lawngreen, lemonchiffon,
+    lightblue, lightcoral, lightcyan, lightgoldenrodyellow, lightgray, lightgreen, lightgrey,
+    lightpink, lightsalmon, lightseagreen, lightskyblue, lightslategray, lightslategrey,
+    lightsteelblue, lightyellow, lime, limegreen, linen, magenta, maroon, mediumaquamarine,
+    mediumblue, mediumorchid, mediumpurple, mediumseagreen, mediumslateblue, mediumspringgreen,
+    mediumturquoise, mediumvioletred, midnightblue, mintcream, mistyrose, moccasin, navajowhite,
+    navy, oldlace, olive, olivedrab, orange, orangered, orchid, palegoldenrod, palegreen,
+    paleturquoise, palevioletred, papayawhip, peachpuff, peru, pink, plum, powderblue, purple,
+    red, rosybrown, royalblue, saddlebrown, salmon, sandybrown, seagreen, seashell, sienna,
+    silver, skyblue, slateblue, slategray, slategrey, snow, springgreen, steelblue, tan, teal,
+    thistle, tomato, turquoise, violet, wheat, white, whitesmoke, yellow, yellowgreen
 
 or the rgb-hex-notation:
 
-	#rgb, #rrggbb, #rrrgggbbb and #rrrrggggbbbb
+    #rgb, #rrggbb, #rrrgggbbb and #rrrrggggbbbb
 
 or the cmyk-hex-notation:
 
-	%cmyk, %ccmmyykk, %cccmmmyyykkk and %ccccmmmmyyyykkkk
+    %cmyk, %ccmmyykk, %cccmmmyyykkk and %ccccmmmmyyyykkkk
 
 or the hsl-hex-notation:
 
-	&hsl, &hhssll, &hhhssslll and &hhhhssssllll
+    &hsl, &hhssll, &hhhssslll and &hhhhssssllll
 
 and additionally the hsv-hex-notation:
 
-	!hsv, !hhssvv, !hhhsssvvv and !hhhhssssvvvv
+    !hsv, !hhssvv, !hhhsssvvv and !hhhhssssvvvv
 
 =cut
 
 sub strokecolor {
-	my $self=shift @_;
-	$self->{hybrid}->strokecolor(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->strokecolor(@_);
+    return($self);
 }
 
 =item $pdf->linedash @dash
@@ -360,9 +374,9 @@ Sets linedash.
 =cut
 
 sub linedash {
-	my ($self,@a)=@_;
-	$self->{hybrid}->linedash(@a);
-	return($self);
+    my ($self,@a)=@_;
+    $self->{gfx}->linedash(@a);
+    return($self);
 }
 
 =item $pdf->linewidth $width
@@ -372,9 +386,9 @@ Sets linewidth.
 =cut
 
 sub linewidth {
-	my ($self,$linewidth)=@_;
-	$self->{hybrid}->linewidth($linewidth);
-	return($self);
+    my ($self,$linewidth)=@_;
+    $self->{gfx}->linewidth($linewidth);
+    return($self);
 }
 
 =item $pdf->transform %opts
@@ -383,19 +397,19 @@ Sets transformations (eg. translate, rotate, scale, skew) in pdf-canonical order
 
 B<Example:>
 
-	$pdf->transform(
-		-translate => [$x,$y],
-		-rotate    => $rot,
-		-scale     => [$sx,$sy],
-		-skew      => [$sa,$sb],
-	)
+    $pdf->transform(
+        -translate => [$x,$y],
+        -rotate    => $rot,
+        -scale     => [$sx,$sy],
+        -skew      => [$sa,$sb],
+    )
 
 =cut
 
 sub transform {
-	my ($self,%opt)=@_;
-	$self->{hybrid}->transform(%opt);
-	return($self);
+    my ($self,%opt)=@_;
+    $self->{gfx}->transform(%opt);
+    return($self);
 }
 
 =item $pdf->move $x, $y
@@ -403,9 +417,9 @@ sub transform {
 =cut
 
 sub move { # x,y ...
-	my $self=shift @_;
-	$self->{hybrid}->move(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->move(@_);
+    return($self);
 }
 
 =item $pdf->line $x, $y
@@ -413,9 +427,9 @@ sub move { # x,y ...
 =cut
 
 sub line { # x,y ...
-	my $self=shift @_;
-	$self->{hybrid}->line(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->line(@_);
+    return($self);
 }
 
 =item $pdf->curve $x1, $y1, $x2, $y2, $x3, $y3
@@ -423,9 +437,9 @@ sub line { # x,y ...
 =cut
 
 sub curve { # x1,y1,x2,y2,x3,y3 ...
-	my $self=shift @_;
-	$self->{hybrid}->curve(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->curve(@_);
+    return($self);
 }
 
 =item $pdf->arc $x, $y, $a, $b, $alfa, $beta, $move
@@ -433,9 +447,9 @@ sub curve { # x1,y1,x2,y2,x3,y3 ...
 =cut
 
 sub arc { # x,y,a,b,alf,bet[,mov]
-	my $self=shift @_;
-	$self->{hybrid}->arc(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->arc(@_);
+    return($self);
 }
 
 =item $pdf->ellipse $x, $y, $a, $b
@@ -443,9 +457,9 @@ sub arc { # x,y,a,b,alf,bet[,mov]
 =cut
 
 sub ellipse {
-	my $self=shift @_;
-	$self->{hybrid}->ellipse(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->ellipse(@_);
+    return($self);
 }
 
 =item $pdf->circle $x, $y, $r
@@ -453,9 +467,9 @@ sub ellipse {
 =cut
 
 sub circle {
-	my $self=shift @_;
-	$self->{hybrid}->circle(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->circle(@_);
+    return($self);
 }
 
 =item $pdf->rect $x,$y, $w,$h
@@ -463,9 +477,9 @@ sub circle {
 =cut
 
 sub rect { # x,y,w,h ...
-	my $self=shift @_;
-	$self->{hybrid}->rect(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->rect(@_);
+    return($self);
 }
 
 =item $pdf->rectxy $x1,$y1, $x2,$y2
@@ -473,9 +487,9 @@ sub rect { # x,y,w,h ...
 =cut
 
 sub rectxy {
-	my $self=shift @_;
-	$self->{hybrid}->rectxy(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->rectxy(@_);
+    return($self);
 }
 
 =item $pdf->poly $x1,$y1, ..., $xn,$yn
@@ -483,9 +497,9 @@ sub rectxy {
 =cut
 
 sub poly {
-	my $self=shift @_;
-	$self->{hybrid}->poly(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->poly(@_);
+    return($self);
 }
 
 =item $pdf->close
@@ -493,9 +507,9 @@ sub poly {
 =cut
 
 sub close {
-	my $self=shift @_;
-	$self->{hybrid}->close;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->close;
+    return($self);
 }
 
 =item $pdf->stroke
@@ -503,9 +517,9 @@ sub close {
 =cut
 
 sub stroke {
-	my $self=shift @_;
-	$self->{hybrid}->stroke;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->stroke;
+    return($self);
 }
 
 =item $pdf->fill
@@ -513,9 +527,9 @@ sub stroke {
 =cut
 
 sub fill { # nonzero
-	my $self=shift @_;
-	$self->{hybrid}->fill;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->fill;
+    return($self);
 }
 
 =item $pdf->fillstroke
@@ -523,9 +537,9 @@ sub fill { # nonzero
 =cut
 
 sub fillstroke { # nonzero
-	my $self=shift @_;
-	$self->{hybrid}->fillstroke;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->fillstroke;
+    return($self);
 }
 
 =item $pdf->image $imgobj, $x,$y, $w,$h
@@ -545,9 +559,9 @@ a scale of 72/150 (or 72/300) or adjust width/height accordingly.
 =cut
 
 sub image {
-	my $self=shift @_;
-	$self->{hybrid}->image(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->image(@_);
+    return($self);
 }
 
 =item $pdf->textstart
@@ -555,9 +569,9 @@ sub image {
 =cut
 
 sub textstart {
-	my $self=shift @_;
-	$self->{hybrid}->textstart;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->textstart;
+    return($self);
 }
 
 =item $pdf->textfont $fontobj,$size
@@ -565,9 +579,9 @@ sub textstart {
 =cut
 
 sub textfont {
-	my $self=shift @_;
-	$self->{hybrid}->font(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->font(@_);
+    return($self);
 }
 
 =item $txt->textlead $leading
@@ -575,9 +589,9 @@ sub textfont {
 =cut
 
 sub textlead {
-	my $self=shift @_;
-	$self->{hybrid}->lead(@_);
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->lead(@_);
+    return($self);
 }
 
 =item $pdf->text $string
@@ -587,8 +601,8 @@ Applys the given text.
 =cut
 
 sub text {
-	my $self=shift @_;
-	return $self->{hybrid}->text(@_)||$self;
+    my $self=shift @_;
+    return $self->{gfx}->text(@_)||$self;
 }
 
 =item $pdf->nl
@@ -596,9 +610,9 @@ sub text {
 =cut
 
 sub nl {
-	my $self=shift @_;
-	$self->{hybrid}->nl;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->nl;
+    return($self);
 }
 
 =item $pdf->textend
@@ -606,9 +620,9 @@ sub nl {
 =cut
 
 sub textend {
-	my $self=shift @_;
-	$self->{hybrid}->textend;
-	return($self);
+    my $self=shift @_;
+    $self->{gfx}->textend;
+    return($self);
 }
 
 =item $pdf->print $font, $size, $x, $y, $rot, $just, $text
@@ -618,33 +632,50 @@ Convenience wrapper for shortening the textstart..textend sequence.
 =cut
 
 sub print {
-	my $self=shift @_;
-	my ($font, $size, $x, $y, $rot, $just, @text)=@_;
-	my $text=join(' ',@text);
-	$self->textstart;
-	$self->textfont($font, $size);
-	$self->transform(
-		-translate=>[$x, $y],
-		-rotate=> $rot,
-	);
-	if($just==1) {
-		$self->{hybrid}->text_center($text);
-	} elsif($just==2) {
-		$self->{hybrid}->text_right($text);
-	} else {
-		$self->text(@text);
-	}
-	$self->textend;
-	return($self);
+    my $self=shift @_;
+    my ($font, $size, $x, $y, $rot, $just, @text)=@_;
+    my $text=join(' ',@text);
+    $self->textstart;
+    $self->textfont($font, $size);
+    $self->transform(
+        -translate=>[$x, $y],
+        -rotate=> $rot,
+    );
+    if($just==1) {
+        $self->{gfx}->text_center($text);
+    } elsif($just==2) {
+        $self->{gfx}->text_right($text);
+    } else {
+        $self->text(@text);
+    }
+    $self->textend;
+    return($self);
 }
+
+1;
+
+__END__
 
 =head1 AUTHOR
 
 alfred reibenschuh
 
+=head1 HISTORY
+
+    $Log: Lite.pm,v $
+    Revision 1.4  2003/12/08 13:05:19  Administrator
+    corrected to proper licencing statement
+
+    Revision 1.3  2003/11/30 17:11:55  Administrator
+    merged into default
+
+    Revision 1.2.2.1  2003/11/30 16:56:21  Administrator
+    merged into default
+
+    Revision 1.2  2003/11/30 11:32:56  Administrator
+    added CVS id/log
+
+
 =cut
 
 
-1;
-
-__END__
