@@ -1,3 +1,12 @@
+2004-09-20 13:22  fredo
+
+	* lib/PDF/API2.pm: added default param to fix import-rotation added
+	  default param to fix annotation-import
+
+2004-09-13 17:30  fredo
+
+	* examples/032_separation: added All/None Separation CS
+
 2004-09-13 17:27  fredo
 
 	* lib/PDF/API2/Page.pm: added rotate for acrobat-wise pdf-creators

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.59 2004/09/03 12:35:09 fredo Exp $
+#   $Id: API2.pm,v 1.60 2004/09/20 11:22:18 fredo Exp $
 #
 #=======================================================================
 
@@ -37,8 +37,8 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.59 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
-    # $Date: 2004/09/03 12:35:09 $
+    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.60 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
+    # $Date: 2004/09/20 11:22:18 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -484,6 +484,12 @@ sub preferences {
 
 Gets/Sets default values for the behaviour of ::API2.
 
+B<Supported Parameters:>
+
+I<nounrotate> ... prohibits API2 from rotating imported/opened page to re-create a default pdf-context.
+
+I<copyannots> ... enables importing of annotations (B<*EXPERIMENTAL*>).
+
 =cut
 
 sub default {
@@ -803,7 +809,7 @@ sub openpage {
         if(($rotate=$page->find_prop('Rotate')) && (!defined($page->{' fixed'}) || $page->{' fixed'}<1)) {
             $rotate=($rotate->val+360)%360;
 
-            if($rotate!=0) {
+            if($rotate!=0 && !$self->{nounrotate}) {
                 $page->{Rotate}=PDFNum(0);
                 foreach my $mediatype (qw( MediaBox CropBox BleedBox TrimBox ArtBox )) {
                     if($media=$page->find_prop($mediatype)) {
@@ -878,9 +884,11 @@ sub walk_obj {
     }
 
     return($objs->{scalar $obj}) if(defined $objs->{scalar $obj});
-##  die "infinite loop while copying objects" if($obj->{' copied'});
-    $tobj=$obj->copy;
-##  $obj->{' copied'}=1;
+####die "infinite loop while copying objects" if($obj->{' copied'});
+
+    $tobj=$obj->copy($spdf); ## thanks to: yaheath // Fri, 17 Sep 2004
+    
+####$obj->{' copied'}=1;
     $tpdf->new_obj($tobj) if($obj->is_obj($spdf));
 
     $objs->{scalar $obj}=$tobj;
@@ -1048,70 +1056,71 @@ sub importpage {
     $t_page->mediabox( map { $_->val } $xo->{BBox}->elementsof) if(defined $xo->{BBox});
     $t_page->gfx->formimage($xo,0,0,1);
 
-#    # copy annotations and/or form elements as well
-#    if (exists $s_page->{Annots} and $s_page->{Annots}) {
-#
-#            # first set up the AcroForm, if required
-#            my $AcroForm;
-#            if (my $a = $s_pdf->{pdf}->{Root}->realise->{AcroForm}) {
-#                    $a->realise;
-#
-#                    $AcroForm = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a,qw( NeedAppearances SigFlags CO DR DA Q ));
-#            }
-#            my @Fields = ();
-#            my @Annots = ();
-#            foreach my $a ($s_page->{Annots}->elementsof) {
-#                    $a->realise;
-#                    my $t_a = PDFDict();
-#                    $self->{pdf}->new_obj($t_a);
-#                    # these objects are likely to be both annotations and Acroform fields
-#                    # key names are copied from PDF Reference 1.4 (Tables)
-#                    my @k = (
-#                            qw( Type Subtype Contents P Rect NM M F BS Border AP AS C CA T Popup A AA StructParent
-#                            ),                                      # Annotations - Common (8.10)
-#                            qw( Subtype Contents Open Name ),       # Text Annotations (8.15)
-#                            qw( Subtype Contents Dest H PA ),       # Link Annotations (8.16)
-#                            qw( Subtype Contents DA Q ),            # Free Text Annotations (8.17)
-#                            qw( Subtype Contents L BS LE IC ) ,     # Line Annotations (8.18)
-#                            qw( Subtype Contents BS IC ),           # Square and Circle Annotations (8.20)
-#                            qw( Subtype Contents QuadPoints ),      # Markup Annotations (8.21)
-#                            qw( Subtype Contents Name ),            # Rubber Stamp Annotations (8.22)
-#                            qw( Subtype Contents InkList BS ),      # Ink Annotations (8.23)
-#                            qw( Subtype Contents Parent Open ),     # Popup Annotations (8.24)
-#                            qw( Subtype FS Contents Name ),         # File Attachment Annotations (8.25)
-#                            qw( Subtype Sound Contents Name ),      # Sound Annotations (8.26)
-#                            qw( Subtype Movie Contents A ),         # Movie Annotations (8.27)
-#                            qw( Subtype Contents H MK ),            # Widget Annotations (8.28)
-#                                                                    # Printers Mark Annotations (none)
-#                                                                    # Trap Network Annotations (none)
-#                    );
-#                    push @k, (
-#                            qw( Subtype FT Parent Kids T TU TM Ff V DV AA
-#                            ),                                      # Fields - Common (8.49)
-#                            qw( DR DA Q ),                          # Fields containing variable text (8.51)
-#                            qw( Opt ),                              # Checkbox field (8.54)
-#                            qw( Opt ),                              # Radio field (8.55)
-#                            qw( MaxLen ),                           # Text field (8.57)
-#                            qw( Opt TI I ),                         # Choice field (8.59)
-#                    ) if $AcroForm;
-#                    # sorting out dups
-#                    my %ky=map { $_ => 1 } @k;
-#                    # we do P separately, as it points to the page the Annotation is on
-#                    delete $ky{P};
-#                    # copy everything else
-#                    foreach my $k (keys %ky) {
-#                            next unless defined $a->{$k};
-#                            $t_a->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a->{$k});
-#                    }
-#                    $t_a->{P} = $t_page;
-#                    push @Annots, $t_a;
-#                    push @Fields, $t_a if ($AcroForm and $t_a->{Subtype}->val eq 'Widget');
-#            }
-#            $t_page->{Annots} = PDFArray(@Annots);
-#            $AcroForm->{Fields} = PDFArray(@Fields) if $AcroForm;
-#            $self->{pdf}->{Root}->{AcroForm} = $AcroForm;
-#    }
+    # copy annotations and/or form elements as well
+    if (exists $s_page->{Annots} and $s_page->{Annots} and $self->{copyannots}) {
+      my %cache;
 
+            # first set up the AcroForm, if required
+            my $AcroForm;
+            if (my $a = $s_pdf->{pdf}->{Root}->realise->{AcroForm}) {
+                    $a->realise;
+
+                    $AcroForm = walk_obj(\%cache,$s_pdf->{pdf},$self->{pdf},$a,qw( NeedAppearances SigFlags CO DR DA Q ));
+            }
+            my @Fields = ();
+            my @Annots = ();
+            foreach my $a ($s_page->{Annots}->elementsof) {
+                    $a->realise;
+                    my $t_a = PDFDict();
+                    $self->{pdf}->new_obj($t_a);
+                    # these objects are likely to be both annotations and Acroform fields
+                    # key names are copied from PDF Reference 1.4 (Tables)
+                    my @k = (
+                            qw( Type Subtype Contents P Rect NM M F BS Border AP AS C CA T Popup A AA StructParent Rotate
+                            ),                                      # Annotations - Common (8.10)
+                            qw( Subtype Contents Open Name ),       # Text Annotations (8.15)
+                            qw( Subtype Contents Dest H PA ),       # Link Annotations (8.16)
+                            qw( Subtype Contents DA Q ),            # Free Text Annotations (8.17)
+                            qw( Subtype Contents L BS LE IC ) ,     # Line Annotations (8.18)
+                            qw( Subtype Contents BS IC ),           # Square and Circle Annotations (8.20)
+                            qw( Subtype Contents QuadPoints ),      # Markup Annotations (8.21)
+                            qw( Subtype Contents Name ),            # Rubber Stamp Annotations (8.22)
+                            qw( Subtype Contents InkList BS ),      # Ink Annotations (8.23)
+                            qw( Subtype Contents Parent Open ),     # Popup Annotations (8.24)
+                            qw( Subtype FS Contents Name ),         # File Attachment Annotations (8.25)
+                            qw( Subtype Sound Contents Name ),      # Sound Annotations (8.26)
+                            qw( Subtype Movie Contents A ),         # Movie Annotations (8.27)
+                            qw( Subtype Contents H MK ),            # Widget Annotations (8.28)
+                                                                    # Printers Mark Annotations (none)
+                                                                    # Trap Network Annotations (none)
+                    );
+                    push @k, (
+                            qw( Subtype FT Parent Kids T TU TM Ff V DV AA
+                            ),                                      # Fields - Common (8.49)
+                            qw( DR DA Q ),                          # Fields containing variable text (8.51)
+                            qw( Opt ),                              # Checkbox field (8.54)
+                            qw( Opt ),                              # Radio field (8.55)
+                            qw( MaxLen ),                           # Text field (8.57)
+                            qw( Opt TI I ),                         # Choice field (8.59)
+                    ) if $AcroForm;
+                    # sorting out dups
+                    my %ky=map { $_ => 1 } @k;
+                    # we do P separately, as it points to the page the Annotation is on
+                    delete $ky{P};
+                    # copy everything else
+                    foreach my $k (keys %ky) {
+                            next unless defined $a->{$k};
+                            $a->{$k}->realise;
+                            $t_a->{$k} = walk_obj(\%cache,$s_pdf->{pdf},$self->{pdf},$a->{$k});
+                    }
+                    $t_a->{P} = $t_page;
+                    push @Annots, $t_a;
+                    push @Fields, $t_a if ($AcroForm and $t_a->{Subtype}->val eq 'Widget');
+            }
+            $t_page->{Annots} = PDFArray(@Annots);
+            $AcroForm->{Fields} = PDFArray(@Fields) if $AcroForm;
+            $self->{pdf}->{Root}->{AcroForm} = $AcroForm;
+    }
     $t_page->{' imported'} = 1;
 
     $self->{pdf}->out_obj($t_page);
@@ -2024,6 +2033,10 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.60  2004/09/20 11:22:18  fredo
+    added default param to fix import-rotation
+    added default param to fix annotation-import
+
     Revision 1.59  2004/09/03 12:35:09  fredo
     pop'd to new version
 
