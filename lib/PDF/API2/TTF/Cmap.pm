@@ -203,6 +203,8 @@ Finds the a Unicode table, giving preference to the Microsoft one, and sets the 
 to it if found. Returns the table it finds.
 
 =cut
+
+
 sub find_ms
 {
     my ($self) = @_;

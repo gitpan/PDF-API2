@@ -20,7 +20,7 @@ package PDF::API2::PdfImage;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Hybrid);
-( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b40 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::PDF::Utils;

@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b40 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -705,10 +705,13 @@ sub importpage {
 
 	# create a whole content stream
 	my $content=$t_page->hybrid();
-	$content->add(" q ");
+	
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
-
+    # since the source page comes from openpage it already 
+    # contains the required starting 'q' without the final 'Q'
+    # which is also added by hybrid so we clear the content stream
+    $content->{' stream'}='';
 		foreach my $k ($s_page->{Contents}->elementsof) {
 			$k->realise;
 			my $stream=unfilter($k->{Filter}, $k->{' stream'});
@@ -718,7 +721,6 @@ sub importpage {
 			$content->add(" $stream ");
 		}
 	}
-	$content->add(" Q ");
 	$content->{Length}=PDFNum(length($content->{' stream'}));
 	## if we like compress we will do it now to do quicker saves
 	if($self->{forcecompress}>0){
