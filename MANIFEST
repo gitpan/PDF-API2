@@ -39,6 +39,7 @@ lib/PDF/API2/Resource/XObject/Image/TIFF.pm
 lib/PDF/API2/Resource/XObject/Form/BarCode.pm
 lib/PDF/API2/Resource/XObject/Form/Hybrid.pm
 lib/PDF/API2/Resource/XObject/Form/BarCode/codabar.pm
+lib/PDF/API2/Resource/XObject/Form/BarCode/code128.pm
 lib/PDF/API2/Resource/XObject/Form/BarCode/code3of9.pm
 lib/PDF/API2/Resource/XObject/Form/BarCode/ean13.pm
 lib/PDF/API2/Resource/XObject/Form/BarCode/int2of5.pm

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.10 2004/01/12 13:52:41 fredo Exp $
+#   $Id: API2.pm,v 1.11 2004/01/14 18:25:41 fredo Exp $
 #
 #=======================================================================
 
@@ -37,9 +37,9 @@ BEGIN {
 
     use vars qw( $VERSION $RELEASEVERSION $seq );
 
-    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/01/12 13:52:41 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/01/14 18:25:41 $
 
-    $RELEASEVERSION = '0.40_14';
+    $RELEASEVERSION = '0.40_15';
 
     $seq="AA";
 
@@ -1677,6 +1677,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.11  2004/01/14 18:25:41  fredo
+    release update 0.40_15
+
     Revision 1.10  2004/01/12 13:52:41  fredo
     update for 0.40_14
 

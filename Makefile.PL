@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 1.8 2004/01/12 13:52:17 fredo Exp $
+#   $Id: Makefile.PL,v 1.9 2004/01/14 18:25:12 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile (
     NAME         =>  "PDF::API2",
-    VERSION      =>  "0.40_14",
+    VERSION      =>  "0.40_15",
     AUTHOR       =>  "areibens\@cpan.org",
     ABSTRACT     =>  "TheNextGen PDF Create/Modify API",
     dist         =>  {
@@ -58,6 +58,9 @@ __END__
 
 
 # $Log: Makefile.PL,v $
+# Revision 1.9  2004/01/14 18:25:12  fredo
+# release update 0.40_15
+#
 # Revision 1.8  2004/01/12 13:52:17  fredo
 # update for 0.40_14
 #
