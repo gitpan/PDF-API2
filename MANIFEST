@@ -29,6 +29,7 @@ lib/PDF/API2/Resource/CIDFont.pm
 lib/PDF/API2/Resource/ColorSpace.pm
 lib/PDF/API2/Resource/ExtGState.pm
 lib/PDF/API2/Resource/Font.pm
+lib/PDF/API2/Resource/UniFont.pm
 lib/PDF/API2/Resource/Pattern.pm
 lib/PDF/API2/Resource/Shading.pm
 lib/PDF/API2/Resource/XObject.pm

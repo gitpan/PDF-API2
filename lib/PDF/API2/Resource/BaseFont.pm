@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 1.11 2004/11/22 02:05:32 fredo Exp $
+#   $Id: BaseFont.pm,v 1.12 2004/11/24 20:10:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:05:32 $
+    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:10:55 $
 
 }
 
@@ -651,42 +651,34 @@ Returns a properly formatted representation of $text for use in the PDF.
 sub textByStr {
     my ($self,$text)=@_;
     my $newtext='';
-    if(is_utf8($text)) {
+    if(is_utf8($text)) 
+    {
         $text=$self->strByUtf($text);
     }
-#    foreach my $g (unpack('C*',$text)) {
-#        $newtext.=sprintf('%02X',$g);
-#    }
-#    return("<$newtext>");
     $newtext=$text;
     $newtext=~s/\\/\\\\/go;
     $newtext=~s/([\x00-\x1f])/sprintf('\%03lo',ord($1))/ge;
     $newtext=~s/([\{\}\[\]\(\)])/\\$1/g;
-    return("($newtext)");
+    return($newtext);
 }
 
 sub text {
-  my ($self,$text,%opts)=@_;
-  my $newtext='';
-  if($opts{-utf8}) {
-    $text=utf8_to_ucs2($text);
-    foreach my $x (0..(length($text)>>1)-1) {
-      $newtext.=pack("C",vec($text,$x,16) & 0xff);
-    }
-  } elsif($opts{-ucs2}) {
-    foreach my $x (0..(length($text)>>1)-1) {
-      $newtext.=pack("C",vec($text,$x,16) & 0xff);
-    }
-  } else {
-  # foreach my $g (0..length($text)-1) {
-  #   $newtext.=
-  #     (substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
-  #     ? sprintf('\%03lo',vec($text,$g,8))
-  #     : substr($text,$g,1) ;
-  # }
+  my ($self,$text,$size)=@_;
+
+  my $newtext=$self->textByStr($text);
+
+  if(defined $size)
+  {
+    return("($newtext) Tj");
   }
-  return("($newtext)");
+  else
+  {
+    return("($newtext)");
+  }
 }
+
+sub isvirtual { return(undef); }
+
 1;
 
 __END__
@@ -700,6 +692,9 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 1.12  2004/11/24 20:10:55  fredo
+    added virtual font handling
+
     Revision 1.11  2004/11/22 02:05:32  fredo
     added pdf-1.5 font param specs
 

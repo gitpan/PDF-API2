@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.16 2004/10/26 11:34:22 fredo Exp $
+#   $Id: Content.pm,v 1.17 2004/11/24 20:10:31 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.16 $' =~ /Revision: (\S+)\s/; # $Date: 2004/10/26 11:34:22 $
+    ( $VERSION ) = '$Revision: 1.17 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:10:31 $
 
 }
 
@@ -1166,9 +1166,20 @@ sub font {
   my ($self,$font,$size)=@_;
   $self->{' font'}=$font;
   $self->{' fontsize'}=$size;
-  $self->add("/".$font->name,float($size),'Tf');
 
-  $self->resource('Font',$font->name,$font);
+  if($font->isvirtual)
+  {
+    $self->add("/".$font->fontlist->[0]->name,float($size),'Tf');
+    foreach my $f (@{$font->fontlist})
+    {
+        $self->resource('Font',$f->name,$f);
+    }
+  }
+  else
+  {
+    $self->add("/".$font->name,float($size),'Tf');
+    $self->resource('Font',$font->name,$font);
+  }
 
   return($self);
 }
@@ -1216,26 +1227,30 @@ sub hspace {
 
 =cut
 
-sub lead {
-        my ($self,$para)=@_;
-        if (defined ($para)) {
-                $self->{' lead'} = $para;
-                $self->add(float($para),'TL');
-        }
-        return $self->{' lead'};
+sub lead 
+{
+    my ($self,$para)=@_;
+    if (defined ($para)) 
+    {
+        $self->{' lead'} = $para;
+        $self->add(float($para),'TL');
+    }
+    return $self->{' lead'};
 }
 
 =item $rise = $txt->rise $rise
 
 =cut
 
-sub rise {
-        my ($self,$para)=@_;
-        if (defined ($para)) {
-                $self->{' rise'} = $para;
-                $self->add(float($para),'Ts');
-        }
-        return $self->{' rise'};
+sub rise 
+{
+    my ($self,$para)=@_;
+    if (defined ($para)) 
+    {
+        $self->{' rise'} = $para;
+        $self->add(float($para),'Ts');
+    }
+    return $self->{' rise'};
 }
 
 =item $rendering = $txt->render $rendering
@@ -1294,15 +1309,16 @@ Returns the width of the string based on all currently set text-attributes.
 
 =cut
 
-sub advancewidth {
+sub advancewidth 
+{
   my ($self,$text)=@_;
-  my $glyph_width=$self->{' font'}->width($text,%opt)*$self->{' fontsize'};
+  my $glyph_width=$self->{' font'}->width($text)*$self->{' fontsize'};
   my @txt=split(/\x20/,$text);
   my $num_space=(scalar @txt)-1;
   my $num_char=length($text);
   my $word_spaces=$self->wordspace*$num_space;
   my $char_spaces=$self->charspace*$num_char;
-  my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->{' hspace'}/100;
+  my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->hspace/100;
   return $advance;
 }
 
@@ -1312,26 +1328,36 @@ Applys text to the content and optionally returns the width of the given text.
 
 =cut
 
-sub text {
-  my ($self,$text,%opt)=@_;
-  my $wd=0;
-  if(defined $opt{-indent}) {
-    $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text($text),']','TJ');
-    $wd=$self->advancewidth($text)+$opt{-indent};
-  } else {
-    $self->add($self->{' font'}->text($text),'Tj');
-    $wd=$self->advancewidth($text);
-  }
+sub text 
+{
+    my ($self,$text,%opt)=@_;
+    my $wd=0;
+    if(defined $opt{-indent}) 
+    {
+        $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),']','TJ');
+        $wd+=$opt{-indent};
+    }
 
-  $self->matrix_update($wd,0);
-  return($wd);
+    if($self->{' font'}->isvirtual)
+    {
+        $self->add($self->{' font'}->text($text,$self->{' fontsize'}));
+    } 
+    else 
+    {
+        $self->add($self->{' font'}->text($text),'Tj');
+    }
+    $wd=$self->advancewidth($text);
+
+    $self->matrix_update($wd,0);
+    return($wd);
 }
 
 =item $txt->text_center $text
 
 =cut
 
-sub text_center {
+sub text_center 
+{
   my ($self,$text)=@_;
   my $width=$self->advancewidth($text);
   return $self->text($text,-indent=>-($width/2));
@@ -1375,7 +1401,7 @@ sub _text_fill_line {
         unshift @txt,pop @line;
     }
     my $ret="@txt";
-    my $text="@line";
+    my $line="@line";
     $"=$save;
     return($line,$ret);
 }
@@ -1560,6 +1586,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.17  2004/11/24 20:10:31  fredo
+    added virtual font handling, fixed var shadow bug
+
     Revision 1.16  2004/10/26 11:34:22  fredo
     reworked text_fill for paragraph, but still being development
 

@@ -145,6 +145,7 @@ foreach $ec (qw[latin1 latin2 latin3 latin4 latin5 latin6 latin7 latin8 latin9 l
         $pdf->end();
 
     }
+    last;
 }
 
 exit;

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.65 2004/10/17 03:57:21 fredo Exp $
+#   $Id: API2.pm,v 1.66 2004/11/24 20:09:57 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = ('$Revision: 1.65 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/10/17 03:57:21 $
+    ($VERSION) = ('$Revision: 1.66 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/11/24 20:09:57 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -68,6 +68,7 @@ BEGIN {
     use PDF::API2::Resource::Font::SynFont;
     use PDF::API2::Resource::CIDFont::TrueType;
     use PDF::API2::Resource::CIDFont::CJKFont;
+    use PDF::API2::Resource::UniFont;
 
     use PDF::API2::Resource::XObject::Image::JPEG;
     use PDF::API2::Resource::XObject::Image::TIFF;
@@ -1415,6 +1416,14 @@ sub bdfont {
     return($obj);
 }
 
+sub unifont {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::UniFont->new_api($self,@opts);
+
+    return($obj);
+}
+
 =back
 
 =head1 IMAGE METHODS
@@ -2039,6 +2048,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.66  2004/11/24 20:09:57  fredo
+    added unifont
+
     Revision 1.65  2004/10/17 03:57:21  fredo
     added ToUnicode call for supported fonts
 

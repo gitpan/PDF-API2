@@ -129,6 +129,7 @@ sub release
     my ($self, $force) = @_;
     my (@tofree);
 
+    return unless(ref($self));
 # delete stuff that we know we can, here
 
     if ($force)

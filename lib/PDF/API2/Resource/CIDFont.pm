@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CIDFont.pm,v 1.9 2004/11/22 21:07:55 fredo Exp $
+#   $Id: CIDFont.pm,v 1.10 2004/11/24 20:10:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 21:07:55 $
+    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:10:55 $
 
 }
 
@@ -203,10 +203,23 @@ sub textByStr
     return($self->text_cid($self->cidsByStr($text)));
 }
 
-sub text { return($_[0]->textByStr($_[1])); }
+sub text 
+{ 
+    my ($self,$text,$size)=@_;
+    my $newtext=$self->textByStr($text);
+    if(defined $size)
+    {
+        return("$newtext Tj");
+    }
+    else
+    {
+        return($newtext);
+    }
+}
 
-sub text_cid {
-    my ($self,$text)=@_;
+sub text_cid 
+{
+    my ($self,$text,$size)=@_;
     if(UNIVERSAL::can($self,'fontfile'))
     {
         foreach my $g (unpack('n*',$text)) {
@@ -214,7 +227,14 @@ sub text_cid {
         }
     }
     my $newtext=unpack('H*',$text);
-    return("<$newtext>");
+    if(defined $size)
+    {
+        return("<$newtext> Tj");
+    }
+    else
+    {
+        return("<$newtext>");
+    }
 }
 
 sub encodeByName {
@@ -268,6 +288,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CIDFont.pm,v $
+    Revision 1.10  2004/11/24 20:10:55  fredo
+    added virtual font handling
+
     Revision 1.9  2004/11/22 21:07:55  fredo
     fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
 

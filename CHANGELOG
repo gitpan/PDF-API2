@@ -1,3 +1,29 @@
+2004-11-24 21:13  fredo
+
+	* MANIFEST: added unifont
+
+2004-11-24 21:12  fredo
+
+	* TODO: update
+
+2004-11-24 21:11  fredo
+
+	* lib/PDF/API2/Resource/UniFont.pm: genesis
+
+2004-11-24 21:10  fredo
+
+	* lib/PDF/API2/Resource/: BaseFont.pm, CIDFont.pm, Font.pm: added
+	  virtual font handling
+
+2004-11-24 21:10  fredo
+
+	* lib/PDF/API2/Content.pm: added virtual font handling, fixed var
+	  shadow bug
+
+2004-11-24 21:09  fredo
+
+	* lib/PDF/API2.pm: added unifont
+
 2004-11-22 22:07  fredo
 
 	* lib/PDF/API2/Resource/: CIDFont.pm, CIDFont/CJKFont.pm,

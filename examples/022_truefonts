@@ -73,6 +73,8 @@ foreach $fn (@ARGV) {
             $txt->font($font,$fx);
 
         my $txt2=$page->text;
+        delete $txt->{Filter};
+        delete $txt2->{Filter};
 
         $txt2->textlabel(50,800,$f1,20,"font='".$font->fontname."'");
         $txt2->textlabel(50,780,$f1,20,"encoding='$encodeing'");
@@ -131,6 +133,7 @@ foreach $fn (@ARGV) {
         $page->mediabox(595,842);
 
         $gfx=$page->gfx;
+        delete $gfx->{Filter};
 
         foreach my $y (750,700,650,600,550,500,450,400,350,300,250,200,150,100,50) {
             foreach my $x (50,100,150,200,250,300,350,400,450,500) {

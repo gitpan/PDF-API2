@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Font.pm,v 1.8 2004/10/17 03:46:20 fredo Exp $
+#   $Id: Font.pm,v 1.9 2004/11/24 20:11:10 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font;
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/10/17 03:46:20 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:11:10 $
 
 }
 
@@ -168,14 +168,6 @@ sub encodeByData {
     return($self);
 }
 
-=item $pdfstring = $font->text $text
-
-Returns a properly formatted representation of $text for use in the PDF.
-
-=cut
-
-sub text { return($_[0]->textByStr($_[1])); }
-
 sub automap {
     my ($self)=@_;
 
@@ -249,6 +241,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Font.pm,v $
+    Revision 1.9  2004/11/24 20:11:10  fredo
+    added virtual font handling
+
     Revision 1.8  2004/10/17 03:46:20  fredo
     restructured encoding vs. unicode vs. glyph-name lookup
 
