@@ -61,13 +61,12 @@ use Unicode::UCD 'charinfo';
     koi8-f koi8-r koi8-u
     cp424 cp437 cp737 cp775
     cp850 cp852 cp855 cp856 cp857
-    cp860 cp861 cp862 cp863 cp864 cp865 cp866 cp869 
-    cp874
+    cp860 cp861 cp862 cp863 cp864 cp865 cp866 cp869 cp874
     WinLatin2 WinCyrillic WinLatin1 WinGreek WinTurkish WinHebrew WinArabic WinBaltic WinVietnamese
-    MacArabic MacCentralEurRoman MacCroatian MacCyrillic MacFarsi MacGreek MacHebrew MacIcelandic MacRoman MacRomanian MacRumanian MacSami MacThai MacTurkish MacUkrainian
+    MacArabic MacCentralEurRoman MacCroatian MacCyrillic MacFarsi MacGreek MacIcelandic MacRoman MacSami MacTurkish MacUkrainian
     AdobeStandardEncoding nextstep hp-roman8
 |;
-
+#   MacHebrew    MacThai     MacRomanian    MacRumanian
 sub encodingToMaps ($) {
     my $e=shift @_;
     my @c=();

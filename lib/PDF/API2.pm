@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.27 2004/05/21 10:12:29 fredo Exp $
+#   $Id: API2.pm,v 1.28 2004/05/28 11:29:01 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $RELEASEVERSION $seq @FontDirs );
 
-    ( $VERSION ) = '$Revision: 1.27 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/21 10:12:29 $
+    ( $VERSION ) = '$Revision: 1.28 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/28 11:29:01 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -1471,16 +1471,18 @@ sub image_gif {
     return($obj);
 }
 
-=item $gdf = $pdf->image_gd $gdobj
+=item $gdf = $pdf->image_gd $gdobj, %options
 
 Returns a new image object from GD::Image.
+
+B<Options:> The only option currently supported is C<-lossless =E<gt> 1>.
 
 =cut
 
 sub image_gd {
     my ($self,$gd,%opts)=@_;
 
-    my $obj=PDF::API2::Resource::XObject::Image::GD->new_api($self,$gd);
+    my $obj=PDF::API2::Resource::XObject::Image::GD->new_api($self,$gd,undef,%opts);
 
     $self->resource('XObject',$obj->name,$obj);
 
@@ -1823,6 +1825,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.28  2004/05/28 11:29:01  fredo
+    added -lossless param to gd images
+
     Revision 1.27  2004/05/21 10:12:29  fredo
     fixed slight importpage quirk
 

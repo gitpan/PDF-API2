@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: GD.pm,v 1.3 2003/12/08 13:06:10 Administrator Exp $
+#   $Id: GD.pm,v 1.4 2004/05/28 11:29:01 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::GD;
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:10 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/28 11:29:01 $
 
 }
 
@@ -55,7 +55,7 @@ Returns a image object from a GD::Image.
 =cut
 
 sub new {
-    my ($class,$pdf,$obj,$name) = @_;
+    my ($class,$pdf,$obj,$name,@opts) = @_;
     my $self;
 
     $class = ref $class if ref $class;
@@ -65,7 +65,7 @@ sub new {
 
     $self->{' apipdf'}=$pdf;
 
-    $self->read_gd($obj);
+    $self->read_gd($obj,@opts);
 
     return($self);
 }
@@ -89,7 +89,8 @@ sub new_api {
 sub read_gd {
     my $self = shift @_;
     my $gd = shift @_;
-
+    my %opts = @_;
+    
     my ($w,$h) = $gd->getBounds();
     my $c = $gd->colorsTotal();
 
@@ -99,7 +100,7 @@ sub read_gd {
     $self->bpc(8);
     $self->colorspace('DeviceRGB');
 
-    if(UNIVERSAL::can($gd,'jpeg') && ($c > 256)) {
+    if(UNIVERSAL::can($gd,'jpeg') && ($c > 256) && !$opts{-lossless}) {
 
         $self->filters('DCTDecode');
         $self->{' nofilt'}=1;
@@ -139,6 +140,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: GD.pm,v $
+    Revision 1.4  2004/05/28 11:29:01  fredo
+    added -lossless param to gd images
+
     Revision 1.3  2003/12/08 13:06:10  Administrator
     corrected to proper licencing statement
 

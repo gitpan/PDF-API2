@@ -55,7 +55,6 @@ use Unicode::UCD 'charinfo';
 |;
 #   MacHebrew    MacThai     MacRomanian    MacRumanian
 
-
 sub encodingToMaps ($) {
     my $e=shift @_;
     my @c=();
@@ -76,7 +75,7 @@ sub esc {
     return("($newtext)");
 }
 
-my @fonts=qw( Times-BoldItalic );
+my @fonts=(glob('fonts/*.ttf'),glob('fonts/*.otf'));
 
 use Test::More qw(no_plan);
 
@@ -85,7 +84,7 @@ foreach my $fn (@fonts) {
     foreach my $enc (@encodings) {
         $pdf=PDF::API2->new;
 
-        my $fnt=$pdf->corefont($fn,-encode => $enc);
+        my $fnt=$pdf->ttfont($fn,-encode => $enc);
         ok(defined($fnt),"font=$fn enc=$enc.");
         my ($m,$h)=encodingToMaps($enc);
         foreach my $c (0..255) {
@@ -94,12 +93,12 @@ foreach my $fn (@fonts) {
             ok(($t eq $u) || (nameByUni($fnt->uniByEnc($c)) eq nameByUni($m->[$c])),"font=$fn enc=$enc c=$c u=$m->[$c] t='$t'(".nameByUni($m->[$c]).")[".charinfo($m->[$c])->{name}."] u='$u'(".nameByUni($fnt->uniByEnc($c)).")[".charinfo($fnt->uniByEnc($c))->{name}."].");
         }
         eval {
-            $fnt=$pdf->corefont("$fn illegal",-encode => $enc);
+            $fnt=$pdf->ttfont("$fn illegal",-encode => $enc);
         };
         ok($@,"font=$fn enc=$enc illegal.");
 
         eval {
-            $fnt=$pdf->corefont("$fn",-encode => "$enc illegal");
+            $fnt=$pdf->ttfont("$fn",-encode => "$enc illegal");
         };
         ok($@,"font=$fn illegal enc=$enc.");
 

@@ -54,8 +54,6 @@ use Unicode::UCD 'charinfo';
     AdobeStandardEncoding nextstep hp-roman8
 |;
 #   MacHebrew    MacThai     MacRomanian    MacRumanian
-
-
 sub encodingToMaps ($) {
     my $e=shift @_;
     my @c=();
@@ -76,7 +74,7 @@ sub esc {
     return("($newtext)");
 }
 
-my @fonts=qw( Times-BoldItalic );
+my @fonts=qw( Verdana-BoldItalic );
 
 use Test::More qw(no_plan);
 

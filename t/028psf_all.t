@@ -35,12 +35,13 @@
 #
 #=======================================================================
 
+use Unicode::UCD 'charinfo';
 use Encode qw(:all);
 use utf8;
+use File::Basename;
 
 use PDF::API2;
 use PDF::API2::Util;
-use Unicode::UCD 'charinfo';
 
 @encodings=qw| 
     latin1 latin2 latin3 latin4 latin5 latin6 latin7 latin8 latin9 latin10
@@ -54,7 +55,6 @@ use Unicode::UCD 'charinfo';
     AdobeStandardEncoding nextstep hp-roman8
 |;
 #   MacHebrew    MacThai     MacRomanian    MacRumanian
-
 
 sub encodingToMaps ($) {
     my $e=shift @_;
@@ -76,16 +76,18 @@ sub esc {
     return("($newtext)");
 }
 
-my @fonts=qw( Times-BoldItalic );
+my @fonts=glob('fonts/*.pfb');
 
 use Test::More qw(no_plan);
 
 foreach my $fn (@fonts) {
-
+    $dir=dirname($fn);
+    $file=basename($fn,'.pfb');
+    $afm="$dir/$file.afm";
+    
     foreach my $enc (@encodings) {
         $pdf=PDF::API2->new;
-
-        my $fnt=$pdf->corefont($fn,-encode => $enc);
+        my $fnt=$pdf->psfont($fn, -afmfile=>$afm, -encode => $enc);
         ok(defined($fnt),"font=$fn enc=$enc.");
         my ($m,$h)=encodingToMaps($enc);
         foreach my $c (0..255) {
@@ -94,12 +96,12 @@ foreach my $fn (@fonts) {
             ok(($t eq $u) || (nameByUni($fnt->uniByEnc($c)) eq nameByUni($m->[$c])),"font=$fn enc=$enc c=$c u=$m->[$c] t='$t'(".nameByUni($m->[$c]).")[".charinfo($m->[$c])->{name}."] u='$u'(".nameByUni($fnt->uniByEnc($c)).")[".charinfo($fnt->uniByEnc($c))->{name}."].");
         }
         eval {
-            $fnt=$pdf->corefont("$fn illegal",-encode => $enc);
+            $fnt=$pdf->psfont("$fn illegal", -afmfile=>$afm, -encode => $enc);
         };
         ok($@,"font=$fn enc=$enc illegal.");
 
         eval {
-            $fnt=$pdf->corefont("$fn",-encode => "$enc illegal");
+            $fnt=$pdf->psfont($fn, -afmfile=>$afm, -encode => "$enc illegal");
         };
         ok($@,"font=$fn illegal enc=$enc.");
 
@@ -121,4 +123,3 @@ __END__
     Revision 1.1  2004/04/18 13:54:21  fredo
     genesis
 
-    

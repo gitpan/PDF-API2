@@ -34,7 +34,6 @@
 #   $Id: 020coreuse.t,v 1.3 2004/04/18 14:11:34 fredo Exp $
 #
 #=======================================================================
-
 use Encode qw(:all);
 use utf8;
 
@@ -54,8 +53,6 @@ use Unicode::UCD 'charinfo';
     AdobeStandardEncoding nextstep hp-roman8
 |;
 #   MacHebrew    MacThai     MacRomanian    MacRumanian
-
-
 sub encodingToMaps ($) {
     my $e=shift @_;
     my @c=();
@@ -76,7 +73,7 @@ sub esc {
     return("($newtext)");
 }
 
-my @fonts=qw( Times-BoldItalic );
+my @fonts=qw( Courier-Oblique );
 
 use Test::More qw(no_plan);
 
