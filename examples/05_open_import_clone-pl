@@ -1,0 +1,142 @@
+#!/usr/bin/perl
+
+use PDF::API2;
+
+if(-f $ARGV[0]) {
+	$pdf=PDF::API2->open($ARGV[0]);
+} else {
+	$pdf=PDF::API2->new;
+}
+
+
+$page = $pdf->page;
+$page->mediabox(595,842);
+$txt=$page->text;
+$txt->compress;
+
+$i=0;
+
+foreach $fn (qw(
+	Courier-Bold
+	Courier-BoldOblique
+	Courier-Oblique
+	Courier
+	Helvetica-Bold
+	Helvetica-BoldOblique
+	Helvetica-Oblique
+	Helvetica
+	Symbol
+	Times-Bold
+	Times-BoldItalic
+	Times-Italic
+	Times-Roman
+	ZapfDingbats
+)) {
+
+	$font=$pdf->corefont($fn,1);
+	
+	$txt->translate(100,$i*50);
+	$txt->font($font,50);
+	$txt->text('Hello World !');
+	$i++;
+}
+
+foreach $fn (glob("*.pfb")) {
+
+	$ff=$fn;
+	$ff=~s/\.pfb$/.afm/;
+
+	$font=$pdf->psfont($fn,$ff);
+
+	foreach $fe (qw(
+		adobe-standard	cp437	cp850	latin1
+	)) {
+
+		$fen=$font->clone($fe);
+		$fen->encode($fe);
+
+		$txt=$page->text;
+		$txt->compress;
+		$txt->translate(100,700);
+		$txt->font($fen,50);
+		$txt->text('Hello World !');
+
+		foreach $x (0..15) {
+			foreach $y (0..15) {
+				$txt->translate(50+(33*$x),50+(33*$y));
+				$txt->text(chr($y*16+$x));
+			}
+		}
+
+	}
+}
+
+$pdf->saveas("$0.pdf");
+
+$pdf=PDF::API2->open("$0.pdf");
+$pdf2=PDF::API2->new;
+
+$pdf2->importpage($pdf,1,1);
+
+$pdf2->clonepage(1);
+$page=$pdf2->openpage(2);
+
+$font=$pdf2->corefont('Helvetica-Bold',1);
+
+$txt=$page->text;
+$txt->compress;
+
+$txt->translate(50,800);
+$txt->font($font,10);
+$txt->text('Updated World !');
+
+foreach $fn (glob("*.ttf")) {
+
+	$font=$pdf2->ttfont($fn);
+
+	foreach $fe (qw(
+		adobe-standard	cp437	cp850	latin1
+	)) {
+
+		$font->encode($fe);
+
+		$txt=$page->text;
+		$txt->compress;
+		$txt->translate(100,700);
+		$txt->font($font,50);
+		$txt->text('Hello World !');
+		$txt->font($font,20);
+
+		foreach $x (0..15) {
+			foreach $y (0..15) {
+				$txt->translate(50+(33*$x),50+(33*$y));
+				$txt->text(chr($y*16+$x));
+			}
+		}
+
+	}
+}
+
+
+$pdf2->saveas("$0.2.pdf");
+
+$pdf=PDF::API2->open("$0.2.pdf");
+$pdf->clonepage(2);
+$page=$pdf->openpage(3);
+
+$font=$pdf->corefont('Helvetica-Bold',1);
+
+$txt=$page->text;
+$txt->compress;
+
+$txt->translate(50,810);
+$txt->font($font,10);
+$txt->text('Updated2 World !');
+
+$page->update;
+
+$pdf->saveas("$0.3.pdf");
+
+exit;
+
+__END__

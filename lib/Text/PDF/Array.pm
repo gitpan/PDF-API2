@@ -51,13 +51,17 @@ sub outobjdeep
     my ($self, $fh, $pdf) = @_;
     my ($obj);
 
+    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
+        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
+    }
+
     $fh->print("[ ");
     foreach $obj (@{$self->{' val'}})
     {
         $obj->outobj($fh, $pdf);
         $fh->print(" ");
     }
-    $fh->print("]");
+    $fh->print("] ");
 }
 
 

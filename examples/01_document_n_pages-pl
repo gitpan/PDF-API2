@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+
+use PDF::API2;
+
+$pdf=PDF::API2->new;
+
+$font=$pdf->corefont('Helvetica',1);
+$font->encode('latin1');
+
+foreach $med ( 
+	[ 0, 0, 595, 842, 0, 0, "This Page is A4" ], 
+	[ 0, 0, 595, 842, 100, 0, "This Page is A4" ], 
+	[ 0, 0, 595, 842, 100, 1, "This Page is A4", "but copped !" ], 
+	[ 0, 0, 500, 800, 0, 0, "This Page is Custom" ], 
+	[ 0, 0, 500, 800, 100, 0, "This Page is Custom" ], 
+	[ 0, 0, 500, 800, 100, 1, "This Page is Custom", "but cropped !" ], 
+	[ 0, 0, 842, 1190, 0, 0, "This Page is A3" ], 
+	[ 0, 0, 842, 1190, 100, 0, "This Page is A3" ], 
+	[ 0, 0, 842, 1190, 100, 1, "This Page is A3", "but cropped !" ], 
+) {
+	($x,$y,$w,$h,$f,$c,@text)=@{$med};
+
+	$page = $pdf->page;
+	$page->mediabox($x-$f,$y-$f,$w+$f,$h+$f);
+	$page->cropbox($x,$y,$w,$h) if($c);
+	
+
+	$gfx=$page->gfx;
+	$gfx->rect($x,$y,$w-$x,$h-$y);
+	$gfx->stroke;
+
+	$txt=$page->text;
+	$txt->font($font,20);
+	$txt->translate($x+10,$y+10);
+	$txt->text("L=($x,$y)");
+	$txt->translate($w-10,$h-20);
+	$txt->text_right("R=($w,$h)");
+	if($c) {
+		$txt->translate($x+10,$h-20);
+	} else {
+		$txt->translate($x-$f+10,$h+$f-20);
+	}
+	$txt->text(shift(@text)." F=($f)");
+	$txt->lead(20);
+	while(scalar @text > 0) {
+		$txt->cr;
+		$txt->text(shift @text);
+	}
+
+}
+
+$pdf->saveas("$0.pdf");
+
+exit;
+
+__END__

@@ -139,6 +139,7 @@ sub readAFM {
 			#	$self->{' AFM'}->{$key} = [ $self->{' AFM'}->{$key} ] unless ref $self->{' AFM'}->{$key};
 			#	push(@{$self->{' AFM'}->{$key}}, $val);
 			} else {
+				$val=~s/[\x00\x1f]+//g;
 				$self->{' AFM'}->{$key} = $val;
 			}
 		} else {
@@ -485,7 +486,7 @@ sub newNonEmbed {
 
 	$self->{'FontDescriptor'}->{'Flags'}=PDFNum($flags);
 	
-	if(defined $parent) {
+	if(defined($parent) && !$self->is_obj($parent)) {
 		$parent->new_obj($self);
 	}
 	return($self);
@@ -493,10 +494,20 @@ sub newNonEmbed {
 
 sub newCore {
 	my ($class, $parent, $name, $pdfname, $encoding, @glyphs) = @_;
-	my ($file);
+	my ($file,$file2,$file3);
 	
 	$file=resolveFontFile("$name.afm");
+	$file2=resolveFontFile("$name.pfa");
+	$file3=resolveFontFile("$name.pfb");
+	
 	if(! -e $file) {die "file='$file' (was '$name.afm') not existant.";}
+
+	if(-e $file2) {
+		return(new($class, $parent, $file2, $file, $pdfname, $encoding, @glyphs));
+	}
+	if(-e $file3) {
+		return(new($class, $parent, $file3, $file, $pdfname, $encoding, @glyphs));
+	}
 
 	$self=newNonEmbed($class, $parent, $file, $pdfname, $encoding, @glyphs);
 
@@ -515,22 +526,7 @@ sub newNonEmbedLight {
 	$self->{'BaseFont'} = PDFName($self->{' AFM'}->{'fontname'} || $name);
 	$self->{'Name'} = PDFName($pdfname);
 	
-	
-	# this removes the "bad /BBox error" in Acrobat
-	# -> untested in other software
-	#
-	# ( but i dont see a reason for this error, 
-	#   unless it is something postscriptish )
-	#
-	if(defined $self->{' AFM'}->{'fontbbox'}) {
-		@w = map { PDFNum($_ || 0) } split(/\s+/,$self->{' AFM'}->{'fontbbox'});
-		$self->{'BBox'}=PDFArray(@w);
-	} else {
-		$self->{'BBox'}
-			= PDFArray(PDFNum(-200),PDFNum(-200),PDFNum(900),PDFNum(1100));
-	}
-	
-	if(defined $parent) {
+	if(defined($parent) && !$self->is_obj($parent)) {
 		$parent->new_obj($self);
 	}
 	return($self);
@@ -628,8 +624,8 @@ sub new {
 		$self=newNonEmbed($class, $parent, $file2, $pdfname, $encoding, @glyphs);
 	}
 	
-	if(defined $parent) {
-		$parent->new_obj($self->{'FontDescriptor'});
+	if(defined($parent) && !$self->is_obj($parent)) {
+	##	$parent->new_obj($self->{'FontDescriptor'});
 		$parent->new_obj($self);
 	}
 	return($self);

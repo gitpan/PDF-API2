@@ -57,6 +57,7 @@ sub new {
 	$self->default('pdf',Text::PDF::File->new);
 	$self->default('Compression',1);
 	$self->default('subset',1);
+	$self->default('time','_'.pdfkey(time()));
 	foreach my $para (keys(%opt)) {
 		$self->default($para,$opt{$para});
 	}
@@ -65,8 +66,10 @@ sub new {
 	$self->{pages}->proc_set(qw( PDF Text ImageB ImageC ImageI ));
 	$self->{catalog}=$self->{pdf}->{Root};
 	$self->{pagestack}=[];
-	my $dig=digest16($class,$self,%opt);
+	my $dig=digest16(digest32($class,$self,%opt));
        	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
+       	$self->{pdf}->{'ID'}->val->[0]->{' ashex'}=1;
+       	$self->{pdf}->{'ID'}->val->[1]->{' ashex'}=1;
        	$self->{pdf}->{' id'}=$dig;
 	return $self;
 }
@@ -115,12 +118,27 @@ sub open {
 	foreach my $para (keys(%opt)) {
 		$self->default($para,$opt{$para});
 	}
-	$self->{pdf}=Text::PDF::File->open($file,1);
+
+	my $fh=PDF::API2::IOString->new();
+	$fh->import($file);
+
+	$self->{pdf}=Text::PDF::File->open($fh,1);
+	$self->{pdf}->{' fname'}=$file;
 	$self->{pdf}->{'Root'}->realise;
 	$self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
+	$self->{pdf}->{' version'} = 3;
 	my @pages=proc_pages($self->{pdf},$self->{pages});
 	$self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
 	$self->{reopened}=1;
+	my $dig=digest16(digest32($class,$file,%opt));
+	if(defined $self->{pdf}->{'ID'}){
+		$self->{pdf}->{'ID'}->realise;
+		$self->{pdf}->{' id'}=$self->{pdf}->{'ID'}->val->[0]->val;
+		$self->{pdf}->{'ID'}=PDFArray(PDFStr($self->{pdf}->{' id'}),PDFStr($dig));
+	} else {
+		$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
+		$self->{pdf}->{' id'}=$dig;
+	}
 	return $self;
 }
 
@@ -150,6 +168,7 @@ sub page {
 	$page->{' apipdf'}=$self->{pdf};
 	$page->{' api'}=$self;
         $self->{pdf}->out_obj($page);
+        $self->{pdf}->out_obj($self->{pages});
 	if($index==0) {
 		push(@{$self->{pagestack}},$page);
 	} elsif($index<0) {
@@ -183,8 +202,166 @@ sub openpage {
 		$page=PDF::API2::Page->coerce($self->{pdf},@{$self->{pagestack}}[$index-1]);
 	}
 	
+#        $self->{pdf}->out_obj($page);
+#        $self->{pdf}->out_obj($self->{pages});
 	$page->{' api'}=$self;
+	$page->{' reopened'}=1;
 	return($page);
+}
+
+=item $pageobj = $pdf->clonepage $sourceindex, $targetindex
+
+Returns the pageobject of page $targetindex, cloned from $sourceindex.
+
+B<Note:> on $index
+	
+	-1,0 ... returns the last page
+	1 ... returns page number 1
+
+B<Beware:>
+
+Under some circumstances, this method may cause $pdf->update to die.
+These circumstances remain unresolved but previously generated pdfs
+via API2 remain unaffected so far.
+
+=cut
+
+sub clonepage {
+	my $self=shift @_;
+	my $s_idx=shift @_||0;
+	my $t_idx=shift @_||0;
+	$t_idx=0 if($self->pages<$t_idx);
+	my ($s_page,$t_page);
+
+	$s_page=$self->openpage($s_idx);
+	$t_page=$self->page($t_idx);
+
+	$s_page->copy($self->{pdf},$t_page);
+	
+####################################################################
+        if(defined($t_page->{Resources})) {
+                $t_page->{Resources}->realise if($t_page->{Resources}->is_obj($self->{pdf}));
+                $t_page->{Resources}=$t_page->{Resources}->copy($self->{pdf});
+        ##      $self->{pdf}->new_obj($t_page->{Resources});
+                $t_page->{Resources}->{' realised'}=1;
+        }
+
+        if(defined($t_page->{Contents})) {
+		$t_page->fixcontents;
+		$s_page->fixcontents;
+	#	foreach my $content ($t_page->{Contents}->elementsof) {
+	#		$content->realise;
+	#	}
+	#
+	#	my $tempobj=$t_page->{Contents};
+	#
+        #        $t_page->{Contents}=$t_page->{Contents}->copy;
+	#	$self->{pdf}->remove_obj($tempobj);
+
+        #        foreach my $content ($t_page->{Contents}->elementsof) {
+        #                $self->{pdf}->new_obj($content);
+        #        }
+        
+		$t_page->{Contents}->{' val'}=[];
+		$t_page->{Contents}->add_elements($s_page->{Contents}->elementsof);
+        }
+####################################################################
+	delete $t_page->{' reopened'};
+
+        $self->{pdf}->out_obj($t_page);
+        $self->{pdf}->out_obj($self->{pages});
+	return($t_page);
+}
+
+
+sub walk_obj {
+	my ($objs,$spdf,$tpdf,$obj,@key)=@_;
+
+	my $tobj;
+	
+	return($objs->{$obj}) if(defined $objs->{$obj});
+	
+	if(ref($obj)=~/Objind$/) {
+		$obj->realise;
+	}
+
+	$tobj=$obj->copy;	
+	$tpdf->new_obj($tobj) if($obj->is_obj($spdf));
+	
+	$objs->{$obj}=$tobj;
+	
+	if(ref($obj)=~/Array$/) {
+		$tobj->{' val'}=[];
+		foreach my $k ($obj->elementsof) {
+			$k->realise if(ref($k)=~/Objind$/);
+			$tobj->add_elements(walk_obj($objs,$spdf,$tpdf,$k));
+		}
+	} elsif(ref($obj)=~/Dict$/) {
+		@key=keys(%{$tobj}) if(scalar @key <1);
+		foreach my $k (@key) {
+			next if($k=~/^ /);
+			$tobj->{$k}=walk_obj($objs,$spdf,$tpdf,$obj->{$k});
+		}
+	}
+	delete $tobj->{' streamloc'};
+	delete $tobj->{' streamsrc'};
+	return($tobj);
+}
+
+=item $pageobj = $pdf->importpage $sourcepdf, $sourceindex, $targetindex
+
+Returns the pageobject of page $targetindex, imported from $sourcepdf,$sourceindex.
+
+B<Note:> on $index
+	
+	-1,0 ... returns the last page
+	1 ... returns page number 1
+
+=cut
+
+sub importpage {
+	my $self=shift @_;
+	my $s_pdf=shift @_;
+	my $s_idx=shift @_||0;
+	my $t_idx=shift @_||0;
+	$t_idx=0 if($self->pages<$t_idx);
+	my ($s_page,$t_page);
+
+	$s_page=$s_pdf->openpage($s_idx);
+	$t_page=$self->page($t_idx);
+	
+	$self->{apiimportcache}=$self->{apiimportcache}||{};
+
+	foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
+		next unless(defined $s_page->{$k});
+		$t_page->{$k} = walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+	}
+	foreach my $k (qw( Thumb Annots )) {
+		next unless(defined $s_page->{$k});
+		$t_page->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+	}
+	foreach my $k (qw( Resources )) {
+		next unless(defined $s_page->{$k});
+		$t_page->{$k}=PDFDict();
+		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
+			next unless(defined $s_page->{$k}->{$sk});
+			$t_page->{$k}->{$sk}=PDFDict();
+			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
+				next if($ssk=~/^ /);
+				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+			}
+		}
+	}
+	if(defined $s_page->{Contents}) {
+		$s_page->fixcontents;
+		$t_page->{Contents}=PDFArray();
+		foreach my $k ($s_page->{Contents}->elementsof) {
+			$t_page->{Contents}->add_elements(walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$k));
+		}
+	}
+        $self->{pdf}->out_obj($t_page);
+        $self->{pdf}->out_obj($self->{pages});
+	return($t_page);
 }
 
 =item $pagenumber = $pdf->pages
@@ -198,6 +375,28 @@ sub pages {
 	return scalar @{$self->{pagestack}};
 }
 
+=item $pdf->mediabox $w, $h
+
+=item $pdf->mediabox $llx, $lly, $urx, $ury
+
+Sets the global mediabox.
+
+=cut
+
+sub mediabox {
+	my ($self,$x1,$y1,$x2,$y2) = @_;
+	if(defined $x2) {
+		$self->{pages}->{'MediaBox'}=PDFArray(
+			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
+		);
+	} else {
+		$self->{pages}->{'MediaBox'}=PDFArray(
+			map { PDFNum(float($_)) } (0,0,$x1,$y1)
+		);
+	}
+	$self;
+}
+
 =item $pdf->update
 
 Updates a previously "opened" document after all changes have been applied.
@@ -206,8 +405,7 @@ Updates a previously "opened" document after all changes have been applied.
 
 sub update {
 	my $self=shift @_;
-	$self->{pdf}->append_file;
-	close( $self->{pdf}->{' OUTFILE'} );
+	$self->saveas($self->{pdf}->{' fname'});
 }
 
 =item $pdf->saveas $file
@@ -217,8 +415,16 @@ Saves the document.
 =cut
 
 sub saveas {
-	my ($this,$file)=@_;
-	$this->{pdf}->out_file($file);
+	my ($self,$file)=@_;
+	if($self->{reopened}==1) {
+		$self->{pdf}->append_file;
+		open(OUTF,">$file");
+		binmode(OUTF);
+		print OUTF ${$self->{pdf}->{' OUTFILE'}->string_ref};
+		close(OUTF);
+	} else {
+		$self->{pdf}->out_file($file);	
+	}
 }
 
 =item $string = $pdf->stringify
@@ -229,13 +435,19 @@ Returns the document in a string.
 
 sub stringify {
 	my ($this)=@_;
-	my $fh = PDF::API2::IOString->new();
-	$fh->open();
-	eval {
-		$this->{pdf}->out_file($fh);
-	};
-	my $str=${$fh->string_ref};
-	$fh->realclose;
+	my $str;
+	if($self->{reopened}==1) {
+		$self->{pdf}->append_file;
+		$str=${$self->{pdf}->{' OUTFILE'}->string_ref};
+	} else {
+		my $fh = PDF::API2::IOString->new();
+		$fh->open();
+		eval {
+			$this->{pdf}->out_file($fh);
+		};
+		$str=${$fh->string_ref};
+		$fh->realclose;
+	} 
 	return($str);
 }
 
@@ -307,7 +519,7 @@ B<Examples:>
 
 sub corefont {
 	my ($self,$name,$light)=@_;
-	my $key='COREx'.pdfkey($name);
+	my $key='FFx'.pdfkey($name);
 
         $self->{pages}->{'Resources'}
         	= $self->{pages}->{'Resources'} 
@@ -353,7 +565,7 @@ B<Examples:>
 
 sub psfont {
 	my ($self,$pfb,$afm,$encoding,@glyphs)=@_;
-	my $key='POSTx'.pdfkey($pfb.$afm);
+	my $key='PSx'.pdfkey($pfb.$afm).$self->{time};
 
         $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
         $self->{pages}->{'Resources'}->{'Font'}=$self->{pages}->{'Resources'}->{'Font'} || PDFDict();
@@ -371,7 +583,8 @@ sub psfont {
 	}
         $self->{pdf}->out_obj($self->{pages});
 
-	$self->{pdf}->new_obj($self->{pages}->{'Resources'}->{'Font'}->{$key});
+	$self->{pdf}->new_obj($self->{pages}->{'Resources'}->{'Font'}->{$key}) 
+		unless($self->{pages}->{'Resources'}->{'Font'}->{$key}->is_obj($self->{pdf}));
 	$self->{pages}->{'Resources'}->{'Font'}->{$key}->{' api'}=$self;
 
 	return($self->{pages}->{'Resources'}->{'Font'}->{$key});
@@ -391,7 +604,7 @@ B<Examples:>
 
 sub ttfont {
 	my ($self,$file,$encoding)=@_;
-	my $key='TRUEx'.pdfkey($file);
+	my $key='TTx'.pdfkey($file).$self->{time};
 
         $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
         $self->{pages}->{'Resources'}->{'Font'}=$self->{pages}->{'Resources'}->{'Font'} || PDFDict();
@@ -434,6 +647,8 @@ sub image {
 
         my $obj=PDF::API2::Image->new($self->{pdf},$file);
 
+        $obj->{' apiname'}.=$self->{time};
+
         $self->{pages}->{'Resources'}->{'XObject'}->{$obj->{' apiname'}}=$obj;
 
         $self->{pdf}->out_obj($self->{pages});
@@ -450,9 +665,9 @@ Returns a new shading object.
 =cut
 
 sub shade {
-	my ($self,$obj,$name)=@_;
-	my $key='SHADEx'.pdfkey($name || 'shade'.time().rand(0x7fffff));
-	$obj=$obj || PDFDict();
+	my ($self,%opts)=@_;
+	my $key='SHx'.pdfkey(%opts || 'shade'.localtime() );
+	my $obj=PDFDict();
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
 	$obj->{' api'}=$self;
@@ -513,11 +728,18 @@ B<Examples:>
 		]
 	);
 
+	$cs = $pdf->colorspace(
+		-type => 'ICCBased',
+		-alternate => 'DeviceRGB',
+		-components => 3,
+		-iccfile => 'codacus.icc'
+	);
+
 =cut
 
 sub colorspace {
 	my ($self,@opt)=@_;
-	my $key='COLORx'.pdfkey('color'.time().rand(0x7fffff));
+	my $key='CSx'.pdfkey('colorspace',@opt);
 	my $obj=PDF::API2::ColorSpace->new($self->{pdf},$key,@opt);
 	$self->{pdf}->new_obj($obj);
         $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
@@ -528,9 +750,36 @@ sub colorspace {
 	return($obj);
 }
 
+
+=item $img = $pdf->barcode %options
+
+Returns a new barcode object.
+
+B<Note:> refer to PDF::API2::Barcode for more details.
+
+=cut
+
+sub barcode {
+	my ($self,%opts)=@_;
+	my $key='BCx'.pdfkey('barcode'.time().rand(0x7fffff));
+	my $obj=PDF::API2::Barcode->new($key,%opts);
+	$obj->{' apiname'}=$key;
+	$obj->{' apipdf'}=$self->{pdf};
+	$obj->{' api'}=$self;
+
+	$self->{pdf}->new_obj($obj);
+        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
+        $self->{pages}->{'Resources'}->{'XObject'}=$self->{pages}->{'Resources'}->{'XObject'} || PDFDict();
+        $self->{pages}->{'Resources'}->{'XObject'}->{$key}=$obj;
+
+        $self->{pdf}->out_obj($self->{pages});
+
+	return($obj);
+}
+
 sub extgstate {
 	my ($self)=@_;
-	my $key='EXTGSTATEx'.pdfkey('extgstate'.time().rand(0x7fffff));
+	my $key='XTGSx'.pdfkey('extgstate'.time().rand(0x7fffff));
 	my $obj=PDF::API2::ExtGState->new($self->{pdf},$key);
 	$self->{pdf}->new_obj($obj);
         $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
@@ -541,174 +790,6 @@ sub extgstate {
 	return($obj);
 }
 
-#==================================================================
-#	PDF::API2::Crypt
-#==================================================================
-#
-# /Filter /Standard
-# /O <...>
-# /U <...>
-# /V 1		if V > 1 then encryptKeyLen > 40
-# /R 2
-# /P -60
-# /Length 40    only if V > 1
-#
-package PDF::API2::Crypt;
-
-use strict;
-use vars qw(@ISA $passwordPad $encryptKeyLen);
-@ISA = qw();
-
-use Text::PDF::Utils;
-use PDF::API2::Util;
-use PDF::API2::MD5 qw( md5 );
-use Math::Trig;
-
-$passwordPad = "\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56\xff\xfa\x01\x08";
-$passwordPad.= "\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c\xa9\xfe\x64\x53\x69\x7a";
-
-$encryptKeyLen=5; # in bytes
-
-sub new {
-	my ($class,%opts)=@_;
-	my $self={};
-	bless $self,$class;
-	my ($own,$usr,$ver,$perm,$rev,$len);
-
-	$own=digest32(scalar localtime());
-	$usr='';
-	$ver=1;
-	$rev=2;
-	$perm=-60;
-	$len=$encryptKeyLen * 8;
-
-	$self->{' nocrypt'}=1;
-	$self->{' filekey'}=fileKey($usr,$perm,$opts{-ID},$own);
-
-	$self->{V}=PDFNum($ver);
-	$self->{R}=PDFNum($rev);
-	$self->{Filter}=PDFName('Standard');
-	$self->{P}=PDFNum($perm);
-	$self->{Length}=PDFNum($len);
-	$self->{O}=PDFStr($own);
-	$self->{U}=PDFStr(userKey($self->{' filekey'}));
-
-	return($self);
-}
-
-sub encrypt {
-	my ($self,$data)=@_;
-	my $ekey=objKey($self->{' o'},$self->{' g'},$self->{' filekey'});
-	$ekey=substr($ekey,0,$encryptKeyLen+5);
-	return(rc4($ekey,$data));
-}
-
-sub reg {
-	my ($self,$num,$gen,$enc)=@_;
-	if(defined($num)) {
-		$self->{' o'}=$num;
-		$self->{' g'}=$gen;
-		$self->{' e'}=$enc;
-	}
-	return(
-		$self->{' o'},
-		$self->{' g'},
-		$self->{' e'}
-	);
-}
-
-sub passPad {
-	my ($pwd,$str)=@_;
-	$str=substr($pwd.$passwordPad,0,32);
-	return($str);
-}
-
-#------------------------------------
-# filekey needs:
-#	user password
-#	/P	(permissions)
-#	/ID	(file id)
-#	/O	(owner key)
-#------------------------------------
-
-sub fileKey {
-	my ($pwd,$p,$id,$o)=@_;
-	my $str;
-	$str=passPad($pwd);
-	$str.=$o;
-	$str.=pack('C', $p & 0xff);
-	$str.=pack('C', ($p >> 8 ) & 0xff);
-	$str.=pack('C', ($p >> 16) & 0xff);
-	$str.=pack('C', ($p >> 24) & 0xff);
-	$str.=$id;
-	return md5($str);
-}
-
-#------------------------------------
-# objKey needs:
-#	objnum	
-#	objgen	
-#	fileKey
-#------------------------------------
-
-sub objKey {
-	my ($num,$gen,$filekey)=@_;
-	my $str;
-	$str=substr($filekey,0,$encryptKeyLen);
-	$str.=pack('C', $num & 0xff);
-	$str.=pack('C', ($num >> 8 ) & 0xff);
-	$str.=pack('C', ($num >> 16) & 0xff);
-	$str.=pack('C', $gen & 0xff);
-	$str.=pack('C', ($gen >> 8 ) & 0xff);
-	return md5($str);
-}
-
-sub ownerKey {
-	my ($pwd,$usr)=@_;
-	my $str;
-	$pwd=passPad($pwd);
-	$pwd=substr($str,0,$encryptKeyLen);
-	$usr=passPad($usr);
-	$str=rc4($pwd,$usr);
-	return($str);
-}
-
-sub userKey {
-	my ($filekey)=@_;
-	my $str=passPad('');;
-	$filekey=substr($filekey,0,$encryptKeyLen);
-	$str=rc4($filekey,$str);
-	return($str);
-}
-
-sub rc4 ($$)
-{
-	my ($key,$buffer) = @_;
-
-	my(@s,$x,$y,$i1,$i2,$i,$t);
-	for($i=0;$i<256;$i++){
-		$s[$i]=$i;
-	}
-	$i2=$i1=$y=$x=0;
-	for($i=0;$i<256;$i++){
-		$i2=(vec($key,$i1,8)+$s[$i]+$i2)%256;
-		$t=$s[$i];
-		$s[$i]=$s[$i2];
-		$s[$i2]=$t;
-		$i1=($i1+1)%length($key);
-	}	
-	for($i=0;$i<length($buffer);$i++){
-		$x=($x+1)%256;
-		$y=($s[$x]+$y)%256;
-		$t=$s[$x];
-		$s[$x]=$s[$y];
-		$s[$y]=$t;
-		$i1=($s[$x]+$s[$y])%256;
-		vec($buffer,$i,8)^=$s[$i1];
-	}
-
-	return $buffer;
-}
 
 #==================================================================
 #	PDF::API2::ColorSpace
@@ -801,8 +882,20 @@ sub new {
 		foreach my $col (@{$opts{-colors}}) {
 			map { $csd->{' stream'}.=pack('C',$_); } @{$col};
 		}
+		$pdf->new_obj($csd);
 		$csd->{Filter}=PDFArray(PDFName('FlateDecode'));
 		$self->add_elements(PDFName($opts{-type}),PDFName($opts{-base}),PDFNum($opts{-maxindex}),$csd);
+		
+	} elsif($opts{-type} eq 'ICCBased') {
+
+		my $csd=PDFDict();
+
+		$csd->{Filter}=PDFArray(PDFName('FlateDecode'));
+		$csd->{Alternate}=PDFName($opts{-alternate}) if(defined $opts{-alternate});
+		$csd->{N}=PDFNum($opts{-components});
+		$csd->{' streamfile'}=$opts{-iccfile};
+		$pdf->new_obj($csd);
+		$self->add_elements(PDFName($opts{-type}),$csd);
 
 	}
 
@@ -1035,10 +1128,10 @@ sub copy { die "COPY NOT IMPLEMENTED !!!";}
 
 sub clone {
 	my $self=shift @_;
-	my $key=shift @_;
+	my $key=shift @_ || localtime();
 	my $res=$self->copy($self->{' apipdf'});
 	$self->{' apipdf'}->new_obj($res);
-	$res->{' apiname'}.='xCx'.pdfkey($key);
+	$res->{' apiname'}.='_CLONEx'.pdfkey($key);
 	$res->{'Name'}=PDFName($res->{' apiname'});
 
         $res->{' api'}->{pages}->{'Resources'}=$res->{' api'}->{pages}->{'Resources'} || PDFDict();
@@ -1066,6 +1159,19 @@ sub glyphs {
 
 Changes the encoding of the font object. If you want more than one encoding
 for one font use 'clone' and then 'encode'.
+
+B<Note:> The following encodings are supported (as of version 0.1.16_beta):
+
+	adobe-standard adobe-symbol adobe-zapf-dingbats 
+	cp1250 cp1251 cp1252 
+	cp437 cp850
+	es es2 pt pt2
+	iso-8859-1 iso-8859-2 latin1 latin2
+	koi8-r koi8-u
+	macintosh
+	microsoft-dingbats
+
+B<Note:> Other encodings must be seperately installed via the pdf-api2-unimaps archive.
 
 =cut
 
@@ -1366,9 +1472,9 @@ sub encode {
 	my $upem = $ttf->{'head'}->read->{'unitsPerEm'};
 
 	$self->{' encoding'}=$enc;
-	$self->{' chrcid'}->{$enc}=$self->{' chrcid'}->{$enc}||();
-	$self->{' chrwidth'}->{$enc}=$self->{' chrwidth'}->{$enc}||();
-	if(scalar @{$self->{' chrcid'}->{$enc}} < 1) {
+	$self->{' chrcid'}->{$enc}=$self->{' chrcid'}->{$enc}||{};
+	$self->{' chrwidth'}->{$enc}=$self->{' chrwidth'}->{$enc}||{};
+	if(scalar keys(%{$self->{' chrcid'}->{$enc}}) < 1) {
 		foreach my $x (0..255) {
 			$self->{' chrcid'}->{$enc}{$x}=
 				$self->{' unicid'}{$map->{'c2u'}->{$x}}||$self->{' unicid'}{32};
@@ -1566,7 +1672,10 @@ Returns a graphics content object.
 sub fixcontents {
 	my ($self) = @_;
         $self->{'Contents'} = $self->{'Contents'} || PDFArray();
-        if(ref($self->{'Contents'})=~/Objind/) {
+        if(ref($self->{'Contents'})=~/Objind$/) {
+		$self->{'Contents'}->realise;
+	}
+        if(ref($self->{'Contents'})!~/Array$/) {
 	        $self->{'Contents'} = PDFArray($self->{'Contents'});
 	}
 }
@@ -1668,6 +1777,16 @@ sub resource {
 	}
 	
 	return($self);
+}
+
+sub content {
+	my ($self,$obj) = @_;
+        $self->fixcontents;
+        $self->{'Contents'}->add_elements($obj);
+##	$self->{' apipdf'}->new_obj($obj);
+        $obj->{' apipdf'}=$self->{' apipdf'};
+        $obj->{' apipage'}=$self;
+        return($obj);
 }
 
 sub ship_out
@@ -2595,6 +2714,18 @@ sub fillstroke { # nonzero
 
 =item $gfx->image $imgobj, $x,$y, $w,$h
 
+=item $gfx->image $imgobj, $x,$y, $scale
+
+=item $gfx->image $imgobj, $x,$y
+
+B<Please Note:> The width/height or scale given
+is in user-space coordinates which is subject to
+transformations which may have been specified beforehand.
+
+Per default this has a 72dpi resolution, so if you want an
+image to have a 150 or 300dpi resolution, you should specify
+a scale of 72/150 (or 72/300) or adjust width/height accordingly.
+
 =cut
 
 sub image {
@@ -2602,12 +2733,42 @@ sub image {
 	my $img=shift @_;
 	my ($x,$y,$w,$h)=@_;
 	$self->save;
+	if(!defined $w) {
+		$h=$img->height;
+		$w=$img->width;
+	} elsif(!defined $h) {
+		$h=$img->height*$w;
+		$w=$img->width*$w;
+	}
 	$self->matrix($w,0,0,$h,$x,$y);
 	$self->add("/$img->{' apiname'}",'Do');
 	$self->restore;
 	$self->{' x'}=$x;
 	$self->{' y'}=$y;
 	$self->resource('XObject',$img->{' apiname'},$img);
+	return($self);
+}
+
+=item $gfx->barcode $bcobj, $center_x, $center_y, $scale [,$frame]
+
+=cut
+
+sub barcode {
+	my $self=shift @_;
+	my $obj=shift @_;
+	my ($cx,$cy,$s,$f)=@_;
+	$self->save;
+	$self->matrix($s,0,0,$s,$cx-($obj->{' w'}*$s/2),$cy-($obj->{' h'}*$s/2));
+	if($f>0) {
+		$self->fillcolorbyname('white');
+		$self->strokecolorbyname('black');
+		$self->linewidth($f);
+		$self->rect(0,0,$obj->{' w'},$obj->{' h'});
+		$self->fillstroke;
+	}
+	$self->add("/$obj->{' apiname'}",'Do');
+	$self->restore;
+	$self->resource('XObject',$obj->{' apiname'},$obj);
 	return($self);
 }
 
@@ -2901,7 +3062,7 @@ sub matrix {
 	my $self=shift @_;
 	my ($a,$b,$c,$d,$e,$f)=@_;
 	if($self->{' apiistext'} == 1) {
-		$self->add(floats($a,$b,$c,$d,$e,$f),'tm');
+		$self->add(floats($a,$b,$c,$d,$e,$f),'Tm');
 	} else {
 		$self->add(floats($a,$b,$c,$d,$e,$f),'cm');
 	}
@@ -2946,6 +3107,639 @@ sub textend {
 		$self->add('ET');
 		$self->{' apiistext'}=0;
 	}
+	return($self);
+}
+
+
+#==================================================================
+#	PDF::API2::Barcode
+#==================================================================
+package PDF::API2::Barcode;
+
+use strict;
+use vars qw( 
+	@ISA
+	
+	$code3of9 
+	@bar3of9
+	%bar3of9ext
+	%bar_wdt
+	
+	@bar128 
+
+	$code128a
+	$code128b
+	$code128c
+
+	$bar128F1
+	$bar128F2
+	$bar128F3
+	$bar128F4
+	$bar128Ca
+	$bar128Cb
+	$bar128Cc
+	$bar128sh
+	$bar128Sa
+	$bar128Sb
+	$bar128Sc
+	$bar128St
+);
+
+@ISA=qw( PDF::API2::Hybrid );
+
+use Text::PDF::Utils;
+use PDF::API2::Util;
+
+%bar_wdt=(
+	 0 => 0,
+	 1 => 1,
+	 2 => 2,
+	 3 => 3,
+	 4 => 4,
+	 5 => 5,
+	 6 => 6,
+	 7 => 7,
+	 8 => 8,
+	 9 => 9,
+	'a' => 1,
+	'b' => 2,
+	'c' => 3,
+	'd' => 4,
+	'e' => 5,
+	'f' => 6,
+	'g' => 7,
+	'h' => 8,
+	'i' => 9,
+	'A' => 1,
+	'B' => 2,
+	'C' => 3,
+	'D' => 4,
+	'E' => 5,
+	'F' => 6,
+	'G' => 7,
+	'H' => 8,
+	'I' => 9,
+);
+
+$code3of9=q|1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*|;
+
+@bar3of9=qw/
+	2112111121	1122111121	2122111111	1112211121
+	2112211111	1122211111	1112112121	2112112111
+	1122112111	1112212111	2111121121	1121121121
+	2121121111	1111221121	2111221111	1121221111
+	1111122121	2111122111	1121122111	1111222111
+	2111111221	1121111221	2121111211	1111211221
+	2111211211	1121211211	1111112221	2111112211
+	1121112211	1111212211	2211111121	1221111121
+	2221111111	1211211121	2211211111	1221211111
+	1211112121	2211112111	1221112111	1212121111
+	1212111211	1211121211	1112121211	abaababaa1
+/;
+
+%bar3of9ext=(
+	"\x00" => '%U',
+	"\x01" => '$A',
+	"\x02" => '$B',
+	"\x03" => '$C',
+	"\x04" => '$D',
+	"\x05" => '$E',
+	"\x06" => '$F',
+	"\x07" => '$G',
+	"\x08" => '$H',
+	"\x09" => '$I',
+	"\x0a" => '$J',
+	"\x0b" => '$K',
+	"\x0c" => '$L',
+	"\x0d" => '$M',
+	"\x0e" => '$N',
+	"\x0f" => '$O',
+	"\x10" => '$P',
+	"\x11" => '$Q',
+	"\x12" => '$R',
+	"\x13" => '$S',
+	"\x14" => '$T',
+	"\x15" => '$U',
+	"\x16" => '$V',
+	"\x17" => '$W',
+	"\x18" => '$X',
+	"\x19" => '$Y',
+	"\x1a" => '$Z',
+	"\x1b" => '%A',
+	"\x1c" => '%B',
+	"\x1d" => '%C',
+	"\x1e" => '%D',
+	"\x1f" => '$E',
+	"\x20" => ' ',
+	"!" => '/A',
+	'"' => '/B',
+	"#" => '/C',
+	'$' => '/D',
+	'%' => '/E',
+	'&' => '/F',
+	"'" => '/G',
+	'(' => '/H',
+	')' => '/I',
+	'*' => '/J',
+	'+' => '/K',
+	',' => '/L',
+	'-' => '-',
+	'.' => '.',
+	'/' => '/O',
+	'0' => '0',
+	'1' => '1',
+	'2' => '2',
+	'3' => '3',
+	'4' => '4',
+	'5' => '5',
+	'6' => '6',
+	'7' => '7',
+	'8' => '8',
+	'9' => '9',
+	':' => '/Z',
+	';' => '%F',
+	'<' => '%G',
+	'=' => '%H',
+	'>' => '%I',
+	'?' => '%J',
+	'@' => '%V',
+	'A' => 'A',
+	'B' => 'B',
+	'C' => 'C',
+	'D' => 'D',
+	'E' => 'E',
+	'F' => 'F',
+	'G' => 'G',
+	'H' => 'H',
+	'I' => 'I',
+	'J' => 'J',
+	'K' => 'K',
+	'L' => 'L',
+	'M' => 'M',
+	'N' => 'N',
+	'O' => 'O',
+	'P' => 'P',
+	'Q' => 'Q',
+	'R' => 'R',
+	'S' => 'S',
+	'T' => 'T',
+	'U' => 'U',
+	'V' => 'V',
+	'W' => 'W',
+	'X' => 'X',
+	'Y' => 'Y',
+	'Z' => 'Z',
+	'[' => '%K',
+	'\\' => '%L',
+	']' => '%M',
+	'^' => '%N',
+	'_' => '%O',
+	'`' => '%W',
+	'a' => '+A',
+	'b' => '+B',
+	'c' => '+C',
+	'd' => '+D',
+	'e' => '+E',
+	'f' => '+F',
+	'g' => '+G',
+	'h' => '+H',
+	'i' => '+I',
+	'j' => '+J',
+	'k' => '+K',
+	'l' => '+L',
+	'm' => '+M',
+	'n' => '+N',
+	'o' => '+O',
+	'p' => '+P',
+	'q' => '+Q',
+	'r' => '+R',
+	's' => '+S',
+	't' => '+T',
+	'u' => '+U',
+	'v' => '+V',
+	'w' => '+W',
+	'x' => '+X',
+	'y' => '+Y',
+	'z' => '+Z',
+	'{' => '%P',
+	'|' => '%Q',
+	'}' => '%R',
+	'~' => '%S',
+	"\x7f" => '%T'
+);
+
+$code128a=q| !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_|.join('',map{chr($_)}(0..31)).qq/\xf3\xf2\x80\xcc\xcb\xf4\xf1\x8a\x8b\x8c\xff/;
+$code128b=q| !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|.qq/|}~\x7f\xf3\xf2\x80\xcc\xf4\xca\xf1\x8a\x8b\x8c\xff/;
+$code128c=("\xfe" x 100).qq/\xcb\xca\xf1\x8a\x8b\x8c\xff/;
+
+@bar128=qw(
+    212222 222122 222221 121223 121322
+    131222 122213 122312 132212 221213
+    221312 231212 112232 122132 122231
+    113222 123122 123221 223211 221132
+    221231 213212 223112 312131 311222
+    321122 321221 312212 322112 322211
+    212123 212321 232121 111323 131123
+    131321 112313 132113 132311 211313
+    231113 231311 112133 112331 132131
+    113123 113321 133121 313121 211331
+    231131 213113 213311 213131 311123
+    311321 331121 312113 312311 332111
+    314111 221411 431111 111224 111422
+    121124 121421 141122 141221 112214
+    112412 122114 122411 142112 142211
+    241211 221114 413111 241112 134111
+    111242 121142 121241 114212 124112
+    124211 411212 421112 421211 212141
+    214121 412121 111143 111341 131141
+    114113 114311 411113 411311 113141
+    114131 311141 411131 b1a4a2 b1a2a4
+    b1a2c2 b3c1a1b
+);
+
+$bar128F1="\xf1";
+$bar128F2="\xf2";
+$bar128F3="\xf3";
+$bar128F4="\xf4";
+
+$bar128Ca="\xca";
+$bar128Cb="\xcb";
+$bar128Cc="\xcc";
+
+$bar128sh="\x80";
+
+$bar128Sa="\x8a";
+$bar128Sb="\x8b";
+$bar128Sc="\x8c";
+
+$bar128St="\xff";
+
+sub encode_128_char_idx {
+	my ($code,$char)=@_;
+	my ($idx);
+	if(lc($code) eq 'a') {
+		return if($char eq $bar128Ca);
+		$idx=index($code128a,$char);
+	} elsif(lc($code) eq 'b') {
+		return if($char eq $bar128Cb);
+		$idx=index($code128b,$char);
+	} elsif(lc($code) eq 'c') {
+		return if($char eq $bar128Cc);
+		if($char=~/^\d+$/) {
+			$idx=substr($char,0,1)*10+substr($char,1,1)*1;
+		} else {
+			$idx=index($code128c,$char);
+		}
+	}
+	return($bar128[$idx],$idx);
+}
+
+sub encode_128_char {
+	my ($code,$char)=@_;
+	my ($b)=encode_128_char_idx($code,$char);
+	return($b);
+}
+
+sub encode_128_string {
+	my ($code,$str)=@_;
+	my ($bar,@chk,$c,$desc,$b,$i,@bars);
+	my @chars=split(//,$str);
+	while(defined($c=shift @chars)) {
+		if($c=~/[\xf1-\xf4]/) {
+			($b,$i)=encode_128_char_idx($code,$c);
+		} elsif($c=~/[\xca-\xcc]/) {
+			($b,$i)=encode_128_char_idx($code,$c);
+			if($c eq "\xca") {
+				$code='a';
+			} elsif($c eq "\xcb") {
+				$code='b';
+			} elsif($c eq "\xcc") {
+				$code='c';
+			}
+		} else {
+			if($code ne 'c') {
+				if($c eq $bar128sh) {
+					($b,$i)=encode_128_char_idx($code,$c);
+					push(@bars,$b);
+					push(@chk,$i);
+					$c=shift(@chars);
+					($b,$i)=encode_128_char_idx($code eq 'a' ? 'b':'a',$c);
+				} else {
+					($b,$i)=encode_128_char_idx($code,$c);
+				}
+			} else {
+				$c.=shift(@chars) if($c=~/\d/);
+				if($c=~/^\d[^\d]*$/) {
+					($b,$i)=encode_128_char_idx($code,"\xcb");
+					push(@bars,$b);
+					push(@chk,$i);
+					$code='b';
+					unshift(@chars,substr($c,1,1));
+					$c=substr($c,0,1);
+				} 
+				($b,$i)=encode_128_char_idx($code,$c);
+			}
+		}
+		$c='' if($c=~/[^\x20-\x7e]/);
+		push(@bars,[$b,$c]);
+		push(@chk,$i);
+	}
+	return([@bars],@chk);
+}
+
+sub encode_128 {
+	my ($code,$str)=@_;
+	my (@bar,$b,@chk,$c);
+	if($code eq 'a') {
+		push(@bar,encode_128_char($code,$bar128Sa));
+		$c=103;
+	} elsif($code eq 'b') {
+		push(@bar,encode_128_char($code,$bar128Sb));
+		$c=104;
+	} elsif($code eq 'c') {
+		push(@bar,encode_128_char($code,$bar128Sc));
+		$c=105;
+	}
+	($b,@chk)=encode_128_string($code,$str);
+	# b ... bars
+	# chk ... chknums
+	push(@bar,@{$b});
+	#calc chksum
+	foreach my $i (1..scalar @chk) {
+		$c+=$i*$chk[$i-1];
+	}
+	$c%=103;
+	push(@bar,$bar128[$c]);
+	push(@bar,encode_128_char($code,$bar128St));
+	return(@bar);
+}
+
+sub encode_ean128 {
+	my ($str)=@_;
+	$str=~s/[^a-zA-Z\d]+//g;
+	$str=~s/(\d+)([a-zA-Z]+)/$1\xcb$2/g;
+	$str=~s/([a-zA-Z]+)(\d+)/$1\xcc$2/g;
+	return(encode_128('c',"\xf1$str"));
+}
+
+sub encode_3of9_char {
+	my $char=shift @_;
+	return($bar3of9[index($code3of9,$char)]);
+}
+
+sub encode_3of9_string {
+	my $string=shift @_;
+	my $bar;
+	my @c=split(//,$string);
+
+	foreach my $char (@c) {
+		$bar.=encode_3of9_char($char);
+	}
+	return($bar);
+}
+
+sub encode_3of9_string_w_chk {
+	my $string=shift @_;
+	my ($bar,$num);
+	my @c=split(//,$string);
+
+	foreach my $char (@c) {
+		$num+=index($code3of9,$char);
+		$bar.=encode_3of9_char($char);
+	}
+	$num%=43;
+	$bar.=$bar3of9[$num];
+	return($bar);
+}
+
+sub encode_3of9 {
+	my $string=shift @_;
+	my @bar;
+
+	$string=uc($string);
+	$string=~s/[^0-9A-Z\-\.\ \$\/\+\%]+//g;
+
+	push(@bar, encode_3of9_char('*') );
+	push(@bar, [ encode_3of9_string($string), $string ] );
+	push(@bar, $bar[0] );
+
+	return(@bar);
+}
+
+sub encode_3of9_w_chk {
+	my $string=shift @_;
+	my @bar;
+
+	$string=uc($string);
+	$string=~s/[^0-9A-Z\-\.\ \$\/\+\%]+//g;
+
+	push(@bar, encode_3of9_char('*') );
+	push(@bar, [ encode_3of9_string_w_chk($string), $string ] );
+	push(@bar, $bar[0] );
+
+	return(@bar);
+}
+
+sub encode_3of9_ext {
+	my $string=shift @_;
+	my @c=split(//,$string);
+	my ($enc,@bar);
+	map { $enc.=$bar3of9ext{$_}; } (@c);
+
+	push(@bar, encode_3of9_char('*') );
+	push(@bar, [ encode_3of9_string($enc), $string ] );
+	push(@bar, $bar[0] );
+
+	return(@bar);
+}
+
+sub encode_3of9_ext_w_chk {
+	my $string=shift @_;
+	my @c=split(//,$string);
+	my ($enc,@bar);
+	map { $enc.=$bar3of9ext{$_}; } (@c);
+
+	push(@bar, encode_3of9_char('*') );
+	push(@bar, [ encode_3of9_string_w_chk($enc), $string ] );
+	push(@bar, $bar[0] );
+
+	return(@bar);
+}
+
+=head2 PDF::API2::Barcode
+
+Subclassed from PDF::API2::Hybrid.
+
+=item $bc = PDF::API2::Barcode->new $pdfkey, %options
+
+Returns a new barcode object (called from $pdf->barcode).
+
+B<Example:>
+
+	PDF::API2::Barcode->new(
+		$key,
+		-font	=> $fontobj,	# the font to use for text
+		-type	=> '3of9',	# the type of barcode
+		-code	=> '0123456789', # the code of the barcode
+		-extn	=> '012345',	# the extension of the barcode
+					# (if applicable)
+		-umzn	=> 10,		# (u)pper (m)ending (z)o(n)e
+		-lmzn	=> 10,		# (l)ower (m)ending (z)o(n)e
+		-zone	=> 50,		# height (zone) of bars 	
+		-quzn	=> 10,		# (qu)iet (z)o(n)e
+		-ofwt	=> 0.01,	# (o)ver(f)low (w)id(t)h
+		-fnsz	=> 10,		# (f)o(n)t(s)i(z)e
+		-text	=> 'alternative text'
+	);
+
+B<Note:> There is currently only support for the following barcodes:
+
+	3of9, 3of9ext, 3of9chk, 3of9extchk,
+	code128a, code128b, code128c, ean128
+
+=cut
+
+sub new {
+	my $class=shift @_;
+	my $key=shift @_;
+	my %opts=@_;
+	my $self = $class->SUPER::new;
+	my (@bar,@ext);
+	
+	$opts{-type}=lc($opts{-type});
+	$self->{' font'}=$opts{-font};
+	
+	$self->{' umzn'}=$opts{-umzn};		# (u)pper (m)ending (z)o(n)e
+	$self->{' lmzn'}=$opts{-lmzn};		# (l)ower (m)ending (z)o(n)e
+	$self->{' zone'}=$opts{-zone};
+	$self->{' quzn'}=$opts{-quzn};		# (qu)iet (z)o(n)e
+	$self->{' ofwt'}=$opts{-ofwt};		# (o)ver(f)low (w)id(t)h
+	$self->{' fnsz'}=$opts{-fnsz};		# (f)o(n)t(s)i(z)e
+	$self->{' spcr'}=$opts{-spcr}||'';
+
+        $self->{'Type'}=PDFName('XObject');
+        $self->{'Subtype'}=PDFName('Form');
+        $self->{'Name'}=PDFName($key);
+        $self->{'Formtype'}=PDFNum(1);
+        $self->{'BBox'}=PDFArray(PDFNum(0),PDFNum(0),PDFNum(1000),PDFNum(1000));
+	
+	if( $opts{-type}=~/^3of9/ ) {
+		if( $opts{-type} eq '3of9' ) {
+			@bar = encode_3of9($opts{-code});
+		} elsif ( $opts{-type} eq '3of9ext' ) {
+			@bar = encode_3of9_ext($opts{-code});
+		} elsif ( $opts{-type} eq '3of9chk' ) {
+			@bar = encode_3of9_w_chk($opts{-code});
+		} elsif ( $opts{-type} eq '3of9extchk' ) {
+			@bar = encode_3of9_ext_w_chk($opts{-code});
+		}
+	} elsif( $opts{-type}=~/^code128/ ) {
+		if( $opts{-type} eq 'code128a' ) {
+			@bar = encode_128('a',$opts{-code});
+		} elsif ( $opts{-type} eq 'code128b' ) {
+			@bar = encode_128('b',$opts{-code});
+		} elsif ( $opts{-type} eq 'code128c' ) {
+			@bar = encode_128('c',$opts{-code});
+		}
+	} elsif( $opts{-type}=~/^ean128/ ) {
+		@bar = encode_ean128($opts{-code});
+	}
+
+	if(scalar @ext < 1) {
+		$self->drawbar([@bar],$opts{-text});
+	} else {
+		$self->drawbar([@bar],$opts{-text},[@ext]);
+	}
+	
+	return($self);
+}
+
+sub drawbar {
+	my $self=shift @_;
+	my @bar=@{shift @_};
+	my $bartext=shift @_;
+	my $ext=shift @_;
+
+	my $x=$self->{' quzn'};
+	my ($code,$str,$bw,$f,$t,$l,$h,$xo);
+	$self->fillcolorbyname('black');
+	$self->strokecolorbyname('black');
+	
+	foreach my $b (@bar) {
+		if(ref($b)) {
+			($code,$str)=@{$b};
+		} else {
+			$code=$b;
+			$str=undef;
+		}
+		$bw=1;
+		$xo=0;
+		foreach my $c (split(//,$code)) {
+			my $w=$bar_wdt{$c};
+			$xo+=$w/2;
+			if($c=~/[0-9]/) {
+				$l=$self->{' quzn'} + $self->{' lmzn'};
+				$h=$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'};
+				$t=$self->{' quzn'};
+				$f=$self->{' fnsz'}||$self->{' lmzn'};
+			} elsif($c=~/[a-z]/) {
+				$l=$self->{' quzn'};
+				$h=$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'};
+				$t=$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'};
+				$f=$self->{' fnsz'}||$self->{' umzn'};
+			} elsif($c=~/[A-Z]/) {
+				$l=$self->{' quzn'};
+				$h=$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'};
+				$f=$self->{' fnsz'}||$self->{' umzn'};
+				$t=$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'} - $f;
+			} else {
+				$l=$self->{' quzn'} + $self->{' lmzn'};
+				$h=$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'};
+				$t=$self->{' quzn'};
+				$f=$self->{' fnsz'}||$self->{' lmzn'};
+			}
+			if($bw) {
+				$self->linewidth($w-$self->{' ofwt'});
+				$self->move($x+$xo,$l);
+				$self->line($x+$xo,$h);
+				$self->stroke;
+				$bw=0;
+			} else {
+				$bw=1;
+			}
+			$xo+=$w/2;
+		}
+		if(defined($str) && ($self->{' lmzn'}>0)) {
+			$str=join($self->{' spcr'},split(//,$str));
+			$self->textstart;
+			$self->translate($x+($xo/2),$t);
+			$self->font($self->{' font'},$f);
+			$self->text_center($str);
+			$self->textend;
+		}
+		$x+=$xo;
+	}	
+	if(defined $bartext) {
+		$f=$self->{' fnsz'}||$self->{' lmzn'};
+		$t=$self->{' quzn'}-$f;
+		$self->textstart;
+		$self->translate(($self->{' quzn'}+$x)/2,$t);
+		$self->font($self->{' font'},$f);
+		$self->text_center($bartext);
+		$self->textend;
+	}	
+	$self->{' w'}=$self->{' quzn'}+$x;
+	$self->{' h'}=2*$self->{' quzn'} + $self->{' lmzn'} + $self->{' zone'} + $self->{' umzn'};
+}
+
+sub font {
+	my ($self,$font,$size)=@_;
+	$self->{' font'}=$font;
+	$self->{' fontsize'}=$size;
+	$self->add("/".$font->{' apiname'},float($size),'Tf');
+
+##	$self->resource('Font',$font->{' apiname'},$font);
+
 	return($self);
 }
 
@@ -3380,6 +4174,27 @@ sub new
     $self;
 }
 
+sub import {
+	my $self = shift;
+	my $file = shift;
+	my $buf = "";
+	*$self->{buf} = \$buf;
+	*$self->{pos} = 0;
+	*$self->{lno} = 0;
+	
+	my $in;
+	open(INF,$file);
+	binmode(INF);
+	while(!eof(INF)) {
+		read(INF,$in,512);
+		$self->print($in);	
+	}
+	close(INF);
+	$self->seek(0,0);
+	
+	$self;
+}
+
 sub open
 {
     my $self = shift;
@@ -3722,6 +4537,7 @@ sub blocking {
 my $notmuch = sub { return };
 
 *fileno    = $notmuch;
+*FILENO    = $notmuch; # for activeperl ?
 *error     = $notmuch;
 *clearerr  = $notmuch;
 *sync      = $notmuch;
@@ -3894,23 +4710,13 @@ sub print {
 }
 
 
-1;
-
 =head1 AUTHOR
 
 alfred reibenschuh
 
 =cut
 
-__END__
 
-#=== sRGB - ColorSpace ===
-1475 0 obj
-[ 
-	/CalRGB << 
-		/WhitePoint [ 0.95049 1 1.08897 ] 
-		/Gamma [ 2.22218 2.22218 2.22218 ] 
-		/Matrix [ 0.41238 0.21259 0.01929 0.35757 0.71519 0.11919 0.1805 0.07217 0.95049 ] 
-	>> 
-]
-endobj
+1;
+
+__END__

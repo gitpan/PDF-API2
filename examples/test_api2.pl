@@ -1,81 +1,128 @@
 #!/usr/bin/perl
 
-sub smack {
-	return;
-	my($name,$self,$pdf)=@_;
-	printf("%s : %d %d R\n",$name, @{$pdf->{' objects'}{$self->uid}}[0..1]);
-	foreach my $k (keys %{$self}) {
-		printf "%s\t'$k' => ",$name;
-		if(ref($self->{$k})=~/Array$/) {
-			print "\n";
-			smack("$name :\t'$k'",$self->{$k},$pdf);
-		} elsif(ref($self->{$k})=~/Name$/) {
-			print "\n";
-			smack("$name :\t'$k'",$self->{$k},$pdf);
-		} elsif(ref($self->{$k})=~/ARRAY/) {
-			eval {
-				printf "[ '%s' ]\n",join("','",map {$_->val} @{$self->{$k}});
-			};
-			if($@) {
-				print "$self->{$k}\n";
-			}
-		} else {
-			print "$self->{$k}\n";
-		}
-	}
-}
-
 use PDF::API2;
 use PDF::API2::Util;
 use Text::PDF::Utils;
 
 $pdf=PDF::API2->new;
 
-# $pdf->encrypt('','');
+$page = $pdf->page;
+$page->mediabox(595,842);
+
+$font=$pdf->corefont('Helvetica',1);
+$font->encode('latin1');
+$txt=$page->text;
+$txt->compress;
+$txt->translate(100,100);
+$txt->font($font,50);
+$txt->text('Hello World !');
+
+## $pdf->protect;
+
+$pdf->saveas('empty.pdf');
+
+
+__END__
+
+`cp -f some.pdf empty.pdf`;
+
+$pdf=PDF::API2->open('empty_old.pdf');
+$pdf2=PDF::API2->open('some.pdf');
+
+$page = $pdf->importpage($pdf2,1,2);
+$page = $pdf->importpage($pdf2,1,3);
+
+$font=$pdf->corefont('Helvetica',1);
+$font->encode('latin1');
+$txt=$page->text;
+$txt->translate(100,100);
+$txt->font($font,10);
+$txt->text('Hello World !');
+
+## $page->update;
+
+$pdf->saveas('empty.pdf');
+
+
+__END__
+
+$pdf=PDF::API2->new;
+
 
 $font=$pdf->corefont('Helvetica',1);
 
-smack('font',$font,$pdf->{pdf});
 
 $page=$pdf->page;
 $page->mediabox(595,842);
 
-smack('page',$page,$pdf->{pdf});
-
 $txt=$page->text;
-$txt->translate(10,10);
+$txt->translate(100,100);
 $txt->font($font,10);
 $txt->text('Hello World !');
 
+$bar=$pdf->barcode(
+	-type => '3of9',
+	-font => $font,
+	-code => '010203045678909',
+	-quzn => 20,
+	-umzn => 10,
+	-lmzn => 10,
+	-zone => 30,
+	-spcr => ' ',
+);
+
 $gfx=$page->gfx;
+$gfx->image($bar,0,0,1,1);
 
-$gfx->linejoin(1);
+$bar=$pdf->barcode(
+	-type => '3of9ext',
+	-font => $font,
+	-code => 'PDF::API2::Test',
+	-quzn => 20,
+	-umzn => 10,
+	-lmzn => 10,
+	-zone => 30,
+);
 
-$gfx->fillcolorbyname('red');
-$gfx->pie3d(200,100,100,70,200,290,20);
-$gfx->fillstroke;
+$gfx->image($bar,0,200,0.5,0.5);
 
-$gfx->fillcolorbyname('green');
-$gfx->pie3d(200,100,100,70,290,390,20);
-$gfx->fillstroke;
+$bar=$pdf->barcode(
+	-type => 'code128b',
+	-font => $font,
+	-code => "Code 128",
+	-quzn => 20,
+	-umzn => 10,
+	-lmzn => 10,
+	-zone => 30,
+);
 
-$gfx->fillcolorbyname('yellow');
-$gfx->pie3d(200,100,100,70,80,200,20);
-$gfx->fillstroke;
+$gfx->image($bar,0,400,1,1);
 
-$gfx->fillcolorbyname('lightblue');
-$gfx->pie3d(200,300,100,70,10,320,20,1);
-$gfx->fillstroke;
+$y=500;
 
-$gfx->fillcolorbyname('orange');
-$gfx->pie3d(200,500,100,70,-80,250,20,1);
-$gfx->fillstroke;
+foreach $t (
+	'(00) 38431853003496706',
+	'(00) 384318530034967067',
+	'(02) 08412345678905 (37) 23',
+	'(01) 18410020706513 (20) 70',
+	'(01) 08412345678905 (10) 4512XA (00) 384123451234567899 (15) 930120',
+	'(01) 08412345678905 (10) 451XA2 (00) 384123451234567899 (15) 930120'
+) {
+	$bar=$pdf->barcode(
+		-type => 'ean128',
+		-font => $font,
+		-code => $t,
+		-quzn => 20,
+		-umzn => 0,
+		-lmzn => 0,
+		-zone => 20,
+		-fnsz => 8,
+		-text => $t
+	);
 
-$gfx->fillcolorbyname('orange');
-$gfx->pie3d(200,700,100,70,100,420,20,1);
-$gfx->fillstroke;
-
-
+	$gfx->barcode($bar,$bar->{' w'}/2,$y,1,1);
+	$y+=50;
+}
 
 $pdf->saveas("$0.pdf");
 
@@ -275,3 +322,43 @@ $pdf->update;
 exit;
 
 __END__
+ADOBE:
+
+6 0 obj
+<< 
+/Filter /Standard 
+/R 2 
+/O (k'é·ŸZ‡H1îÕÓó”/Ó:•¥|	6h»ï$¿1)
+/U (/{´¢‰{O÷½¥¨P2\r©Ä]Õ0ì ]åkÌ)
+/P -60 
+/V 1 
+/Length 40 
+>> 
+endobj
+11 0 obj
+<< /S 36 /Filter /FlateDecode /Length 12 0 R >> 
+stream
+—e8RİıWG¨ç9@ÁıÍŠH\A…vÜä,@ÊÓXqDèKFë×
+Œ³T
+endstream
+endobj
+
+<<
+/Length 40
+/Filter /Standard
+/O (k'é·ŸZ‡H1îÕÓó”/Ó:•¥|\t6h»ï$¿1)
+/P -60
+/R 2
+/U (/{´¢‰{O÷½¥¨P2\r©Ä]Õ0ì ]åkÌ)
+/V 1
+>>
+endobj
+5 0 obj
+<<
+/Length 98
+>>
+stream
+²¨4÷Ò¼—Ÿt[b²¡QwB9©[ÿ'm-°çVöğ:ÚD5šòJÓ~òjªÌ†ë‡Ëï¦l
+óÖÊ[ØLvšà‡fí±X'’> ï+Ä2z_zS†O³4š€ú
+endstream
+endobj

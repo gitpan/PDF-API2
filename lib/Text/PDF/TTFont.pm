@@ -243,6 +243,10 @@ sub outobjdeep
 {
     my ($self, $fh, $pdf, $passthru) = @_;
     
+    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
+            $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
+    }
+
     return $self->SUPER::outobjdeep($fh, $pdf) if $passthru;
 
     my ($f) = $self->{' font'};

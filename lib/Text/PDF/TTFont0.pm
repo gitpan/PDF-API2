@@ -192,6 +192,10 @@ sub outobjdeep
     my ($s) = $d->{'FontDescriptor'}{'FontFile2'};
     my ($ffh);
 
+    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
+        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
+    }
+
     if ($self->{' subset'})
     {
         my ($max) = length($self->{' subvec'}) * 8;

@@ -116,12 +116,16 @@ sub as_pdf
     my ($self,$str,$hexit) = @_;
     $str = $str || $self->{'val'};
     
-    if ($hexit || ($str =~ m/[^\n\r\t\b\f\040-\176\200-\377]/oi))
-    {
+    if($hexit==1) {
         $str =~ s/(.)/sprintf("%02x", ord($1))/oige;
         return "<$str>";
-    } else
-    {
+    } elsif($self->{' nohex'}>0) {
+        $str =~ s/([\n\r\t\b\f\\()])/\\$out_trans{$1}/ogi;
+        return "($str)";
+    } elsif($str =~ m/[^\n\r\t\b\f\040-\176\200-\377]/oi) {
+        $str =~ s/(.)/sprintf("%02x", ord($1))/oige;
+        return "<$str>";
+    } else {
         $str =~ s/([\n\r\t\b\f\\()])/\\$out_trans{$1}/ogi;
         return "($str)";
     }
@@ -136,9 +140,20 @@ Outputs the string in PDF format, complete with necessary conversions
 sub outobjdeep
 {
     my ($self, $fh, $pdf) = @_;
-    my ($objnum,$objgen,$encrypt);
-    
-    if($self->{' ashex'}==1) {
+
+    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
+        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
+    }
+
+    if(defined($pdf->{Encrypt}) && ($self->{' nocrypt'}<1)) {
+ 	$fh->print(
+ 		$self->as_pdf(
+ 			$pdf->{Encrypt}->encrypt($self->val)
+ 		)
+ 	);
+    } elsif($self->{' nohex'}==1) {
+	$fh->print($self->as_pdf($self->val,0));
+    } elsif($self->{' ashex'}==1) {
  	$fh->print($self->as_pdf($self->val,1));
     } else {
 	$fh->print($self->as_pdf);

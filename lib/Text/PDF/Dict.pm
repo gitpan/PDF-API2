@@ -70,6 +70,23 @@ sub outobjdeep
     my ($key, $val, $f, @filts);
     my ($loc, $str, %specs);
 
+    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
+        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
+    }
+
+    if (defined $self->{' streamfile'})
+    {
+    	$self->{' stream'}='';
+        open(DICTFH, $self->{' streamfile'}) || die "Unable to open $self->{' streamfile'}";
+        binmode DICTFH;
+        while (read(DICTFH, $str, 4096))
+        {
+            $self->{' stream'}.=$str;
+        }
+        close(DICTFH);
+        delete $self->{' streamfile'};
+    }
+
     if (defined $self->{' stream'} or defined $self->{' streamfile'} or defined $self->{' streamloc'})
     {
         if ($self->{'Filter'} || !defined $self->{' stream'})
@@ -147,36 +164,12 @@ sub outobjdeep
             foreach $f (reverse @filts)
             { $str = $f->outfilt($str, 1); }
         }
+        if(defined($pdf->{Encrypt}) && ($self->{' nocrypt'}<1)) {
+		$str=$pdf->{Encrypt}->encrypt($str);
+        }
         $fh->print($str);
         $self->{'Length'}{'val'} = $fh->tell - $loc + 1 if $#filts >= 0;
         $fh->print("\nendstream");
-#        $self->{'Length'}->outobjdeep($fh);
-    } elsif (defined $self->{' streamfile'})
-    {
-        open(DICTFH, $self->{' streamfile'}) || die "Unable to open $self->{' streamfile'}";
-        binmode DICTFH;
-        $fh->print("\nstream\n");
-        $loc = $fh->tell;
-        while (read(DICTFH, $str, 4096))
-        {
-            unless ($self->{' nofilt'})
-            {
-                foreach $f (reverse @filts)
-                { $str = $f->outfilt($str, 0); }
-            }
-            $fh->print($str);
-        }
-        close(DICTFH);
-        unless ($self->{' nofilt'})
-        {
-            $str = "";
-            foreach $f (reverse @filts)
-            { $str = $f->outfilt($str, 1); }
-            $fh->print($str);
-        }
-        $self->{'Length'}{'val'} = $fh->tell - $loc + 1;
-        $fh->print("\nendstream\n");
-#        $self->{'Length'}->outobjdeep($fh);
     }
 }
 

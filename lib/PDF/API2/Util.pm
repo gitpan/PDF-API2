@@ -1,6 +1,6 @@
 package PDF::API2::Util;
 
-use vars qw($VERSION @ISA @EXPORT);
+use vars qw($VERSION @ISA @EXPORT %colors);
 use Math::Trig;
 use POSIX;
 
@@ -10,86 +10,12 @@ require Exporter;
 	pdfkey digest digestx digest16 digest32 
 	float floats floats5 intg intgs 
 	mMin mMax 
-	cRGB cRGB8 RGBasCMYK 
+	cRGB cRGB8 RGBasCMYK HSVtoRGB
 	namecolor
 );            
 
-sub mMin {
-	my $n=HUGE_VAL;
-	map { $n=($n>$_) ? $_ : $n } @_;
-	return($n);	
-}
-
-sub mMax {
-	my $n=-(HUGE_VAL);
-	map { $n=($n<$_) ? $_ : $n } @_;
-	return($n);	
-}
-
-sub cRGB {
-	my @cmy=(map { 1-$_ } @_);
-	my $k=mMin(@cmy);
-	return((map { $_-$k } @cmy),$k);
-}
-
-sub cRGB8 {
-	return cRGB(map { $_/255 } @_);
-}
-
-sub RGBasCMYK {
-	my @rgb=@_;
-	my @cmy=(map { 1-$_ } @rgb);
-	my $k=mMin(@cmy);
-	return((map { $_-$k } @cmy),$k);
-}
-
-sub HSVtoRGB ($$$) {
-	my ($h,$s,$v)=@_;
-	my ($r,$g,$b,$i,$f,$p,$q,$t);
-
-        if( $s == 0 ) {
-                ## achromatic (grey)
-                return ($v,$v,$v);
-        }
-
-        $h %= 360;                      
-        $h /= 60;                       ## sector 0 to 5
-        $i = POSIX::floor( $h );
-        $f = $h - $i;                   ## factorial part of h
-        $p = $v * ( 1 - $s );
-        $q = $v * ( 1 - $s * $f );
-        $t = $v * ( 1 - $s * ( 1 - $f ) );
-
-	if($i<1) {
-		$r = $v;
-                $g = $t;
-                $b = $p;
-	} elsif($i<2){
-		$r = $q;
-                $g = $v;
-                $b = $p;
-	} elsif($i<3){
-		$r = $p;
-                $g = $v;
-                $b = $t;
-	} elsif($i<4){
-		$r = $p;
-                $g = $q;
-                $b = $v;
-	} elsif($i<5){
-		$r = $t;
-                $g = $p;
-                $b = $v;
-	} else {
-		$r = $v;
-                $g = $p;
-                $b = $q;
-	}
-	return ($r,$g,$b);
-}
-
-sub namecolor {
-        my %colors=(
+BEGIN {
+        %colors=(
         	aliceblue => [0.941176470588235,0.972549019607843,1],
         	antiquewhite => [0.980392156862745,0.92156862745098,0.843137254901961],
         	aqua => [0,1,1],
@@ -240,6 +166,83 @@ sub namecolor {
                 none => [0,0,0],
         );
 
+}
+
+sub mMin {
+	my $n=HUGE_VAL;
+	map { $n=($n>$_) ? $_ : $n } @_;
+	return($n);	
+}
+
+sub mMax {
+	my $n=-(HUGE_VAL);
+	map { $n=($n<$_) ? $_ : $n } @_;
+	return($n);	
+}
+
+sub cRGB {
+	my @cmy=(map { 1-$_ } @_);
+	my $k=mMin(@cmy);
+	return((map { $_-$k } @cmy),$k);
+}
+
+sub cRGB8 {
+	return cRGB(map { $_/255 } @_);
+}
+
+sub RGBasCMYK {
+	my @rgb=@_;
+	my @cmy=(map { 1-$_ } @rgb);
+	my $k=mMin(@cmy);
+	return((map { $_-$k } @cmy),$k);
+}
+
+sub HSVtoRGB ($$$) {
+	my ($h,$s,$v)=@_;
+	my ($r,$g,$b,$i,$f,$p,$q,$t);
+
+        if( $s == 0 ) {
+                ## achromatic (grey)
+                return ($v,$v,$v);
+        }
+
+        $h %= 360;                      
+        $h /= 60;                       ## sector 0 to 5
+        $i = POSIX::floor( $h );
+        $f = $h - $i;                   ## factorial part of h
+        $p = $v * ( 1 - $s );
+        $q = $v * ( 1 - $s * $f );
+        $t = $v * ( 1 - $s * ( 1 - $f ) );
+
+	if($i<1) {
+		$r = $v;
+                $g = $t;
+                $b = $p;
+	} elsif($i<2){
+		$r = $q;
+                $g = $v;
+                $b = $p;
+	} elsif($i<3){
+		$r = $p;
+                $g = $v;
+                $b = $t;
+	} elsif($i<4){
+		$r = $p;
+                $g = $q;
+                $b = $v;
+	} elsif($i<5){
+		$r = $t;
+                $g = $p;
+                $b = $v;
+	} else {
+		$r = $v;
+                $g = $p;
+                $b = $q;
+	}
+	return ($r,$g,$b);
+}
+
+sub namecolor {
 	my $name=lc(shift @_);
 	$name=~s/[^\#!%a-z0-9]//cg;
 	my $col;
@@ -286,9 +289,9 @@ sub namecolor {
 			$y=hex(substr($name,9,4))/0xffff;
 			$k=hex(substr($name,13,4))/0xffff;
 		}
-		$r=1-$r-$h;
-		$g=1-$g-$h;
-		$b=1-$b-$h;
+		$r=1-$c-$k;
+		$g=1-$m-$k;
+		$b=1-$y-$k;
 		$col=[$r,$g,$b];
 	} elsif($name=~/^!/) {
 		my ($r,$g,$b,$h,$s,$v);
@@ -343,9 +346,17 @@ sub digestx {
 		$off+=vec($xdata,($set & $mask),8);
 		vec($xdata,($set & ($mask<<1 |1)),4)=vec($mdkey,($off & 0x7f),4);
 	}
-	foreach $set (0..$mask) {
-		vec($xdata,$set,8)=(vec($xdata,$set,8) & 0x7f) | 0x40;
-	}
+	
+#	foreach $set (0..$mask) {
+#		vec($xdata,$set,8)=(vec($xdata,$set,8) & 0x7f) | 0x40;
+#	}
+
+#	$off=0;
+#	foreach $set (0..$mask) {
+#		$off+=vec($xdata,$set,8);
+#		vec($xdata,$set,8)=vec($mdkey,($off & 0x3f),8);
+#	}
+
 	return($xdata);
 }
 
@@ -370,10 +381,13 @@ sub xlog10 {
 
 sub float {
 	my $f=shift @_;
-	my $mxd=shift @_||2;
+	my $mxd=shift @_||4;
 	$f=0 if(abs($f)<0.0000000000000001);
 	my $ad=floor(xlog10($f)-$mxd);
-	if($ad>0){
+	if(abs($f-int($f)) < (10**(-$mxd))) {
+		# just in case we have an integer
+		return sprintf('%i',$f);
+	} elsif($ad>0){
 		return sprintf('%f',$f);
 	} else {
 		return sprintf('%.'.abs($ad).'f',$f);

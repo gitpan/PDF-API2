@@ -213,7 +213,15 @@ sub open
 
     $self = $class->_new;
     if (ref $fname)
-    { $self->{' INFILE'} = $fname; }
+    { 
+        $self->{' INFILE'} = $fname; 
+        if ($update)
+        {
+            $self->{' update'} = 1;
+            $self->{' OUTFILE'} = $fname;
+        }
+        $fh = $fname; 
+    }
     else
     {
         $fh = IO::File->new(($update ? "+" : "") . "<$fname") || return undef;
@@ -226,6 +234,7 @@ sub open
             $self->{' fname'} = $fname;
         }
     }
+    $fh->seek(0, 0);            # go to start of file
     $fh->read($buf, 255);
     if ($buf !~ m/^\%PDF\-1\.\d+\s*$cr/mo)
     { die "$fname not a PDF file version 1.x"; }
@@ -368,7 +377,7 @@ sub append_file
 
     $fh = $self->{' INFILE'};
     
-    # hack to ugrade pdf-version number to support
+    # hack to upgrade pdf-version number to support
     # requested features in higher versions that
     # the pdf was originally created.
     $fh->seek(7,0);
@@ -389,6 +398,8 @@ sub append_file
     else
     { $tdict->{'Root'} = $self->{'Root'}; }
     $tdict->{'Size'} = $self->{'Size'};
+    $tdict->{' nocrypt'} = 1;
+    $tdict->{'Encrypt'} = $self->{'Encrypt'} if(defined $self->{'Encrypt'});
 
 # added v0.09
     foreach $t (grep ($_ !~ m/^\s/oi, keys %$self))
@@ -461,9 +472,11 @@ sub close_file
     my ($fh, $tdict, $t);
     
     $tdict = PDFDict();
+    $tdict->{' nocrypt'} = 1;
     $tdict->{'Info'} = $self->{'Info'} if defined $self->{'Info'};
     $tdict->{'ID'} = $self->{'ID'} if defined $self->{'ID'};
     $tdict->{'Root'} = defined($self->{' newroot'}) ? $self->{' newroot'} : $self->{'Root'};
+    $tdict->{'Encrypt'} = $self->{'Encrypt'} if(defined $self->{'Encrypt'});
 
 # remove all freed objects from the outlist
     @{$self->{' outlist'}} = grep(!$_->{' isfree'}, @{$self->{' outlist'}}) unless ($self->{' update'});

@@ -2,24 +2,13 @@
 
 use ExtUtils::MakeMaker;
 
-require 'version.perl';
+require 'version.p';
 
-$versionfile='version.perl';
+print "Current version is: $version \n";
 
-print "Current version is: ".$version->{'v_short'}." on a ";
-
-#if($^O eq 'MSWin32') {
-#	use Config;
-#	print $Config{'archname'}."\n";
-#} else {
-#	`cp gif/Makefile.PL.org gif/Makefile.PL`;
-#	`cp gif/giflib/Makefile.PL.org gif/giflib/Makefile.PL`;
-#	print `./shtool guessos`."\n";
-#}
-        
 WriteMakefile (
 	NAME		=>	"PDF::API2",
-	VERSION		=>	"$version->{'v_short'}_unstable",
+	VERSION		=>	"$version".'_beta',
 	AUTHOR		=>	"areibens\@cpan.org",
 	ABSTRACT	=>	"TNG PDF Generation API",
 	dist		=>	{
@@ -27,6 +16,8 @@ WriteMakefile (
 		ZIPFLAGS	=>	" -v -o -r -9 ",
 		COMPRESS	=>	"gzip -9 -f ",
 	},
+	MAN1PODS	=>	{},
+	MAN3PODS	=>	{},
 	PREREQ_PM	=>	{
 					'Compress::Zlib'	=> 1.03,
 				},
@@ -35,27 +26,28 @@ WriteMakefile (
 sub MY::postamble
 {
     my $self = shift;
-    return <<"EOT";
+    return <<'EOT';
 
 htmldoc:
 	perl pod3html -i lib/PDF/API2.pm -o docs/pdf-api2.pm.html
 
-new-version: shtool
-	./shtool version -l perl -n "PDF::API2" -i v $versionfile
+new-version: version.p
+	perl -e 'require "version.p"; @v=split(/\./,$$version); $$v[0]++; print "\$$version=\"".join(".",@v)."\";1;\n";' >version.pp
+	mv version.pp version.p
 	perl Makefile.PL
 
-new-release: shtool
-	./shtool version -l perl -n "PDF::API2" -i r $versionfile
+new-release: version.p
+	perl -e 'require "version.p"; @v=split(/\./,$$version); $$v[1]++; print "\$$version=\"".join(".",@v)."\";1;\n";' >version.pp
+	mv version.pp version.p
 	perl Makefile.PL
 
-new-level: shtool
-	./shtool version -l perl -n "PDF::API2" -i l $versionfile
+new-level: version.p
+	perl -e 'require "version.p"; @v=split(/\./,$$version); $$v[2]++; print "\$$version=\"".join(".",@v)."\";1;\n";' >version.pp
+	mv version.pp version.p
 	perl Makefile.PL
 
-custom-version: shtool
-	./shtool version -l perl -n "PDF::API2" -s \$(MODULEVERSION) $versionfile
-	perl Makefile.PL
-
+version.p:
+	perl -e 'print "\$version=\"0.0.1\";\n1;\n";' >version.p
 
 EOT
 }
