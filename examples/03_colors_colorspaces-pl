@@ -126,7 +126,7 @@ while (scalar @c >0) {
 	$txt=$page->text;
 	$gfx=$page->gfx;
 	$txt->compress;
-	$gfx->compress;
+#	$gfx->compress;
 	$txt->fillcolor(0);
 	printt($txt,$font,20,100,800,'left=RGB toright=CalRGBs');
 	
@@ -172,7 +172,7 @@ while (scalar @c >0) {
 	printt($txt,$font,20,100,800,'left=RGB right=CMYK');
 	$gfx=$page->gfx;
 	$txt->compress;
-	$gfx->compress;
+#	$gfx->compress;
 	foreach my $y (reverse(0..13)) {
 		foreach my $x (0..4) {
 			last if(scalar @c ==0);
@@ -203,8 +203,8 @@ while (scalar @c >0) {
 	$txt->fillcolor(0);
 	printt($txt,$font,20,100,800,'colorindexed');
 	$gfx=$page->gfx;
-	$txt->compress;
-	$gfx->compress;
+#	$txt->compress;
+#	$gfx->compress;
 	foreach my $y (reverse(0..13)) {
 		foreach my $x (0..4) {
 			last if(scalar @c ==0);
@@ -227,7 +227,7 @@ while (scalar @c >0) {
 	$txt=$page->text;
 	$gfx=$page->gfx;
 	$txt->compress;
-	$gfx->compress;
+#	$gfx->compress;
 	$txt->fillcolor(0);
 	printt($txt,$font,20,100,800,'L*a*b colors');
 	foreach my $y (reverse(0..14)) {
@@ -274,7 +274,7 @@ foreach my $h (0..35) {
 	$txt=$page->text;
 	$gfx=$page->gfx;
 	$txt->compress;
-	$gfx->compress;
+#	$gfx->compress;
 	$txt->fillcolor(0);
 	$hue=$h*10;
 	printt($txt,$font,20,100,800,"hue,saturation,value (h=$hue)");
@@ -300,7 +300,7 @@ foreach my $icc (qw(
 
 	$cs_icc = $pdf->colorspace(
 		-type => 'ICCBased',
-		-alternate => 'DeviceRGB',
+		-base => 'DeviceRGB',
 		-iccfile => $icc,
 		-components => 3,
 	);
@@ -311,7 +311,7 @@ foreach my $icc (qw(
 	$txt=$page->text;
 	$gfx=$page->gfx;
 	$txt->compress;
-	$gfx->compress;
+#	$gfx->compress;
 	$txt->fillcolor(0);
 	$hue=$h*10;
 	printt($txt,$font,20,100,800,"ICC Profile : $icc /RGB");
@@ -336,7 +336,7 @@ foreach my $icc (qw(
 
 	$cs_icc = $pdf->colorspace(
 		-type => 'ICCBased',
-		-alternate => 'DeviceCMYK',
+		-base => 'DeviceCMYK',
 		-iccfile => $icc,
 		-components => 4,
 	);
@@ -347,7 +347,7 @@ foreach my $icc (qw(
 	$txt=$page->text;
 	$gfx=$page->gfx;
 	$txt->compress;
-	$gfx->compress;
+#	$gfx->compress;
 	$txt->fillcolor(0);
 	$hue=$h*10;
 	printt($txt,$font,20,100,800,"ICC Profile : $icc /CMYK");

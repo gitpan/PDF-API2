@@ -352,10 +352,13 @@ sub release
     # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
     # message.
     ###########################################################################
-    foreach my $key (keys %{$self})
-    {
-        warn ref($self) . " still has '$key' key left after release.\n";
-    }
+    
+## SILENCED BY FREDO
+##
+#    foreach my $key (keys %{$self})
+#    {
+#        warn ref($self) . " still has '$key' key left after release.\n";
+#    }
 
     ###########################################################################
     # All done cleaning up.

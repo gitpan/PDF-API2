@@ -196,7 +196,7 @@ sub readPSF {
 #	print $newdata;
     # End conversion.
 
-	@asci=split(/\x0a/,$newdata);
+	@asci=split(/[\x0d\x0a]/,$newdata);
         map {
                 my($s,$t)=$_=~/^\/(\w+)\s(.+)\sdef$/;
                 $t=~s|[\/\(\)\[\]\{\}]||cgi;
@@ -265,7 +265,7 @@ sub readPSF {
 			$h{'bbx'}{$ch}=sprintf("%d %d %d %d",$v2[0],0,$v2[1]-$v2[0],$wy);
 			# print "G='$ch' WX='$v2[1]' BBX='".$h{'bbx'}{$ch}."'\n";
 		} else {
-			print "unknown bbx command at glyph='$ch' stack='".join(',',@v2)."' command='$input'\n";
+			# print "unknown bbx command at glyph='$ch' stack='".join(',',@v2)."' command='$input'\n";
 			$h{'wx'}{$ch}=0;
 			$h{'bbx'}{$ch}="0 0 0 0";
 		}
@@ -455,7 +455,7 @@ sub newNonEmbed {
 	$self->{'LastChar'} = PDFNum(255);
 	$self->{'Name'} = PDFName($pdfname);
 
-	$self->encodeProper($encoding, 32, 255, @glyphs);
+	$self->encodeProper( $file2 ? $encoding : 'WinAnsiEncoding' , 32, 255, @glyphs);
 	
 	$self->{'FontDescriptor'}=PDFDict();
 	$self->{'FontDescriptor'}->{'Type'}=PDFName('FontDescriptor');
@@ -469,6 +469,13 @@ sub newNonEmbed {
 	$self->{'FontDescriptor'}->{'StemV'}=PDFNum(0);
 	$self->{'FontDescriptor'}->{'StemH'}=PDFNum(0);
 	$self->{'FontDescriptor'}->{'XHeight'}=PDFNum($self->{' AFM'}->{'xheight'}||$w[3]->val||0);
+
+	$self->{' ascent'}=$self->{' AFM'}->{'ascender'}||0;
+	$self->{' descent'}=$self->{' AFM'}->{'descender'}||0;
+	$self->{' italicangle'}=$self->{' AFM'}->{'italicangle'}||0;
+	$self->{' fontbbox'}=[ split(/\s+/,$self->{' AFM'}->{'fontbbox'}) ];
+	$self->{' capheight'}=$self->{' AFM'}->{'capheight'}||$w[3]->val||0;
+	$self->{' xheight'}=$self->{' AFM'}->{'xheight'}||$w[3]->val||0;
 	
 	my $flags=0;
 	$self->{' AFM'}->{'encoding'}=$self->{' AFM'}->{'encoding'}||'';
@@ -525,6 +532,13 @@ sub newNonEmbedLight {
 	$self->{'Subtype'} = PDFName("Type1");
 	$self->{'BaseFont'} = PDFName($self->{' AFM'}->{'fontname'} || $name);
 	$self->{'Name'} = PDFName($pdfname);
+	@w=split(/\s+/,$self->{' AFM'}->{'fontbbox'});
+	$self->{' ascent'}=$self->{' AFM'}->{'ascender'}||0;
+	$self->{' descent'}=$self->{' AFM'}->{'descender'}||0;
+	$self->{' italicangle'}=$self->{' AFM'}->{'italicangle'}||0;
+	$self->{' fontbbox'}=[ @w ];
+	$self->{' capheight'}=$self->{' AFM'}->{'capheight'}||$w[3]||0;
+	$self->{' xheight'}=$self->{' AFM'}->{'xheight'}||($w[3]/2)||0;
 	
 	if(defined($parent) && !$self->is_obj($parent)) {
 		$parent->new_obj($self);

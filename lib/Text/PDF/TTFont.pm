@@ -95,6 +95,23 @@ sub new
     $f->{'Ascent'} = PDFNum(int($font->{'hhea'}->read->{'Ascender'} * 1000 / $upem));
     $f->{'Descent'} = PDFNum(int($font->{'hhea'}{'Descender'} * 1000 / $upem));
 
+	$self->{' ascent'}=int($font->{'hhea'}->read->{'Ascender'} * 1000 / $upem);
+	$self->{' descent'}=int($font->{'hhea'}{'Descender'} * 1000 / $upem);
+
+	$self->{' capheight'}=int(
+		$font->{'loca'}->read->{'glyphs'}[
+			$font->{'post'}{'STRINGS'}{"H"}
+		]->read->{'yMax'}
+		* 1000 / $upem
+	)||0;
+	
+	$self->{' xheight'}=int(
+		$font->{'loca'}->read->{'glyphs'}[
+			$font->{'post'}{'STRINGS'}{"x"}
+		]->read->{'yMax'}
+		* 1000 / $upem
+	)||0;
+
 # find the top of an H or the null box! Or maybe we should just duck and say 0?
     $f->{'CapHeight'} = PDFNum(0);
 #            int($font->{'loca'}->read->{'glyphs'}[$font->{'post'}{'STRINGS'}{"H"}]->read->{'yMax'}
@@ -102,11 +119,21 @@ sub new
     $f->{'StemV'} = PDFNum(0);                       # no way!
     $f->{'FontName'} = $self->{'BaseFont'};
     $f->{'ItalicAngle'} = PDFNum($font->{'post'}->read->{'italicAngle'});
+
+	$self->{' italicangle'}=$font->{'post'}->read->{'italicAngle'};
+
     $f->{'FontBBox'} = PDFArray(
             PDFNum(int($font->{'head'}{'xMin'} * 1000 / $upem)),
             PDFNum(int($font->{'head'}{'yMin'} * 1000 / $upem)),
             PDFNum(int($font->{'head'}{'xMax'} * 1000 / $upem)),
             PDFNum(int($font->{'head'}{'yMax'} * 1000 / $upem)));
+
+	$self->{' fontbbox'}=[
+		int($font->{'head'}{'xMin'} * 1000 / $upem),
+	        int($font->{'head'}{'yMin'} * 1000 / $upem),
+	        int($font->{'head'}{'xMax'} * 1000 / $upem),
+		int($font->{'head'}{'yMax'} * 1000 / $upem)
+	];
 
     $flags = 4;
     $flags = 0;

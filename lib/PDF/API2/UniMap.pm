@@ -4,11 +4,11 @@ package PDF::API2::UniMap;
 use vars qw ($VERSION @EXPORT @EXPORT_OK @EXPORT_TAGS @ISA);
 
 BEGIN {
-    @ISA         = qw(Exporter);
-    @EXPORT      = qw ();
-    @EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
-    @EXPORT_TAGS = qw ();
-    $VERSION     = "0.2.1";
+	@ISA         = qw(Exporter);
+	@EXPORT      = qw ();
+	@EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
+	@EXPORT_TAGS = qw ();
+	( $VERSION ) = '$Revisioning: 20011118.155234 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 sub utf8c_to_ucs4c {

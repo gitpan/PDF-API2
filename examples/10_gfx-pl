@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use PDF::API2;
+
+$pdf=PDF::API2->new;
+
+$font=$pdf->corefont('Helvetica',1);
+
+	$page = $pdf->page;
+	$page->mediabox(595,842);
+	$txt=$page->text;
+	$txt->compress;
+	$gfx=$page->gfx;
+#	$gfx->compress;
+	$r=50;
+	$x=50;
+	$y=50;
+	$h=200;
+	$w=300;
+	$x1=$x+$r;
+	$y1=$y+$r;
+	$gfx->arc( $x1, $y1, $r, $r, 270, 180, 1 );
+	$x1=$x;
+	$y1=$y+$h-$r;
+	$gfx->line($x1,$y1);
+	$x1=$x+$r;
+	$y1=$y+$h-$r;
+	$gfx->arc( $x1, $y1, $r, $r, 180, 90);
+	$x1=$x+$w-$r;
+	$y1=$y+$h;
+	$gfx->line($x1,$y1);
+	$x1=$x+$w-$r;
+	$y1=$y+$h-$r;
+	$gfx->arc( $x1, $y1, $r, $r, 90, 0);
+	$x1=$x+$w;
+	$y1=$y+$r;
+	$gfx->line($x1,$y1);
+	$x1=$x+$w-$r;
+	$y1=$y+$r;
+	$gfx->arc( $x1, $y1, $r, $r, 0, -90);
+	$gfx->close;
+	$gfx->stroke;
+
+$pdf->saveas("$0.pdf");
+
+exit;
+
+__END__

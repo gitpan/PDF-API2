@@ -1,6 +1,8 @@
 package PDF::API2::Color;
 
-$VERSION='0.1_03';
+use vars qw( $VERSION );
+
+( $VERSION ) = '$Revisioning: 20011118.155302 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 

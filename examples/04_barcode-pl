@@ -7,11 +7,11 @@ use Text::PDF::Utils;
 $pdf=PDF::API2->new;
 
 $f1=$pdf->corefont('Helvetica',1);
-$f1->encode('latin1');
+# $f1->encode('latin1');
 
 
 $f2=$pdf->corefont('Times-Roman',1);
-$f2->encode('latin1');
+# $f2->encode('latin1');
 
 $page = $pdf->page;
 $page->mediabox(595,842);
@@ -25,7 +25,7 @@ $txt->text('Barcode Test !');
 
 
 $gfx=$page->gfx;
-$gfx->compress;
+# $gfx->compress;
 
 $bar=$pdf->barcode(
 	-type => '3of9',
@@ -61,7 +61,7 @@ foreach $t (
 		-fnsz => 8,
 		-text => $t
 	);
-	$bar->compress;
+#	$bar->compress;
 	$gfx->barcode($bar,$bar->{' w'}/2,$y,1,1);
 	$y+=70;
 }
