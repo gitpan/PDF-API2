@@ -25,7 +25,7 @@ use POSIX;
 use vars qw(@ISA $VERSION $fkey %fkeyset);
 @ISA = qw( PDF::API2::PDF::Dict );
 
-( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 my $fkey='0';
 my %fkeyset=(

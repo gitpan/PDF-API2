@@ -4,7 +4,7 @@ use vars qw($VERSION @ISA @EXPORT %colors $key_var);
 use Math::Trig;
 use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/; 
+( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/; 
 
 $key_var='AA';
 

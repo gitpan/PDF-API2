@@ -143,7 +143,7 @@ use PDF::API2::PDF::Page;
 use PDF::API2::PDF::Pages;
 use PDF::API2::PDF::Null;
 
-( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:27 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 #$VERSION = "0.23";      # MJPH  14-AUG-2002     Fix MANIFEST
 #$VERSION = "0.22";      # MJPH  26-JUL-2002     Add PDF::API2::PDF::File::copy, tidy up update(), sort out out_trailer
