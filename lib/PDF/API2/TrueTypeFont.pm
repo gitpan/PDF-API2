@@ -24,7 +24,7 @@ use PDF::API2::PDF::Dict;
 use POSIX;
 use vars qw(@ISA $VERSION);
 @ISA = qw( PDF::API2::PDF::Dict );
-( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =item $font = PDF::API2::TrueTypeFont->new $pdf, $file, %options
 

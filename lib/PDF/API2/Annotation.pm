@@ -20,7 +20,7 @@ package PDF::API2::Annotation;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::PDF::Dict;

@@ -19,7 +19,7 @@ package PDF::API2::CoreFont;
 
 BEGIN {
 	use vars qw( @ISA $fonts $alias $subs @latin1 @macroman @winansi @adobestd $VERSION );
-	( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 use strict;

@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -497,11 +497,13 @@ sub openpage {
 				$content->add(" ".unfilter($k->{Filter}, $k->{' stream'})." ");
 			}
 			$content->add(" Q ");
+			$content->{Length}=PDFNum(length($content->{' stream'}));
 			## if we like compress we will do it now to do quicker saves
 			if($self->{forcecompress}>0){
 				$content->compress;
 				$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
 				$content->{' nofilt'}=1;
+				$content->{Length}=PDFNum(length($content->{' stream'}));
 			}
 		}
 	}
@@ -713,11 +715,13 @@ sub importpage {
 		}
 	}
 	$content->add(" Q ");
+	$content->{Length}=PDFNum(length($content->{' stream'}));
 	## if we like compress we will do it now to do quicker saves
 	if($self->{forcecompress}>0){
 		$content->compress;
 		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
 		$content->{' nofilt'}=1;
+		$content->{Length}=PDFNum(length($content->{' stream'}));
 	}
 
         # copy annotations and/or form elements as well

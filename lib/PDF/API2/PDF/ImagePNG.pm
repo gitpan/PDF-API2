@@ -11,7 +11,7 @@ use PDF::API2::PDF::Image;
 use Compress::Zlib;
 use vars qw(@ISA $VERSION);
 
-( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 @ISA = qw(PDF::API2::PDF::Image);
 

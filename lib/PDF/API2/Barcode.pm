@@ -50,7 +50,7 @@ use vars qw(
 	$VERSION
 );
 
-( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Utils;
 use PDF::API2::PDF::Dict;

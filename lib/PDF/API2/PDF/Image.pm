@@ -9,7 +9,7 @@ use PDF::API2::PDF::Utils;
 use vars qw(@ISA $VERSION );
 
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3a29 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head2 PDF::API2::PDF::Image
 
