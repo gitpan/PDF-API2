@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.22 2004/04/04 23:42:10 fredo Exp $
+#   $Id: API2.pm,v 1.24 2004/04/07 10:48:53 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $RELEASEVERSION $seq @FontDirs );
 
-    ( $VERSION ) = '$Revision: 1.22 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/04 23:42:10 $
+    ( $VERSION ) = '$Revision: 1.24 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/07 10:48:53 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -87,6 +87,8 @@ BEGIN {
     use PDF::API2::Resource::ColorSpace::Indexed::Hue;
     use PDF::API2::Resource::ColorSpace::Indexed::WebColor;
 
+    use PDF::API2::Resource::ColorSpace::Separation;
+    
     use Compress::Zlib;
 
     use Math::Trig;
@@ -1574,79 +1576,12 @@ for gray-level bitmap-images.
 
 sub colorspace_separation {
     my ($self,$name,@clr)=@_;
+    my $obj=PDF::API2::Resource::ColorSpace::Separation->new_api($self,$name,@clr);
 
-    my $fct=PDFDict();
-    my $csname='DevceRGB';
-    if($clr[0]=~/^[a-z\#\!]+/) {
-        # colorname or #! specifier
-        # with rgb target colorspace
-        # namecolor returns always a RGB
-        my ($r,$g,$b)=namecolor($clr[0]);
+    $self->resource('ColorSpace',$obj->name,$obj);
 
-        $fct->{FunctionType}=PDFNum(0);
-        $fct->{Size}=PDFArray(PDFNum(2));
-        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$r,0,$g,0,$b));
-        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
-        $fct->{BitsPerSample}=PDFNum(8);
-        $fct->{' stream'}="\x00\x00\x00\xff\xff\xff";
-    } elsif($clr[0]=~/^[\%]+/) {
-        # % specifier
-        # with cmyk target colorspace
-        my ($c,$m,$y,$k)=namecolor_cmyk($clr[0]);
-        $csname='DevceCMYK';
-
-        $fct->{FunctionType}=PDFNum(0);
-        $fct->{Size}=PDFArray(PDFNum(2));
-        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$c,0,$m,0,$y,0,$k));
-        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
-        $fct->{BitsPerSample}=PDFNum(8);
-        $fct->{' stream'}="\x00\x00\x00\x00\xff\xff\xff\xff";
-    } elsif(scalar @clr == 1) {
-        # grey color spec.
-        while($clr[0]>1) { $clr[0]/=255; }
-        # adjusted for 8/16/32bit spec.
-        my $g=$clr[0];
-        $csname='DevceGray';
-
-        $fct->{FunctionType}=PDFNum(0);
-        $fct->{Size}=PDFArray(PDFNum(2));
-        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$g));
-        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
-        $fct->{BitsPerSample}=PDFNum(8);
-        $fct->{' stream'}="\x00\xff";
-    } elsif(scalar @clr == 3) {
-        # legacy rgb color-spec (0 <= x <= 1)
-        my ($r,$g,$b)=@clr;
-
-        $fct->{FunctionType}=PDFNum(0);
-        $fct->{Size}=PDFArray(PDFNum(2));
-        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$r,0,$g,0,$b));
-        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
-        $fct->{BitsPerSample}=PDFNum(8);
-        $fct->{' stream'}="\x00\x00\x00\xff\xff\xff";
-    } elsif(scalar @clr == 4) {
-        # legacy cmyk color-spec (0 <= x <= 1)
-        my ($c,$m,$y,$k)=@clr;
-        $csname='DevceCMYK';
-
-        $fct->{FunctionType}=PDFNum(0);
-        $fct->{Size}=PDFArray(PDFNum(2));
-        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$c,0,$m,0,$y,0,$k));
-        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
-        $fct->{BitsPerSample}=PDFNum(8);
-        $fct->{' stream'}="\x00\x00\x00\x00\xff\xff\xff\xff";
-    } else {
-        die 'invalid color specification.';
-    }
-
-    my $cso=PDFArray( PDFName('Separation'), PDFName($name), PDFName($csname), $fct);
-
-    $self->{pdf}->new_obj($cso);
-    $self->{pdf}->new_obj($fct);
-    
-    $self->resource('ColorSpace',$name,$cso);
-
-    return($cso);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =back
@@ -1867,6 +1802,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.24  2004/04/07 10:48:53  fredo
+    fixed handling of ColorSpace/Separation
+
+    Revision 1.23  2004/04/06 21:00:52  fredo
+    separation colorspace now a full resource
+
     Revision 1.22  2004/04/04 23:42:10  fredo
     fixed 270 degree rotation in openpage
 

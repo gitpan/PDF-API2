@@ -13,7 +13,11 @@ contrib/pdf-deoptimize.pl
 contrib/pdf-optimize.pl
 examples/020_corefonts
 examples/021_synfonts
+examples/022_truefonts
+examples/023_cjkfonts
 examples/030_colorspecs
+examples/031_color_hsv
+examples/032_separation
 lib/PDF/API2.pm
 lib/PDF/API2/Annotation.pm
 lib/PDF/API2/Content.pm
@@ -89,6 +93,7 @@ lib/PDF/API2/Resource/ColorSpace/Indexed.pm
 lib/PDF/API2/Resource/ColorSpace/Indexed/ACTFile.pm
 lib/PDF/API2/Resource/ColorSpace/Indexed/Hue.pm
 lib/PDF/API2/Resource/ColorSpace/Indexed/WebColor.pm
+lib/PDF/API2/Resource/ColorSpace/Separation.pm
 lib/PDF/API2/Resource/CIDFont/CJKFont.pm
 lib/PDF/API2/Resource/CIDFont/TrueType.pm
 lib/PDF/API2/Resource/CIDFont/TrueType/FontFile.pm

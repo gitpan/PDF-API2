@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.8 2004/02/12 14:46:44 fredo Exp $
+#   $Id: Content.pm,v 1.9 2004/04/07 10:49:26 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
     use Math::Trig;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 14:46:44 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/07 10:49:26 $
 
 }
 
@@ -521,7 +521,7 @@ sub fillcolor {
         @{$self->{' fillcolor'}}=@_;
         my @clrs=@_;
         $self->add($self->_makecolor(1,@clrs));
-        if(ref($clrs[0]) eq 'PDF::API2::ColorSpace') {
+        if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) {
             $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
         } elsif(ref($clrs[0]) eq 'PDF::API2::Pattern') {
             $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
@@ -1664,6 +1664,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.9  2004/04/07 10:49:26  fredo
+    fixed handling of colorSpaces for fill/strokecolor
+
     Revision 1.8  2004/02/12 14:46:44  fredo
     removed duplicate definition of egstate method
 
