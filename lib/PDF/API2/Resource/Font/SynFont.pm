@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: SynFont.pm,v 1.3 2003/12/08 13:06:01 Administrator Exp $
+#   $Id: SynFont.pm,v 1.7 2004/02/10 15:55:42 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::SynFont;
@@ -42,10 +42,11 @@ BEGIN {
     use PDF::API2::Util;
     use PDF::API2::Basic::PDF::Utils;
     use Math::Trig;
+    use Unicode::UCD 'charinfo';
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:01 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/10 15:55:42 $
 
 }
 
@@ -123,6 +124,7 @@ sub new {
         'lastchar' => $last,
         'char' => [ '.notdef' ],
         'uni' => [ 0 ],
+        'u2e' => { 0 => 0 },
         'fontbbox' => '',
         'wx' => { 'space' => '600' },
     };
@@ -152,23 +154,42 @@ sub new {
     my $xo=PDFDict();
     $self->{Resources}->{Font}=$xo;
     $self->{Resources}->{Font}->{FSN}=$font;
+    foreach my $w ($first..$last) {
+        $self->data->{char}->[$w]=$font->glyphByEnc($w);
+        $self->data->{uni}->[$w]=uniByName($self->data->{char}->[$w]);
+        $self->data->{u2e}->{$self->data->{uni}->[$w]}=$w;
+    }
+    #use Data::Dumper;
+    #print Dumper($self->data);
     my @widths=();
     foreach my $w ($first..$last) {
+        if($self->data->{char}->[$w] eq '.notdef') {
+            push @widths,$self->missingwidth;
+            next;
+        }
         my $char=PDFDict();
         my $wth=int($font->width(chr($w))*1000*$slant);
         $procs->{$font->glyphByEnc($w)}=$char;
-        $self->data->{char}->[$w]=$font->glyphByEnc($w);
-        $self->data->{uni}->[$w]=uniByName($self->data->{char}->[$w]);
-        $self->data->{wx}->{$font->glyphByEnc($w)}=$wth;
-        push @widths,$wth;
         $char->{Filter}=PDFArray(PDFName('FlateDecode'));
         $char->{' stream'}=$wth." 0 ".join(' ',map { int($_) } $self->fontbbox)." d1\n";
         $char->{' stream'}.="BT\n";
         $char->{' stream'}.=join(' ',1,0,tan(deg2rad($oblique)),1,0,0)." Tm\n" if($oblique);
-        $char->{' stream'}.="/FSN 1000 Tf\n";
-        $char->{' stream'}.=($slant*100)." Tz\n" if($slant!=1);
         $char->{' stream'}.="2 Tr ".($bold)." w\n" if($bold);
-        $char->{' stream'}.=$self->text(chr($w))." Tj\nET\n";
+        my $ci = charinfo($self->data->{uni}->[$w]);
+        if($opts{-caps} && $ci->{upper}) {
+            $char->{' stream'}.="/FSN 800 Tf\n";
+            $char->{' stream'}.=($slant*110)." Tz\n";
+            my $ch=$self->encByUni(hex($ci->{upper}));
+            $wth=int($font->width(chr($ch))*800*$slant*1.1);
+            $char->{' stream'}.=$self->text(chr($ch));
+        } else {
+            $char->{' stream'}.="/FSN 1000 Tf\n";
+            $char->{' stream'}.=($slant*100)." Tz\n" if($slant!=1);
+            $char->{' stream'}.=$self->text(chr($w));
+        }
+        $char->{' stream'}.=" Tj\nET\n";
+        push @widths,$wth;
+        $self->data->{wx}->{$font->glyphByEnc($w)}=$wth;
         $pdf->new_obj($char);
     }
     $procs->{'.notdef'}=$procs->{$font->data->{char}->[32]};
@@ -232,6 +253,18 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: SynFont.pm,v $
+    Revision 1.7  2004/02/10 15:55:42  fredo
+    fixed glyph generation for .notdef glyphs
+
+    Revision 1.6  2004/02/01 22:06:26  fredo
+    beautified caps generation
+
+    Revision 1.5  2004/02/01 19:27:18  fredo
+    fixed width calc for caps
+
+    Revision 1.4  2004/02/01 19:04:31  fredo
+    added caps capability
+
     Revision 1.3  2003/12/08 13:06:01  Administrator
     corrected to proper licencing statement
 

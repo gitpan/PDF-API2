@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CJKFont.pm,v 1.3 2003/12/08 13:05:33 Administrator Exp $
+#   $Id: CJKFont.pm,v 1.4 2004/02/24 00:08:54 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::CJKFont;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:33 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/24 00:08:54 $
 
     $fonts = { };
     $cmap = { };
@@ -146,14 +146,18 @@ sub text_cid {
     my ($self,$text)=@_;
     my $newtext='';
     foreach my $g (unpack('n*',$text)) {
-        $newtext.=sprintf('%04X',$g);
+        $newtext.=substr(sprintf('%04X',$g),0,4);
     }
     return("<$newtext>");
 }
 
 sub cidsByStr {
     my ($self,$s)=@_;
-    $s=pack('n*',map { $self->cidByUni($_) } unpack('U*',decode($self->data->{encode},$s)));
+    if($self->data->{encode}) {
+        $s=pack('n*',map { $self->cidByUni($_) } unpack('U*',decode($self->data->{encode},$s)));
+    } else {
+        $s=pack('n*',map { $self->cidByUni($_) } unpack('U*',$s));
+    }
     return($s);
 }
 
@@ -222,6 +226,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CJKFont.pm,v $
+    Revision 1.4  2004/02/24 00:08:54  fredo
+    added utf8 fallback for encoding
+
     Revision 1.3  2003/12/08 13:05:33  Administrator
     corrected to proper licencing statement
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Annotation.pm,v 1.5 2003/12/08 13:05:18 Administrator Exp $
+#   $Id: Annotation.pm,v 1.7 2004/02/22 23:55:49 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Annotation;
@@ -43,7 +43,10 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:18 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/22 23:55:49 $
+
+    use utf8;
+    use Encode qw(:all);
 
 }
 
@@ -97,7 +100,11 @@ sub url {
     $self->{Subtype}=PDFName('Link');
     $self->{A}=PDFDict();
     $self->{A}->{S}=PDFName('URI');
-    $self->{A}->{URI}=PDFStr($url);
+    if(is_utf8($url) || utf8::valid($url)) {
+        $self->{A}->{URI}=PDFUtf($url);
+    } else {
+        $self->{A}->{URI}=PDFStr($url);
+    }
     $self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
     $self->border(@{$opts{-border}}) if(defined $opts{-border});
     return($self);
@@ -111,11 +118,15 @@ options %opts (-rect and/or -border).
 =cut
 
 sub file {
-    my ($self,$file,%opts)=@_;
+    my ($self,$url,%opts)=@_;
     $self->{Subtype}=PDFName('Link');
     $self->{A}=PDFDict();
     $self->{A}->{S}=PDFName('Launch');
-    $self->{A}->{F}=PDFStr($file);
+    if(is_utf8($url) || utf8::valid($url)) {
+        $self->{A}->{F}=PDFUtf($url);
+    } else {
+        $self->{A}->{F}=PDFStr($url);
+    }
     $self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
     $self->border(@{$opts{-border}}) if(defined $opts{-border});
     return($self);
@@ -129,11 +140,15 @@ and options %opts (same as dest).
 =cut
 
 sub pdfile {
-    my ($self,$file,$pnum,%opts)=@_;
+    my ($self,$url,$pnum,%opts)=@_;
     $self->{Subtype}=PDFName('Link');
     $self->{A}=PDFDict();
     $self->{A}->{S}=PDFName('GoToR');
-    $self->{A}->{F}=PDFStr($file);
+    if(is_utf8($url) || utf8::valid($url)) {
+        $self->{A}->{F}=PDFUtf($url);
+    } else {
+        $self->{A}->{F}=PDFStr($url);
+    }
     if(defined $opts{-fit}) {
         $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('Fit'));
     } elsif(defined $opts{-fith}) {
@@ -208,7 +223,12 @@ Sets the text-content of the annotation, if applicable.
 
 sub content {
     my ($self,@t)=@_;
-    $self->{Content}=PDFStr(join("\n",@t));
+    my $t=join("\n",@t);
+    if(is_utf8($t) || utf8::valid($t)) {
+        $self->{Content}=PDFUtf($t);
+    } else {
+        $self->{Content}=PDFStr($t);
+    }
     return($self);
 }
 
@@ -327,6 +347,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Annotation.pm,v $
+    Revision 1.7  2004/02/22 23:55:49  fredo
+    full utf8 awareness
+
+    Revision 1.6  2004/02/05 13:33:18  fredo
+    added unicode handling to strings
+
     Revision 1.5  2003/12/08 13:05:18  Administrator
     corrected to proper licencing statement
 

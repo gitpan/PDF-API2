@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Filter.pm,v 1.3 2003/12/08 13:05:20 Administrator Exp $
+#   $Id: Filter.pm,v 1.4 2004/02/18 14:05:15 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Filter;
@@ -380,47 +380,44 @@ sub new
     my ($class) = @_;
     my ($self) = {};
 
-    $self->{'indict'} = [@basedict];
-    $self->{'insize'} = 9;
-#    $self->{'outfilt'} = Compress::Zlib::deflateInit();     # patent precludes LZW encoding
+    $self->{indict} = [@basedict];
+    $self->{bits} = 9;
+    $self->{insize} = $self->{bits};
+    $self->{resetcode}=1<<($self->{insize}-1);
+    $self->{endcode}=$self->{resetcode}+1;
+    $self->{nextcode}=$self->{endcode}+1;
+
     bless $self, $class;
 }
 
 sub infilt
 {
     my ($self, $dat, $last) = @_;
-    my ($num, $cache, $cache_size, $res, $mode, $count);
+    my ($num, $cache, $cache_size, $res);
 
-    $count = 258;
     while ($dat ne '' || $cache_size > 0)
     {
         ($num, $cache, $cache_size) = $self->read_dat(\$dat, $cache, $cache_size, $self->{'insize'});
-        return $res if ($num == 257);
-        if ($num == 256)
-        {
-             $self->{'indict'} = [@basedict];
-             $self->{'insize'} = 9;
-             $count = 258;
-             undef $mode;
-             next;
+
+        # this was a little arkward to comprehand
+        # here is a better version -- fredo
+        $self->{'insize'}++ if($self->{nextcode} == (1<<$self->{'insize'}));
+        if($num==$self->{resetcode}) {
+            $self->{'insize'}=$self->{bits};
+            $self->{nextcode}=$self->{endcode}+1;
+            next;
+        } elsif($num==$self->{endcode}) {
+            last;
+        } elsif($num<$self->{resetcode}) {
+            $self->{'indict'}[$self->{nextcode}] = $self->{'indict'}[$num];
+            $res.=$self->{'indict'}[$self->{nextcode}];
+            $self->{nextcode}++;
+        } elsif($num>$self->{endcode}) {
+            $self->{'indict'}[$self->{nextcode}] = $self->{'indict'}[$num];
+            $self->{'indict'}[$self->{nextcode}].= substr($self->{'indict'}[$num+1],0,1);
+            $res.=$self->{'indict'}[$self->{nextcode}];
+            $self->{nextcode}++;
         }
-        if (defined $mode)
-        {
-            $self->{'indict'}[$count] = $mode . substr($self->{'indict'}[$num], 0, 1);
-            $count++;
-        }
-        $mode = $self->{'indict'}[$num];
-        $res .= $mode;
-        if ($count >= 4096)
-        {
-            $self->{'indict'} = [@basedict];
-            $self->{'insize'} = 9;
-        } elsif ($count == 511)
-        { $self->{'insize'} = 10; }
-        elsif ($count == 1023)
-        { $self->{'insize'} = 11; }
-        elsif ($count == 2047)
-        { $self->{'insize'} = 12; }
     }
     return $res;
 }

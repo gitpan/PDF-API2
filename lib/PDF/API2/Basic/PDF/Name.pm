@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Name.pm,v 1.3 2003/12/08 13:05:20 Administrator Exp $
+#   $Id: Name.pm,v 1.4 2004/02/18 14:04:25 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Name;
@@ -106,8 +106,10 @@ encode certain characters in hex if the version is greater than 1.1.
 sub string_to_name ($;$)
 {
     my ($str, $pdf) = @_;
-    if (!(defined ($pdf) && $pdf->{' version'} < 2))
-      { $str =~ s|([\001-\040\177-\377%()\[\]{}<>#/])|"#".sprintf("%02X", ord($1))|oge; }
+ #   if (!(defined ($pdf) && $pdf->{' version'} < 2))
+ #     { 
+      $str =~ s|([\x00-\x20\x7f-\xff%()\[\]{}<>#/])|"#".sprintf("%02X", ord($1))|oge; 
+ #     }
     return $str;
 }
 

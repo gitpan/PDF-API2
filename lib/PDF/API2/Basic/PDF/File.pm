@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.7 2004/01/19 14:09:56 fredo Exp $
+#   $Id: File.pm,v 1.8 2004/01/22 14:17:29 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -950,6 +950,7 @@ sub ship_out
         delete $self->{' outlist_cache'}{$objind};
         next if grep {$_ eq $objind} @{$self->{' free'}};
 
+        map { $fh->print("\%   $_ \n") } split(/$cr/,$objind->{' comments'}) if($objind->{' comments'});
         $self->{' locs'}{$objind->uid} = $fh->tell;
         ($objnum, $objgen) = @{$self->{' objects'}{$objind->uid}}[0..1];
         $fh->printf("%d %d obj ", $objnum, $objgen);

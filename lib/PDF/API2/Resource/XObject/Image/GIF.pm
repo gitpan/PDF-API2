@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: GIF.pm,v 1.3 2003/12/08 13:06:11 Administrator Exp $
+#   $Id: GIF.pm,v 1.5 2004/03/20 08:37:43 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:11 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/03/20 08:37:43 $
 
 }
 
@@ -53,6 +53,54 @@ BEGIN {
 Returns a gif-image object.
 
 =cut
+
+# added from PDF::Create:
+# PDF::Image::GIFImage - GIF image support
+# Author: Michael Gross <mdgrosse@sbox.tugraz.at>
+# modified for internal use. (c) 2004 fredo.
+sub unInterlace { 
+    my $self = shift;
+    my $data = $self->{' stream'};
+    my $row;
+    my @result;
+    my $width = $self->width;
+    my $height = $self->height;
+    my $idx = 0;
+
+    #Pass 1 - every 8th row, starting with row 0
+    $row = 0;
+    while ($row < $height) {
+        $result[$row] = substr($data, $idx*$width, $width);
+        $row+=8;
+        $idx++;
+    }
+    
+    #Pass 2 - every 8th row, starting with row 4
+    $row = 4;
+    while ($row < $height) {
+        $result[$row] = substr($data, $idx*$width, $width);
+        $row+=8;
+        $idx++;
+    }
+    
+    #Pass 3 - every 4th row, starting with row 2
+    $row = 2;
+    while ($row < $height) {
+        $result[$row] = substr($data, $idx*$width, $width);
+        $row+=4;
+        $idx++;
+    }
+    
+    #Pass 4 - every 2th row, starting with row 1
+    $row = 1;
+    while ($row < $height) {
+        $result[$row] = substr($data, $idx*$width, $width);
+        $row+=2;
+        $idx++;
+    }
+    
+    $self->{' stream'}=join('', @result);
+}
 
 sub deGIF {
     my ($ibits,$stream)=@_;
@@ -107,7 +155,7 @@ sub deGIF {
 sub new {
     my ($class,$pdf,$file,$name,%opts) = @_;
     my $self;
-    my $fh = IO::File->new;
+    my $inter=0;
 
     $class = ref $class if ref $class;
 
@@ -145,12 +193,15 @@ sub new {
             $self->height($h||$hg);
             $self->bpc(8);
 
-            if($flags&0x80) {
+            if($flags&0x80) { # local colormap
                 my $colSize=2**(($flags&0x7)+1);
                 my $dict=PDFDict();
                 $pdf->new_obj($dict);
                 $self->colorspace(PDFArray(PDFName('Indexed'),PDFName('DeviceRGB'),PDFNum($colSize-1),$dict));
                 $fh->read($dict->{' stream'},3*$colSize); # color-table
+            }
+            if($flags&0x40) { # need de-interlace
+                $inter=1;
             }
 
             $fh->read($buf,1); # image-lzw-start (should be 9).
@@ -166,6 +217,7 @@ sub new {
                 $len=unpack('C',$buf);
             }
             $self->{' stream'}=deGIF($sep+1,$stream);
+            $self->unInterlace if($inter);
             last;
         } elsif($sep==0x3b) {
             last;
@@ -234,6 +286,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: GIF.pm,v $
+    Revision 1.5  2004/03/20 08:37:43  fredo
+    added de-interlacing
+
+    Revision 1.4  2004/02/12 14:48:41  fredo
+    removed duplicate definition of $fh
+
     Revision 1.3  2003/12/08 13:06:11  Administrator
     corrected to proper licencing statement
 

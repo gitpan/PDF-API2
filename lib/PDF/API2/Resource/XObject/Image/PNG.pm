@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: PNG.pm,v 1.3 2003/12/08 13:06:11 Administrator Exp $
+#   $Id: PNG.pm,v 1.4 2004/02/12 14:48:01 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::PNG;
@@ -43,7 +43,7 @@ BEGIN {
 
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:11 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 14:48:01 $
 }
 
 =item $res = PDF::API2::Resource::XObject::Image::PNG->new $pdf, $file [, $name]
@@ -55,7 +55,6 @@ Returns a png-image object.
 sub new {
     my ($class,$pdf,$file,$name,%opts) = @_;
     my $self;
-    my $fh = IO::File->new;
 
     $class = ref $class if ref $class;
 
@@ -369,6 +368,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: PNG.pm,v $
+    Revision 1.4  2004/02/12 14:48:01  fredo
+    removed duplicate definition of $fh
+
     Revision 1.3  2003/12/08 13:06:11  Administrator
     corrected to proper licencing statement
 

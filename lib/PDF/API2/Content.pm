@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#   $Id: Content.pm,v 1.8 2004/02/12 14:46:44 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
     use Math::Trig;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 14:46:44 $
 
 }
 
@@ -98,14 +98,14 @@ Adds @content to the object.
 sub add_post {
     my $self=shift @_;
     if(scalar @_>0) {
-        $self->{' poststream'}.=" ".join(' ',@_)."\n";
+        $self->{' poststream'}.=($self->{' poststream'}=~m|\s$|o?'':' ').join(' ',@_).' ';
     }
     $self;
 }
 sub add {
     my $self=shift @_;
     if(scalar @_>0) {
-        $self->{' stream'}.=" ".join(' ',@_)."\n";
+        $self->{' stream'}.=($self->{' stream'}=~m|\s$|o?'':' ').join(' ',@_).' ';
     }
     $self;
 }
@@ -432,22 +432,53 @@ sub transform {
 
 =item $co->fillcolor @colors
 
-Sets fillcolor, see PDF::API2::Util for a list of possible color specifiers.
+=item $co->strokecolor @colors
+
+Sets fill-/strokecolor, see PDF::API2::Util for a list of possible color specifiers.
 
 B<Examples:>
 
     $co->fillcolor('blue');       # blue
-    $co->fillcolor('#FF0000');    # red
+    $co->strokecolor('#FF0000');  # red
     $co->fillcolor('%FFF000000'); # cyan
 
 =cut
 
+# default colorspaces: rgb/hsv/named cmyk/hsl lab
+#   ... only one text string
+#
+# pattern or shading space
+#   ... only one object
+#
+# legacy greylevel
+#   ... only one value
+#
+# 
+
 sub _makecolor {
-    my ($sf,@clr)=@_;
-    if($clr[0]=~/^[a-z\!\$\%\&\#]+/) {
-        # colorname or #%&! specifier
+    my ($self,$sf,@clr)=@_;
+    if($clr[0]=~/^[a-z\#\!]+/) {
+        # colorname or #! specifier
+        # with rgb target colorspace
         # namecolor returns always a RGB
         return(namecolor($clr[0]),($sf?'rg':'RG'));
+    } elsif($clr[0]=~/^[\%]+/) {
+        # % specifier
+        # with cmyk target colorspace
+        return(namecolor_cmyk($clr[0]),($sf?'k':'K'));
+    } elsif($clr[0]=~/^[\$\&]/) {
+        # &$ specifier
+        # with L*a*b target colorspace
+        if(!defined $self->resource('ColorSpace','LabS')) {
+            my $dc=PDFDict();
+            my $cs=PDFArray(PDFName('Lab'),$dc);
+        #    $dc->{WhitePoint}=PDFArray(map { PDFNum($_) } qw(0.9505 1.0000 1.0890));
+            $dc->{WhitePoint}=PDFArray(map { PDFNum($_) } qw(1 1 1));
+            $dc->{Range}=PDFArray(map { PDFNum($_) } qw(-128 127 -128 127));
+            $dc->{Gamma}=PDFArray(map { PDFNum($_) } qw(2.2 2.2 2.2));
+            $self->resource('ColorSpace','LabS',$cs);
+        }
+        return('/LabS',($sf?'cs':'CS'),namecolor_lab($clr[0]),($sf?'sc':'SC'));
     } elsif((scalar @clr == 1) && ref($clr[0])) {
         # pattern or shading space
         return('/Pattern',($sf?'cs':'CS'),'/'.($clr[0]->name),($sf?'scn':'SCN'));
@@ -456,12 +487,25 @@ sub _makecolor {
         while($clr[0]>1) { $clr[0]/=255; }
         # adjusted for 8/16/32bit spec.
         return($clr[0],($sf?'g':'G'));
+    } elsif(scalar @clr > 1 && ref($clr[0])) {
+        # indexed colorspace plus color-index
+        # or custom colorspace plus param
+        my $cs=shift @clr;
+        return('/'.($cs->name),($sf?'cs':'CS'),$cs->param(@clr),($sf?'sc':'SC'));
     } elsif(scalar @clr == 2) {
         # indexed colorspace plus color-index
         # or custom colorspace plus param
         return('/'.($clr[0]->name),($sf?'cs':'CS'),$clr[0]->param($clr[1]),($sf?'sc':'SC'));
     } elsif(scalar @clr == 3) {
         # legacy rgb color-spec (0 <= x <= 1)
+        if(!defined $self->resource('ColorSpace','RgbS')) {
+            my $dc=PDFDict();
+            my $cs=PDFArray(PDFName('CalRGB'),$dc);
+            $dc->{WhitePoint}=PDFArray(map { PDFNum($_) } qw(0.9505 1.0000 1.0890));
+            $dc->{Gamma}=PDFArray(map { PDFNum($_) } qw(2.2 2.2 2.2));
+            $self->resource('ColorSpace','RgbS',$cs);
+        }
+        return('/RgbS',($sf?'cs':'CS'),floats5(@clr),($sf?'sc':'SC'));
         return(floats($clr[0],$clr[1],$clr[2]),($sf?'rg':'RG'));
     } elsif(scalar @clr == 4) {
         # legacy cmyk color-spec (0 <= x <= 1)
@@ -476,7 +520,7 @@ sub fillcolor {
     if(scalar @_) {
         @{$self->{' fillcolor'}}=@_;
         my @clrs=@_;
-        $self->add(_makecolor(1,@clrs));
+        $self->add($self->_makecolor(1,@clrs));
         if(ref($clrs[0]) eq 'PDF::API2::ColorSpace') {
             $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
         } elsif(ref($clrs[0]) eq 'PDF::API2::Pattern') {
@@ -486,18 +530,12 @@ sub fillcolor {
     return(@{$self->{' fillcolor'}});
 }
 
-=item $co->strokecolor @colors
-
-Sets strokecolor, see PDF::API2::Util for a list of possible color specifiers.
-
-=cut
-
 sub strokecolor {
     my $self=shift @_;
     if(scalar @_) {
         @{$self->{' strokecolor'}}=@_;
         my @clrs=@_;
-        $self->add(_makecolor(0,@clrs));
+        $self->add($self->_makecolor(0,@clrs));
         if(ref($clrs[0]) eq 'PDF::API2::ColorSpace') {
             $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
         } elsif(ref($clrs[0]) eq 'PDF::API2::Pattern') {
@@ -505,18 +543,6 @@ sub strokecolor {
         }
     }
     return(@{$self->{' strokecolor'}});
-}
-
-=item $co->egstate $egsobj
-
-=cut
-
-sub egstate {
-    my $self=shift @_;
-    my $egs=shift @_;
-    $self->add('/'.($egs->name),'gs');
-    $self->resource('ExtGState',$egs->name,$egs);
-    return($self);
 }
 
 =head1 GRAPHICS METHODS
@@ -620,31 +646,31 @@ sub curve { # x1,y1,x2,y2,x3,y3 ...
 }
 
 sub arctocurve {
-        my ($a,$b,$alpha,$beta)=@_;
-        if(abs($beta-$alpha) > 90) {
-            return (
-                arctocurve($a,$b,$alpha,($beta+$alpha)/2),
-                arctocurve($a,$b,($beta+$alpha)/2,$beta)
-            );
-        } else {
-                $alpha = ($alpha * pi / 180);
-                $beta  = ($beta * pi / 180);
+    my ($a,$b,$alpha,$beta)=@_;
+    if(abs($beta-$alpha) > 30) {
+        return (
+            arctocurve($a,$b,$alpha,($beta+$alpha)/2),
+            arctocurve($a,$b,($beta+$alpha)/2,$beta)
+        );
+    } else {
+        $alpha = ($alpha * pi / 180);
+        $beta  = ($beta * pi / 180);
 
-                my $bcp = (4.0/3 * (1 - cos(($beta - $alpha)/2)) / sin(($beta - $alpha)/2));
-                my $sin_alpha = sin($alpha);
-                my $sin_beta =  sin($beta);
-                my $cos_alpha = cos($alpha);
-                my $cos_beta =  cos($beta);
+        my $bcp = (4.0/3 * (1 - cos(($beta - $alpha)/2)) / sin(($beta - $alpha)/2));
+        my $sin_alpha = sin($alpha);
+        my $sin_beta =  sin($beta);
+        my $cos_alpha = cos($alpha);
+        my $cos_beta =  cos($beta);
 
-                my $p0_x = $a * $cos_alpha;
-                my $p0_y = $b * $sin_alpha;
-                my $p1_x = $a * ($cos_alpha - $bcp * $sin_alpha);
-                my $p1_y = $b * ($sin_alpha + $bcp * $cos_alpha);
-                my $p2_x = $a * ($cos_beta + $bcp * $sin_beta);
-                my $p2_y = $b * ($sin_beta - $bcp * $cos_beta);
-                my $p3_x = $a * $cos_beta;
-                my $p3_y = $b * $sin_beta;
-                return($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
+        my $p0_x = $a * $cos_alpha;
+        my $p0_y = $b * $sin_alpha;
+        my $p1_x = $a * ($cos_alpha - $bcp * $sin_alpha);
+        my $p1_y = $b * ($sin_alpha + $bcp * $cos_alpha);
+        my $p2_x = $a * ($cos_beta + $bcp * $sin_beta);
+        my $p2_y = $b * ($sin_beta - $bcp * $cos_beta);
+        my $p3_x = $a * $cos_beta;
+        my $p3_y = $b * $sin_beta;
+        return($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
     }
 }
 
@@ -657,25 +683,25 @@ set to 1, unless you want to continue an existing path.
 =cut
 
 sub arc { # x,y,a,b,alf,bet[,mov]
-        my ($self,$x,$y,$a,$b,$alpha,$beta,$move)=@_;
-        my @points=arctocurve($a,$b,$alpha,$beta);
-        my ($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
+    my ($self,$x,$y,$a,$b,$alpha,$beta,$move)=@_;
+    my @points=arctocurve($a,$b,$alpha,$beta);
+    my ($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
 
-        $p0_x= $x + shift @points;
-        $p0_y= $y + shift @points;
+    $p0_x= $x + shift @points;
+    $p0_y= $y + shift @points;
 
-        $self->move($p0_x,$p0_y) if($move);
+    $self->move($p0_x,$p0_y) if($move);
 
     while(scalar @points > 0) {
-            $p1_x= $x + shift @points;
-            $p1_y= $y + shift @points;
-            $p2_x= $x + shift @points;
-            $p2_y= $y + shift @points;
-            $p3_x= $x + shift @points;
-            $p3_y= $y + shift @points;
-            $self->curve($p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
-            shift @points;
-            shift @points;
+        $p1_x= $x + shift @points;
+        $p1_y= $y + shift @points;
+        $p2_x= $x + shift @points;
+        $p2_y= $y + shift @points;
+        $p3_x= $x + shift @points;
+        $p3_y= $y + shift @points;
+        $self->curve($p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
+        shift @points;
+        shift @points;
         $self->{' x'}=$p3_x;
         $self->{' y'}=$p3_y;
     }
@@ -717,7 +743,7 @@ from x1,y1 to x2,y2.
 
 sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
     my ($self,$x1,$y1,$x2,$y2,$r,$move,$larc,$spf) = @_;
-        my ($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
+    my ($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
     my $x=$x2-$x1;
     $x=$x1-$x2 if($spf>0);
     my $y=$y2-$y1;
@@ -758,18 +784,18 @@ sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
     $x=$x1-$p0_x;
     $y=$y1-$p0_y;
 
-        $self->move($x,$y) if($move);
+    $self->move($x,$y) if($move);
 
     while(scalar @points > 0) {
-            $p1_x= $x + shift @points;
-            $p1_y= $y + shift @points;
-            $p2_x= $x + shift @points;
-            $p2_y= $y + shift @points;
-            $p3_x= $x + shift @points;
-            $p3_y= $y + shift @points;
-            $self->curve($p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
-            shift @points;
-            shift @points;
+        $p1_x= $x + shift @points;
+        $p1_y= $y + shift @points;
+        $p2_x= $x + shift @points;
+        $p2_y= $y + shift @points;
+        $p3_x= $x + shift @points;
+        $p3_y= $y + shift @points;
+        $self->curve($p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
+        shift @points;
+        shift @points;
     }
     return($self);
 }
@@ -781,7 +807,7 @@ sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
 sub pie {
     my $self=shift @_;
     my ($x,$y,$a,$b,$alfa,$beta)=@_;
-        my ($p0_x,$p0_y)=arctocurve($a,$b,$alfa,$beta);
+    my ($p0_x,$p0_y)=arctocurve($a,$b,$alfa,$beta);
     $self->move($x,$y);
     $self->line($p0_x+$x,$p0_y+$y);
     $self->arc($x,$y,$a,$b,$alfa,$beta);
@@ -1283,8 +1309,6 @@ sub advancewidth {
 
 Applys text to the content and optionally returns the width of the given text.
 
-You can use the -utf8 option to give the text in utf8.
-
 =cut
 
 sub text {
@@ -1302,79 +1326,79 @@ sub text {
   return($wd);
 }
 
-sub _text_fancy {
-  my ($self,$text,%opt)=@_;
-  my %state1=();
-  my %state2=();
-  my $wd=0;
-  my @txt;
-  if(! $opt{-ucs2}) {
-    @txt=split(/\s+/,$text);
-    $text=join(' ',@txt);
-  }
-  if((defined $opt{-font})
-    || (defined $opt{-size})
-    || (defined $opt{-color})
-    || (defined $opt{-underline})
-  ) {
-    %state1=$self->textstate;
-
-    # look into font options
-    if(defined $opt{-font} && defined $opt{-size}) {
-      $self->font($opt{-font},$opt{-size});
-    } elsif(defined $opt{-font}) {
-      $self->font($opt{-font},$self->{' fontsize'});
-    } elsif(defined $opt{-size}) {
-      $self->font($self->{' font'},$opt{-size});
-    }
-
-    $self->fillcolor(@{$opt{-color}}) if(defined $opt{-color});
-
-    %state2=$self->textstate;
-
-    if(defined $opt{-underline}) {
-      if(defined $opt{-indent}) {
-        $self->matrix_update($opt{-indent},0);
-      }
-      my $wd=$self->advancewidth($text,%opt);
-      if($wd) {
-        my ($x1,$y1)=$self->textpos;
-        $self->matrix_update($wd,0);
-        my ($x2,$y2)=$self->textpos;
-
-        my $x3=$x1+(($y2-$y1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
-        my $y3=$y1+(($x2-$x1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
-
-        my $x4=$x3+($x2-$x1);
-        my $y4=$y3+($y2-$y1);
-        $self->add('ET');
-        PDF::API2::Content::save($self);
-        PDF::API2::Content::linewidth($self,$opt{-underline});
-        PDF::API2::Content::strokecolor($self,@{$state2{fillcolor}});
-        PDF::API2::Gfx::move($self,$x3,$y3);
-        PDF::API2::Gfx::line($self,$x4,$y4);
-        PDF::API2::Gfx::stroke($self);
-        PDF::API2::Content::restore($self);
-        $self->add('BT');
-        $self->textstate(%state2);
-      }
-    }
-  }
-  $wd=$self->text($text,%opt);
-  if((defined $opt{-font})
-    || (defined $opt{-size})
-    || (defined $opt{-color})
-    || (defined $opt{-underline})
-  ) {
-    delete $state1{matrix};
-    delete $state1{rotate};
-    delete $state1{scale};
-    delete $state1{skew};
-    delete $state1{translate};
-    $self->textstate(%state1);
-  }
-  return($wd);
-}
+#sub _text_fancy {
+#  my ($self,$text,%opt)=@_;
+#  my %state1=();
+#  my %state2=();
+#  my $wd=0;
+#  my @txt;
+#  if(! $opt{-ucs2}) {
+#    @txt=split(/\s+/,$text);
+#    $text=join(' ',@txt);
+#  }
+#  if((defined $opt{-font})
+#    || (defined $opt{-size})
+#    || (defined $opt{-color})
+#    || (defined $opt{-underline})
+#  ) {
+#    %state1=$self->textstate;
+#
+#    # look into font options
+#    if(defined $opt{-font} && defined $opt{-size}) {
+#      $self->font($opt{-font},$opt{-size});
+#    } elsif(defined $opt{-font}) {
+#      $self->font($opt{-font},$self->{' fontsize'});
+#    } elsif(defined $opt{-size}) {
+#      $self->font($self->{' font'},$opt{-size});
+#    }
+#
+#    $self->fillcolor(@{$opt{-color}}) if(defined $opt{-color});
+#
+#    %state2=$self->textstate;
+#
+#    if(defined $opt{-underline}) {
+#      if(defined $opt{-indent}) {
+#        $self->matrix_update($opt{-indent},0);
+#      }
+#      my $wd=$self->advancewidth($text,%opt);
+#      if($wd) {
+#        my ($x1,$y1)=$self->textpos;
+#        $self->matrix_update($wd,0);
+#        my ($x2,$y2)=$self->textpos;
+#
+#        my $x3=$x1+(($y2-$y1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
+#        my $y3=$y1+(($x2-$x1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
+#
+#        my $x4=$x3+($x2-$x1);
+#        my $y4=$y3+($y2-$y1);
+#        $self->add('ET');
+#        PDF::API2::Content::save($self);
+#        PDF::API2::Content::linewidth($self,$opt{-underline});
+#        PDF::API2::Content::strokecolor($self,@{$state2{fillcolor}});
+#        PDF::API2::Gfx::move($self,$x3,$y3);
+#        PDF::API2::Gfx::line($self,$x4,$y4);
+#        PDF::API2::Gfx::stroke($self);
+#        PDF::API2::Content::restore($self);
+#        $self->add('BT');
+#        $self->textstate(%state2);
+#      }
+#    }
+#  }
+#  $wd=$self->text($text,%opt);
+#  if((defined $opt{-font})
+#    || (defined $opt{-size})
+#    || (defined $opt{-color})
+#    || (defined $opt{-underline})
+#  ) {
+#    delete $state1{matrix};
+#    delete $state1{rotate};
+#    delete $state1{scale};
+#    delete $state1{skew};
+#    delete $state1{translate};
+#    $self->textstate(%state1);
+#  }
+#  return($wd);
+#}
 
 =item $txt->text_center $text
 
@@ -1542,30 +1566,90 @@ sub textend {
     return($self);
 }
 
+=item $width = $txt->textlabel $x, $y, $font, $size, $text, %options
+
+Applys text with options, but without teststart/end and optionally returns the width of the given text.
+
+B<Example:> 
+
+    $t = $page->gfx;
+    $t->textlabel(300,700,$myfont,20,'Page Header',
+        -rotate => -30,
+        -color => '#FF0000',
+        -hspace => 120,
+        -center => 1,
+    );
+    
+=cut
+
+sub textlabel {
+    my ($self,$x,$y,$font,$size,$text,%opts,$wht) = @_;
+    my %trans_opts=( -translate => [$x,$y] );
+    my %text_state=();
+    $trans_opts{-rotate} = $opts{-rotate} if($opts{-rotate});
+
+    my $wastext = $self->{' apiistext'};
+    if($wastext) {
+        %text_state=$self->textstate;
+        $self->textend;
+    }
+    $self->save;
+    $self->textstart;
+    
+    $self->transform(%trans_opts);
+    
+    $self->fillcolor(ref($opts{-color}) ? @{$opts{-color}} : $opts{-color}) if($opts{-color});
+    $self->strokecolor(ref($opts{-strokecolor}) ? @{$opts{-strokecolor}} : $opts{-strokecolor}) if($opts{-strokecolor});
+
+    $self->font($font,$size);
+
+    $self->charspace($opts{-charspace})     if($opts{-charspace});
+    $self->hspace($opts{-hspace})           if($opts{-hspace});
+    $self->wordspace($opts{-wordspace})     if($opts{-wordspace});
+    $self->render($opts{-render})           if($opts{-render});
+
+    if($opts{-right}) {
+        $wht = $self->text_right($text);
+    } elsif($opts{-center}) {
+        $wht = $self->text_center($text);
+    } else {
+        $wht = $self->text($text);
+    }
+    
+    $self->textend;
+    $self->restore;
+    
+    if($wastext) {
+        $self->textstart;
+        $self->textstate(%text_state);
+    }
+    return($wht);
+}
+
 sub resource {
     my ($self, $type, $key, $obj, $force) = @_;
     if($self->{' apipage'}) {
-      # we are a content stream on a page.
-    return( $self->{' apipage'}->resource($type, $key, $obj, $force) );
+        # we are a content stream on a page.
+        return( $self->{' apipage'}->resource($type, $key, $obj, $force) );
     } else {
-      # we are a self-contained content stream.
-    $self->{Resources}||=PDFDict();
+        # we are a self-contained content stream.
+        $self->{Resources}||=PDFDict();
 
-    my $dict=$self->{Resources};
-    $dict->realise if(ref($dict)=~/Objind$/);
+        my $dict=$self->{Resources};
+        $dict->realise if(ref($dict)=~/Objind$/);
 
-    $dict->{$type}||= PDFDict();
-    $dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
-    unless (defined $obj) {
-      return($dict->{$type}->{$key} || undef);
-    } else {
-        if($force) {
-            $dict->{$type}->{$key}=$obj;
+        $dict->{$type}||= PDFDict();
+        $dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
+        unless (defined $obj) {
+            return($dict->{$type}->{$key} || undef);
         } else {
-            $dict->{$type}->{$key}||= $obj;
+            if($force) {
+                $dict->{$type}->{$key}=$obj;
+            } else {
+                $dict->{$type}->{$key}||= $obj;
+            }
+            return($dict);
         }
-      return($dict);
-    }
     }
 }
 
@@ -1580,6 +1664,19 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.8  2004/02/12 14:46:44  fredo
+    removed duplicate definition of egstate method
+
+    Revision 1.7  2004/02/06 02:01:25  fredo
+    added save/restore around textlabel
+
+    Revision 1.6  2004/02/05 23:24:00  fredo
+    fixed lab behavior
+
+    Revision 1.5  2004/02/05 12:26:08  fredo
+    revised '_makecolor' to use Lab for hsv/hsl,
+    added textlabel method
+
     Revision 1.4  2003/12/08 13:05:19  Administrator
     corrected to proper licencing statement
 

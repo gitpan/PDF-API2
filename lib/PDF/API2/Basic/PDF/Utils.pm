@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Utils.pm,v 1.3 2003/12/08 13:05:21 Administrator Exp $
+#   $Id: Utils.pm,v 1.5 2004/02/24 02:08:35 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Utils;
@@ -46,11 +46,12 @@ use PDF::API2::Basic::PDF::Dict;
 use PDF::API2::Basic::PDF::Name;
 use PDF::API2::Basic::PDF::Number;
 use PDF::API2::Basic::PDF::String;
+use PDF::API2::Basic::PDF::Literal;
 
 use Exporter;
 use vars qw(@EXPORT @ISA);
 @ISA = qw(Exporter);
-@EXPORT = qw(PDFBool PDFArray PDFDict PDFName PDFNum PDFStr
+@EXPORT = qw(PDFBool PDFArray PDFDict PDFName PDFNum PDFStr PDFUtf
              asPDFBool asPDFName asPDFNum asPDFStr);
 # no warnings qw(uninitialized);
 
@@ -114,6 +115,23 @@ Creates a string via PDF::API2::Basic::PDF::String->new
 sub PDFStr
 { PDF::API2::Basic::PDF::String->new(@_); }
 
+=head2 PDFUtf
+
+Creates a utf8-string via PDF::API2::Basic::PDF::String->new
+
+=cut
+
+sub PDFUtf
+{ my $x=PDF::API2::Basic::PDF::String->new(@_); $x->{' isutf'}=1; return($x); }
+
+=head2 PDFLiteral
+
+Creates a pdf-literal via PDF::API2::Basic::PDF::Literal->new
+
+=cut
+
+sub PDFLiteral
+{ PDF::API2::Basic::PDF::Literal->new(@_); }
 
 =head2 asPDFBool
 
@@ -166,32 +184,33 @@ sub unpacku
     my ($str) = @_;
     my (@res);
 
+    return (unpack("U*", $str));
 #    return (unpack("U*", $str)) if ($^V && $^V ge v5.6.0);
-    return (unpack("U*", $str)) if ($] >= 5.006);       # so much for $^V!
-
-    $str = "$str";              # copy $str
-    while (length($str))        # Thanks to Gisle Aas for some of his old code
-    {
-        $str =~ s/^[\x80-\xBF]+//o;
-        if ($str =~ s/^([\x00-\x7F]+)//o)
-        { push(@res, unpack("C*", $1)); }
-        elsif ($str =~ s/^([\xC0-\xDF])([\x80-\xBF])//o)
-        { push(@res, ((ord($1) & 0x1F) << 6) | (ord($2) & 0x3F)); }
-        elsif ($str =~ s/^([\0xE0-\xEF])([\x80-\xBF])([\x80-\xBF])//o)
-        { push(@res, ((ord($1) & 0x0F) << 12)
-                          | ((ord($2) & 0x3F) << 6)
-                          | (ord($3) & 0x3F)); }
-        elsif ($str =~ s/^([\xF0-\xF7])([\x80-\xBF])([\x80-\xBF])([\x80-\xBF])//o)
-        {
-            my ($b1, $b2, $b3, $b4) = (ord($1), ord($2), ord($3), ord($4));
-            push(@res, ((($b1 & 0x07) << 8) | (($b2 & 0x3F) << 2)
-                            | (($b3 & 0x30) >> 4)) + 0xD600);  # account for offset
-            push(@res, ((($b3 & 0x0F) << 6) | ($b4 & 0x3F)) + 0xDC00);
-        }
-        elsif ($str =~ s/^[\xF8-\xFF][\x80-\xBF]*//o)
-        { }
-    }
-    @res;
+#    return (unpack("U*", $str)) if ($] >= 5.006);       # so much for $^V!
+#
+#    $str = "$str";              # copy $str
+#    while (length($str))        # Thanks to Gisle Aas for some of his old code
+#    {
+#        $str =~ s/^[\x80-\xBF]+//o;
+#        if ($str =~ s/^([\x00-\x7F]+)//o)
+#        { push(@res, unpack("C*", $1)); }
+#        elsif ($str =~ s/^([\xC0-\xDF])([\x80-\xBF])//o)
+#        { push(@res, ((ord($1) & 0x1F) << 6) | (ord($2) & 0x3F)); }
+#        elsif ($str =~ s/^([\0xE0-\xEF])([\x80-\xBF])([\x80-\xBF])//o)
+#        { push(@res, ((ord($1) & 0x0F) << 12)
+#                          | ((ord($2) & 0x3F) << 6)
+#                          | (ord($3) & 0x3F)); }
+#        elsif ($str =~ s/^([\xF0-\xF7])([\x80-\xBF])([\x80-\xBF])([\x80-\xBF])//o)
+#        {
+#            my ($b1, $b2, $b3, $b4) = (ord($1), ord($2), ord($3), ord($4));
+#            push(@res, ((($b1 & 0x07) << 8) | (($b2 & 0x3F) << 2)
+#                            | (($b3 & 0x30) >> 4)) + 0xD600);  # account for offset
+#            push(@res, ((($b3 & 0x0F) << 6) | ($b4 & 0x3F)) + 0xDC00);
+#        }
+#        elsif ($str =~ s/^[\xF8-\xFF][\x80-\xBF]*//o)
+#        { }
+#    }
+#    @res;
 }
 
 

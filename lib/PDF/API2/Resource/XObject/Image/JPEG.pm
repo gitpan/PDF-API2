@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: JPEG.pm,v 1.3 2003/12/08 13:06:11 Administrator Exp $
+#   $Id: JPEG.pm,v 1.4 2004/03/02 21:55:24 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::JPEG;
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:11 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/03/02 21:55:24 $
 
 }
 
@@ -132,7 +132,8 @@ sub read_jpeg {
         $fh->read($buf,$len-2);
         next if ($mark == 0xFE);
         next if ($mark >= 0xE0 && $mark <= 0xEF);
-        if (($mark >= 0xC0) && ($mark <= 0xCF)) {
+        if (($mark >= 0xC0) && ($mark <= 0xCF) && 
+            ($mark != 0xC4) && ($mark != 0xC8) && ($mark != 0xCC)) {
             ($p, $h, $w, $c) = unpack("CnnC", substr($buf, 0, 6));
             last;
         }
@@ -167,6 +168,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: JPEG.pm,v $
+    Revision 1.4  2004/03/02 21:55:24  fredo
+    fixed reading jpeg image info marker according to ITU-T T.81 spec
+
     Revision 1.3  2003/12/08 13:06:11  Administrator
     corrected to proper licencing statement
 

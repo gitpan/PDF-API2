@@ -28,16 +28,33 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 1.10 2004/01/19 14:16:02 fredo Exp $
+#   $Id: Makefile.PL,v 1.14 2004/01/22 14:19:31 fredo Exp $
 #
 #=======================================================================
 
 require 5.008;
+
 use ExtUtils::MakeMaker;
+
+my $versionfile = "lib/PDF/API2/Version.pm";
+
+print STDERR <<'EOT';
+      _   _    ____  ____  _____      _    ____ ___   ____
+  _  |_|_|_|  |  _ \|  _ \|  ___|    / \  |  _ \_ _| |___ \
+ |_| _|_||_|  | |_) | | | | |_      / _ \ | |_) | |    __) |
+ _  |_||_|_|  |  __/| |_| |  _|    / ___ \|  __/| |   / __/
+|_|  |_|_|_|  |_|   |____/|_|     /_/   \_\_|  |___| |_____|
+EOT
+
+eval { require $versionfile; };
+
+print <<EOT;
+                                        VERSION $PDF::API2::Version::VERSION
+EOT
 
 WriteMakefile (
     NAME         =>  "PDF::API2",
-    VERSION      =>  "0.40_16",
+    VERSION_FROM =>  $versionfile,
     AUTHOR       =>  "areibens\@cpan.org",
     ABSTRACT     =>  "TheNextGen PDF Create/Modify API",
     dist         =>  {
@@ -52,12 +69,24 @@ WriteMakefile (
                 },
 );
 
+
 exit;
 
 __END__
-
-
+         
 # $Log: Makefile.PL,v $
+# Revision 1.14  2004/01/22 14:19:31  fredo
+# final versioning update for 0.40_17 and beyond
+#
+# Revision 1.13  2004/01/21 23:21:11  fredo
+# updated logo string
+#
+# Revision 1.12  2004/01/21 12:44:11  fredo
+# fixed MakeMaker VERSION_FROM parameter
+#
+# Revision 1.11  2004/01/21 12:29:06  fredo
+# moved release versioning to PDF::API2::Version
+#
 # Revision 1.10  2004/01/19 14:16:02  fredo
 # update for 0.40_16
 #

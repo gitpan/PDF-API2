@@ -1,0 +1,338 @@
+2004-04-05 01:52  fredo
+
+    * lib/PDF/API2/Version.pm: updated for release 0.40_18
+
+2004-04-05 01:44  fredo
+
+    * lib/PDF/API2/Shape/: polygon.pm, polyline.pm: updated stroke/fill
+      behaviour
+
+2004-04-05 01:42  fredo
+
+    * lib/PDF/API2.pm: fixed 270 degree rotation in openpage
+
+2004-04-05 01:36  fredo
+
+    * lib/PDF/API2.pm: added simple separation colorspace
+
+2004-03-20 10:11  fredo
+
+    * lib/PDF/API2.pm: modified font search path methodname
+
+2004-03-20 09:38  fredo
+
+    * lib/PDF/API2.pm: added isEncrypted determinator
+
+2004-03-20 09:37  fredo
+
+    * lib/PDF/API2/Resource/XObject/Image/GIF.pm: added de-interlacing
+
+2004-03-18 10:43  fredo
+
+    * lib/PDF/API2.pm: added font search path handling
+
+2004-03-18 07:47  fredo
+
+    * lib/PDF/API2/Outline.pm: fixed yank/paste error in dest method
+      with -xyz parameter
+
+2004-03-02 22:55  fredo
+
+    * lib/PDF/API2/Resource/XObject/Image/JPEG.pm: fixed reading jpeg
+      image info marker according to ITU-T T.81 spec
+
+2004-03-02 20:22  fredo
+
+    * lib/PDF/API2/Basic/PDF/Literal.pm: added missing 'use vars' and
+      fixed xmlexport method
+
+2004-03-02 20:21  fredo
+
+    * MANIFEST: added missing Version.pm definition
+
+2004-02-24 03:09  fredo
+
+    * lib/PDF/API2/Basic/PDF/Literal.pm: added initializer code
+
+2004-02-24 03:08  fredo
+
+    * lib/PDF/API2/Basic/PDF/Utils.pm, MANIFEST: added literal
+
+2004-02-24 02:59  fredo
+
+    * lib/PDF/API2/Basic/PDF/Literal.pm: genesis
+
+2004-02-24 01:08  fredo
+
+    * lib/PDF/API2/Resource/CIDFont/CJKFont.pm: added utf8 fallback for
+      encoding
+
+2004-02-24 01:07  fredo
+
+    * lib/PDF/API2/Resource/CIDFont/CMap/: simplified.pm,
+      traditional.pm: fixed unicode mapping based on adobe's
+      utf32/utf16 specification
+
+2004-02-24 00:34  fredo
+
+    * lib/PDF/API2/Resource/CIDFont/CMap/korean.pm: fixed unicode
+      mapping based on adobe's utf32/utf16 specification
+
+2004-02-24 00:19  fredo
+
+    * lib/PDF/API2/Resource/CIDFont/CMap/japanese.pm: fixed unicode
+      mapping based on adobe's ucs2 specification with added vertical
+      encoding
+
+2004-02-23 00:55  fredo
+
+    * lib/PDF/API2/Annotation.pm: full utf8 awareness
+
+2004-02-23 00:49  fredo
+
+    * lib/PDF/API2/Resource/CIDFont/CMap/japanese.pm: fixed unicode
+      mapping based on adobe's ucs2 specification
+
+2004-02-23 00:45  fredo
+
+    * lib/PDF/API2/HOWTO.pod: added pdftk tool comment
+
+2004-02-19 03:07  fredo
+
+    * lib/PDF/API2/Resource/CIDFont/CJKFont/: adobemingstdlightacro.pm,
+      adobemyungjostdmediumacro.pm, adobesongstdlightacro.pm: updated
+      to acrobat 6 standard
+
+2004-02-19 01:37  fredo
+
+    * lib/PDF/API2/HOWTO.pod: added interoperability section
+
+2004-02-18 15:05  fredo
+
+    * lib/PDF/API2/Basic/PDF/Filter.pm: updated lzwdecode with code
+      take from the gif module
+
+2004-02-18 15:04  fredo
+
+    * lib/PDF/API2/Basic/PDF/: Dict.pm, Name.pm: fixed name/key
+      encoding regardless of pdf-version (who uses ancient but
+      conforming pdf 1.0/1.1 anymore?)
+
+2004-02-13 11:56  fredo
+
+    * lib/PDF/API2/HOWTO.pod: added hello world example
+
+2004-02-12 21:33  fredo
+
+    * MANIFEST: added shapes: line, polyline, polygon
+
+2004-02-12 21:26  fredo
+
+    * lib/PDF/API2/Shape/polygon.pm: initial import
+
+2004-02-12 21:20  fredo
+
+    * lib/PDF/API2/: Shape.pm, Shape/line.pm, Shape/polyline.pm:
+      updated new method for options
+
+2004-02-12 21:10  fredo
+
+    * lib/PDF/API2/Shape/: line.pm, polyline.pm: initial import
+
+2004-02-12 17:55  fredo
+
+    * lib/PDF/API2/Shape.pm: added release method, fixed render methods
+
+2004-02-12 17:40  fredo
+
+    * lib/PDF/API2/Shape.pm: initial import
+
+2004-02-12 15:48  fredo
+
+    * lib/PDF/API2/Resource/XObject/Image/: PNG.pm, GIF.pm: removed
+      duplicate definition of $fh
+
+2004-02-12 15:46  fredo
+
+    * lib/PDF/API2/Content.pm: removed duplicate definition of egstate
+      method
+
+2004-02-12 15:41  fredo
+
+    * examples/031_color_hsv: initial import
+
+2004-02-12 15:40  fredo
+
+    * examples/030_colorspecs: moved HSV to own example
+
+2004-02-12 15:39  fredo
+
+    * lib/PDF/API2/Util.pm: start work on better HSV code
+
+2004-02-12 15:38  fredo
+
+    * lib/PDF/API2.pm: added openScalar method
+
+2004-02-12 15:38  fredo
+
+    * lib/PDF/API2/IOString.pm: added import_from_scalar method
+
+2004-02-10 16:55  fredo
+
+    * lib/PDF/API2/Resource/Font/SynFont.pm: fixed glyph generation for
+      .notdef glyphs
+
+2004-02-10 16:54  fredo
+
+    * examples/021_synfonts: modified to use all corefonts
+
+2004-02-10 16:53  fredo
+
+    * lib/PDF/API2/Util.pm: corrected pdfkeys
+
+2004-02-06 03:01  fredo
+
+    * lib/PDF/API2/Content.pm: added save/restore around textlabel
+
+2004-02-06 00:24  fredo
+
+    * lib/PDF/API2/Content.pm: fixed lab behavior
+
+2004-02-05 23:35  fredo
+
+    * examples/030_colorspecs: added rgb gamma
+
+2004-02-05 23:21  fredo
+
+    * lib/PDF/API2/Util.pm: fixed lab behavior
+
+2004-02-05 23:17  fredo
+
+    * examples/030_colorspecs: initial import
+
+2004-02-05 17:13  fredo
+
+    * lib/PDF/API2/Util.pm: fixed namecolor methods
+
+2004-02-05 14:33  fredo
+
+    * lib/PDF/API2/Annotation.pm: added unicode handling to strings
+
+2004-02-05 14:27  fredo
+
+    * lib/PDF/API2/Basic/PDF/String.pm: corrected utf8 behavior
+      according to '3.8.1 Text Strings', U+FEFF indicating UTF-16BE
+      (big-endian)
+
+2004-02-05 14:18  fredo
+
+    * lib/PDF/API2.pm: corrected info hash utf8 usage
+
+2004-02-05 13:28  fredo
+
+    * MANIFEST: added colorspecs example
+
+2004-02-05 13:26  fredo
+
+    * lib/PDF/API2/Content.pm: revised '_makecolor' to use Lab for
+      hsv/hsl, added textlabel method
+
+2004-02-05 12:28  fredo
+
+    * lib/PDF/API2/Util.pm: simplified namecolor, added *_lab/*_cmyk
+      methods, corrected rgb->cmyk conversion to practical parameters
+
+2004-02-05 01:54  fredo
+
+    * lib/PDF/API2/Basic/PDF/Utils.pm: added "PDFUtf" util method
+
+2004-02-05 01:52  fredo
+
+    * lib/PDF/API2/Basic/PDF/String.pm: added utf output capability
+
+2004-02-05 00:43  fredo
+
+    * lib/PDF/API2.pm: pdf info method now properly recognized utf8
+      parameters
+
+2004-02-02 01:25  fredo
+
+    * examples/021_synfonts: added caps example
+
+2004-02-01 23:06  fredo
+
+    * lib/PDF/API2/Resource/Font/SynFont.pm: beautified caps generation
+
+2004-02-01 22:34  fredo
+
+    * MANIFEST: added PDF::API2::Content::Text::Markup
+
+2004-02-01 22:32  fredo
+
+    * lib/PDF/API2/Content/Text/Markup.pm: added basic (yet unfinished)
+      parsing code
+
+2004-02-01 20:27  fredo
+
+    * lib/PDF/API2/Resource/Font/SynFont.pm: fixed width calc for caps
+
+2004-02-01 20:04  fredo
+
+    * lib/PDF/API2/Resource/Font/SynFont.pm: added caps capability
+
+2004-01-29 10:03  fredo
+
+    * lib/PDF/API2/Content/Text/Markup.pm: genesis
+
+2004-01-29 09:37  fredo
+
+    * lib/PDF/API2/Content/symbols.pm: updated comments, added symbol
+      aliases
+
+2004-01-28 15:12  fredo
+
+    * contrib/: pdf-deoptimize.pl, pdf-optimize.pl: updated licence
+      statement
+
+2004-01-22 15:19  fredo
+
+    * Makefile.PL: final versioning update for 0.40_17 and beyond
+
+2004-01-22 15:17  fredo
+
+    * lib/PDF/API2/Basic/PDF/File.pm: added internal object comments
+      feature for future debugging
+
+2004-01-22 00:21  fredo
+
+    * Makefile.PL: updated logo string
+
+2004-01-21 14:24  fredo
+
+    * lib/PDF/API2/Version.pm: fixed errorneous use/require behaviour
+
+2004-01-21 13:44  fredo
+
+    * Makefile.PL: fixed MakeMaker VERSION_FROM parameter
+
+2004-01-21 13:35  fredo
+
+    * MANIFEST: added changelog.pre
+
+2004-01-21 13:29  fredo
+
+    * Makefile.PL, lib/PDF/API2.pm, lib/PDF/API2/Version.pm: moved
+      release versioning to PDF::API2::Version
+
+2004-01-21 13:18  fredo
+
+    * MANIFEST: added full changelog
+
+2004-01-19 21:02  fredo
+
+    * MANIFEST: added contrib pdf optimize/deoptimize
+
+2004-01-19 20:59  fredo
+
+    * contrib/: pdf-deoptimize.pl, pdf-optimize.pl: initial import
+

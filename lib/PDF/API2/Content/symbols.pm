@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: symbols.pm,v 1.4 2003/12/08 13:05:31 Administrator Exp $
+#   $Id: symbols.pm,v 1.5 2004/01/29 08:37:46 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Content::symbols;
@@ -37,7 +37,7 @@ my $symbol={
         'centerpoint'   => [ 0, -1 ],   #   center of symbol
         'endpoint'      => [ 0,  0 ],   #   end of symbol
         'startpoint'    => [ 0, -2 ],   #   start of symbol (connector)
-        'orientation'   => 0,           #   in degrees
+        'orientation'   => 0,           #   in degrees (0=upright)
         'stream'        =>              #   symbol description
             '0 -2 m -1 -3 l 0 0 l 1 3 l c',
     },
@@ -45,13 +45,14 @@ my $symbol={
         'centerpoint'   => [ 0, -2 ],   #   center of symbol
         'endpoint'      => [ 0,  0 ],   #   end of symbol
         'startpoint'    => [ 0, -3 ],   #   start of symbol (connector)
-        'orientation'   => 0,           #   in degrees
+        'orientation'   => 0,           #   in degrees (0=upright)
         'stream'        =>              #   symbol description
             '0 -3 m -1 -3 l 0 0 l 1 3 l c',
     },
 };
 
 $symbol->{'->'} = $symbol->{arrow};
+$symbol->{'|>'} = $symbol->{arrowfull};
 
 1;
 
@@ -64,6 +65,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: symbols.pm,v $
+    Revision 1.5  2004/01/29 08:37:46  fredo
+    updated comments, added symbol aliases
+
     Revision 1.4  2003/12/08 13:05:31  Administrator
     corrected to proper licencing statement
 

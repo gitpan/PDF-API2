@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: String.pm,v 1.4 2004/01/08 23:54:24 fredo Exp $
+#   $Id: String.pm,v 1.6 2004/02/05 13:27:05 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::String;
@@ -113,20 +113,30 @@ sub convert
 {
     my ($self, $str) = @_;
 
-	if($str=~m|^\s*\<|o) { 
-		# cleaning up hex-strings, since spec is very loose,
-		# at least openoffice exporter needs this ! - fredo
-		$str=~s|[^0-9a-f]+||gio;
-		$str="<$str>";
-		$self->{' ishex'}=1;
-	}
-	
-	$str =~ s/\\([nrtbf\\()])/$trans{$1}/ogi;
-	$str =~ s/\\([0-7]+)/chr(oct($1))/oeg;              # thanks to kundrat@kundrat.sk
-	1 while $str =~ s/\<([0-9a-f]{2})/chr(hex($1))."\<"/oige;
-	$str =~ s/\<([0-9a-f]?)\>/chr(hex($1."0"))/oige;
-	$str =~ s/\<\>//og;
-	
+    if($str=~m|^\s*\<|o) { 
+        # cleaning up hex-strings, since spec is very loose,
+        # at least openoffice exporter needs this ! - fredo
+        $str=~s|[^0-9a-f]+||gio;
+        $str="<$str>";
+        $self->{' ishex'}=1;
+    }
+    
+    $str =~ s/\\([nrtbf\\()])/$trans{$1}/ogi;
+    $str =~ s/\\([0-7]+)/chr(oct($1))/oeg;              # thanks to kundrat@kundrat.sk
+    1 while $str =~ s/\<([0-9a-f]{2})/chr(hex($1))."\<"/oige;
+    $str =~ s/\<([0-9a-f]?)\>/chr(hex($1."0"))/oige;
+    $str =~ s/\<\>//og;
+    
+#    if(unpack('n',$str)==0xfffe) {
+#        my ($mark,@c)=unpack('n*',$str);
+#        $str=pack('U*',@c);
+#        $self->{' isutf'}=1;
+#    } elsif(unpack('n',$str)==0xfeff) {
+#        my ($mark,@c)=unpack('v*',$str);
+#        $str=pack('U*',@c);
+#        $self->{' isutf'}=1;
+#    }
+    
     return $str;
 }
 
@@ -152,20 +162,23 @@ sub as_pdf
     my ($self) = @_;
     my ($str) = $self->{'val'};
 
-	if($self->{' ishex'}) { # imported as hex ?
-		$str = join( '', map { sprintf('%02X',$_) } unpack('C*',$str) );
-		return "<$str>";
-	} else {
-		if ($str =~ m/[^\n\r\t\b\f\040-\176\200-\377]/oi)
-		{
-			$str =~ s/(.)/sprintf("%02X", ord($1))/oge;
-			return "<$str>";
-		} else
-		{
-			$str =~ s/([\n\r\t\b\f\\()])/\\$out_trans{$1}/ogi;
-			return "($str)";
-		}
-	}
+    if($self->{' isutf'}) { 
+        $str = join( '', map { sprintf('%04X',$_) } unpack('U*',$str) );
+        return "<FEFF$str>";
+    } elsif($self->{' ishex'}) { # imported as hex ?
+        $str = join( '', map { sprintf('%02X',$_) } unpack('C*',$str) );
+        return "<$str>";
+    } else {
+        if ($str =~ m/[^\n\r\t\b\f\040-\176\200-\377]/oi)
+        {
+            $str =~ s/(.)/sprintf("%02X", ord($1))/oge;
+            return "<$str>";
+        } else
+        {
+            $str =~ s/([\n\r\t\b\f\\()])/\\$out_trans{$1}/ogi;
+            return "($str)";
+        }
+    }
 }
 
 

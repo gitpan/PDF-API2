@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Dict.pm,v 1.3 2003/12/08 13:05:20 Administrator Exp $
+#   $Id: Dict.pm,v 1.4 2004/02/18 14:04:25 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
@@ -36,6 +36,7 @@ use PDF::API2::Basic::PDF::Objind;
 $cr = '(?:\015|\012|(?:\015\012))';
 
 use PDF::API2::Basic::PDF::Filter;
+use PDF::API2::Basic::PDF::Name;
 
 BEGIN
 {
@@ -116,7 +117,7 @@ sub outobjdeep
         $specs{$_} = 1;
         if (defined $self->{$_})
         {
-            $fh->print("/$_ ");
+            $fh->print('/'.PDF::API2::Basic::PDF::Name::string_to_name($_).' ');
             $self->{$_}->outobj($fh, $pdf, %opts);
             $fh->print(" ");
         }

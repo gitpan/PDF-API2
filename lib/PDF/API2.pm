@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.13 2004/01/19 14:16:32 fredo Exp $
+#   $Id: API2.pm,v 1.22 2004/04/04 23:42:10 fredo Exp $
 #
 #=======================================================================
 
@@ -35,11 +35,16 @@ package PDF::API2;
 
 BEGIN {
 
-    use vars qw( $VERSION $RELEASEVERSION $seq );
+    use vars qw( $VERSION $RELEASEVERSION $seq @FontDirs );
 
-    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/01/19 14:16:32 $
+    ( $VERSION ) = '$Revision: 1.22 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/04 23:42:10 $
 
-    $RELEASEVERSION = '0.40_16';
+    @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
+        qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
+
+    use PDF::API2::Version;
+    
+    $RELEASEVERSION = $PDF::API2::Version::VERSION;
 
     $seq="AA";
 
@@ -87,6 +92,9 @@ BEGIN {
     use Math::Trig;
 
     use POSIX qw( ceil floor );
+
+    use utf8;
+    use Encode qw(:all);
 
 }
 
@@ -139,6 +147,7 @@ sub new {
     $self->{pages}->{Resources}||=PDFDict();
     $self->{pdf}->new_obj($self->{pages}->{Resources}) unless($self->{pages}->{Resources}->is_obj($self->{pdf}));
     $self->{catalog}=$self->{pdf}->{Root};
+    $self->{fonts}={};
     $self->{pagestack}=[];
     $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
     $self->preferences(%opt);
@@ -183,6 +192,42 @@ sub open {
     $self->{reopened}=1;
     $self->{time}='_'.pdfkey(time());
     $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
+    $self->{fonts}={};
+    return $self;
+}
+
+=item $pdf = PDF::API->openScalar $pdfstream
+
+Opens an existing PDF-stream for modification.
+
+=cut
+
+sub openScalar {
+    my $class=shift(@_);
+    my $file=shift(@_);
+    my %opt=@_;
+    my $self={};
+    bless($self,$class);
+    $self->default('Compression',1);
+    $self->default('subset',1);
+    $self->default('update',1);
+    foreach my $para (keys(%opt)) {
+        $self->default($para,$opt{$para});
+    }
+    my $fh=PDF::API2::IOString->new();
+    $fh->import_from_scalar($file);
+    $self->{pdf}=PDF::API2::Basic::PDF::File->open_swallowed($fh,1);
+    $self->{pdf}->{'Root'}->realise;
+    $self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
+    $self->{pdf}->{' version'} = 3;
+    $self->{pdf}->{' apipagecount'} = 0;
+    my @pages=proc_pages($self->{pdf},$self->{pages});
+    $self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
+    $self->{catalog}=$self->{pdf}->{Root};
+    $self->{reopened}=1;
+    $self->{time}='_'.pdfkey(time());
+    $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
+    $self->{fonts}={};
     return $self;
 }
 
@@ -438,6 +483,17 @@ sub default {
     return($temp);
 }
 
+=item $bool = $pdf->isEncrypted
+
+Checks if the previously opened pdf is encrypted.
+
+=cut
+
+sub isEncrypted {
+    my $self=shift @_;
+    return(defined($self->{pdf}->{'Encrypt'}) ? 1 : 0);
+}
+    
 =item %infohash $pdf->info %infohash
 
 Sets/Gets the info structure of the document.
@@ -469,19 +525,30 @@ sub info {
     }
 
     if(scalar @_) {
-      foreach (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
-        next unless(defined $opt{$_});
-        $self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}||'')
+      foreach my $k (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
+        next unless(defined $opt{$k});
+        if(is_utf8($opt{$k}) || utf8::valid($opt{$k})) {
+            $self->{pdf}->{'Info'}->{$k}=PDFUtf($opt{$k}||'')
+        } else {
+            $self->{pdf}->{'Info'}->{$k}=PDFStr($opt{$k}||'')
+        }
       }
-    $self->{pdf}->out_obj($self->{pdf}->{'Info'});
+      $self->{pdf}->out_obj($self->{pdf}->{'Info'});
     }
 
 
     if(defined $self->{pdf}->{'Info'}) {
       %opt=();
-      foreach (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
-        next unless(defined $self->{pdf}->{'Info'}->{$_});
-        $opt{$_}=$self->{pdf}->{'Info'}->{$_}->val;
+      foreach my $k (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
+        next unless(defined $self->{pdf}->{'Info'}->{$k});
+        $opt{$k}=$self->{pdf}->{'Info'}->{$k}->val;
+        if(unpack('n',$opt{$_})==0xfffe) {
+            my ($mark,@c)=unpack('n*',$opt{$k});
+            $opt{$k}=pack('U*',@c);
+        } elsif(unpack('n',$opt{$k})==0xfeff) {
+            my ($mark,@c)=unpack('v*',$opt{$k});
+            $opt{$k}=pack('U*',@c);
+        }
       }
   }
   return(%opt);
@@ -722,7 +789,7 @@ sub openpage {
                     } elsif($rotate==180) {
                         $trans="-1 0 0 -1 $media->[2] $media->[3] cm" if($mediatype eq 'MediaBox');
                     } elsif($rotate==270) {
-                        $trans="-1 0 0 -1 $media->[3] 0 cm" if($mediatype eq 'MediaBox');
+                        $trans="0 1 -1 0 $media->[3] 0 cm" if($mediatype eq 'MediaBox');
                         $media=[$media->[1],$media->[0],$media->[3],$media->[2]];
                     }
                     $page->{$mediatype}=PDFArray(map { PDFNum($_) } @{$media});
@@ -1118,6 +1185,25 @@ sub artbox {
 
 =over 4
 
+=item @allFontDirs = PDF::API2::addFontDirs $dir1, ..., $dirN
+
+Adds one or more directories to the search-path for finding font files.
+Returns the list of searched directories.
+
+=cut
+
+sub addFontDirs {
+    push( @FontDirs, @_ );
+    return( @FontDirs );
+}
+
+sub __findFont {
+    my $font=shift @_;
+    my @fonts=($font,map { "$_/$font" } @FontDirs);
+    while((scalar @fonts > 0) && (! -f $fonts[0])) { shift @fonts; }
+    return($fonts[0]);
+}
+
 =item $font = $pdf->corefont $fontname [, %options]
 
 Returns a new adobe core font object.
@@ -1182,6 +1268,11 @@ Valid %options are:
 sub psfont {
     my ($self,$psf,%opts)=@_;
 
+    foreach my $o (qw(-afmfile -pfmfile)) {
+        next unless(defined $opts{$o});
+        $opts{$o}=_findFont($opts{$o});
+    }
+    $psf=_findFont($psf);
     my $obj=PDF::API2::Resource::Font::Postscript->new_api($self,$psf,%opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
@@ -1214,6 +1305,7 @@ Valid %options are:
 sub ttfont {
     my ($self,$file,%opts)=@_;
 
+    $file=_findFont($file);
     my $obj=PDF::API2::Resource::CIDFont::TrueType->new_api($self,$file,%opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
@@ -1459,6 +1551,104 @@ sub colorspace_hue {
     return($obj);
 }
 
+=item $cs = $pdf->colorspace_separation $tint, $color
+
+Returns a new limited separation colorspace-object based on the parameters.
+
+=cut
+
+=pod
+
+I<$tint> can be any valid ink-identifier, including but not limited to:
+'Cyan', 'Magenta', 'Yellow', 'Black', 'Red', 'Green', 'Blue' or 'Orange'.
+
+I<$color> must be a valid color-specification limited to:
+'#rrggbb', '!hhssvv', '%ccmmyykk' or a "named color" (rgb).
+
+The colorspace model for will be automatically chosen based on the specified color.
+
+B<WARNING:> this is NOT YET a full colorspace object, so it can only be used 
+for gray-level bitmap-images.
+
+=cut
+
+sub colorspace_separation {
+    my ($self,$name,@clr)=@_;
+
+    my $fct=PDFDict();
+    my $csname='DevceRGB';
+    if($clr[0]=~/^[a-z\#\!]+/) {
+        # colorname or #! specifier
+        # with rgb target colorspace
+        # namecolor returns always a RGB
+        my ($r,$g,$b)=namecolor($clr[0]);
+
+        $fct->{FunctionType}=PDFNum(0);
+        $fct->{Size}=PDFArray(PDFNum(2));
+        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$r,0,$g,0,$b));
+        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
+        $fct->{BitsPerSample}=PDFNum(8);
+        $fct->{' stream'}="\x00\x00\x00\xff\xff\xff";
+    } elsif($clr[0]=~/^[\%]+/) {
+        # % specifier
+        # with cmyk target colorspace
+        my ($c,$m,$y,$k)=namecolor_cmyk($clr[0]);
+        $csname='DevceCMYK';
+
+        $fct->{FunctionType}=PDFNum(0);
+        $fct->{Size}=PDFArray(PDFNum(2));
+        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$c,0,$m,0,$y,0,$k));
+        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
+        $fct->{BitsPerSample}=PDFNum(8);
+        $fct->{' stream'}="\x00\x00\x00\x00\xff\xff\xff\xff";
+    } elsif(scalar @clr == 1) {
+        # grey color spec.
+        while($clr[0]>1) { $clr[0]/=255; }
+        # adjusted for 8/16/32bit spec.
+        my $g=$clr[0];
+        $csname='DevceGray';
+
+        $fct->{FunctionType}=PDFNum(0);
+        $fct->{Size}=PDFArray(PDFNum(2));
+        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$g));
+        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
+        $fct->{BitsPerSample}=PDFNum(8);
+        $fct->{' stream'}="\x00\xff";
+    } elsif(scalar @clr == 3) {
+        # legacy rgb color-spec (0 <= x <= 1)
+        my ($r,$g,$b)=@clr;
+
+        $fct->{FunctionType}=PDFNum(0);
+        $fct->{Size}=PDFArray(PDFNum(2));
+        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$r,0,$g,0,$b));
+        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
+        $fct->{BitsPerSample}=PDFNum(8);
+        $fct->{' stream'}="\x00\x00\x00\xff\xff\xff";
+    } elsif(scalar @clr == 4) {
+        # legacy cmyk color-spec (0 <= x <= 1)
+        my ($c,$m,$y,$k)=@clr;
+        $csname='DevceCMYK';
+
+        $fct->{FunctionType}=PDFNum(0);
+        $fct->{Size}=PDFArray(PDFNum(2));
+        $fct->{Range}=PDFArray(map {PDFNum($_)} (0,$c,0,$m,0,$y,0,$k));
+        $fct->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
+        $fct->{BitsPerSample}=PDFNum(8);
+        $fct->{' stream'}="\x00\x00\x00\x00\xff\xff\xff\xff";
+    } else {
+        die 'invalid color specification.';
+    }
+
+    my $cso=PDFArray( PDFName('Separation'), PDFName($name), PDFName($csname), $fct);
+
+    $self->{pdf}->new_obj($cso);
+    $self->{pdf}->new_obj($fct);
+    
+    $self->resource('ColorSpace',$name,$cso);
+
+    return($cso);
+}
+
 =back
 
 =head1 OTHER METHODS
@@ -1677,6 +1867,33 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.22  2004/04/04 23:42:10  fredo
+    fixed 270 degree rotation in openpage
+
+    Revision 1.21  2004/04/04 23:36:33  fredo
+    added simple separation colorspace
+
+    Revision 1.20  2004/03/20 09:11:45  fredo
+    modified font search path methodname
+
+    Revision 1.19  2004/03/20 08:38:38  fredo
+    added isEncrypted determinator
+
+    Revision 1.18  2004/03/18 09:43:32  fredo
+    added font search path handling
+
+    Revision 1.17  2004/02/12 14:38:33  fredo
+    added openScalar method
+
+    Revision 1.16  2004/02/05 13:18:39  fredo
+    corrected info hash utf8 usage
+
+    Revision 1.15  2004/02/04 23:43:53  fredo
+    pdf info method now properly recognized utf8 parameters
+
+    Revision 1.14  2004/01/21 12:29:06  fredo
+    moved release versioning to PDF::API2::Version
+
     Revision 1.13  2004/01/19 14:16:32  fredo
     update for 0.40_16
 

@@ -27,13 +27,13 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: adobesongstdlightacro.pm,v 1.3 2003/12/08 13:05:36 Administrator Exp $
+#   $Id: adobesongstdlightacro.pm,v 1.4 2004/02/19 02:07:13 fredo Exp $
 #
 #=======================================================================
 
 $fonts->{adobesongstdlightacro} = {
-#    'fontname' => 'AdobeSongStd-Light-Acro',
-    'fontname' => 'STSongStd-Light-Acro',
+    'fontname' => 'AdobeSongStd-Light-Acro',
+#    'fontname' => 'STSongStd-Light-Acro',
     'altname' => 'AdobeSongStdAcroL',
     'subname' => 'Regular',
     'cmap' => 'simplified',
@@ -29124,6 +29124,9 @@ __END__
 =head1 HISTORY
 
     $Log: adobesongstdlightacro.pm,v $
+    Revision 1.4  2004/02/19 02:07:13  fredo
+    updated to acrobat 6 standard
+
     Revision 1.3  2003/12/08 13:05:36  Administrator
     corrected to proper licencing statement
 

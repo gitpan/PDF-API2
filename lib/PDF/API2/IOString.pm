@@ -33,14 +33,14 @@
 #   Original Copyright 1998-2000 Gisle Aas.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: IOString.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#   $Id: IOString.pm,v 1.5 2004/02/12 14:38:16 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::IOString;
 
 require 5.006;
     use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 14:38:16 $
 use Symbol ();
 use FileHandle;
 
@@ -74,6 +74,17 @@ sub import_from_file {
     $inf->close;
     $self->seek(0,0);
 
+    $self;
+}
+sub import_from_scalar {
+    my $self = shift @_;
+    my $file = shift @_;
+    my $buf = "";
+    *$self->{buf} = \$buf;
+    *$self->{pos} = 0;
+    *$self->{lno} = 0;
+    $self->print($file);
+    $self->seek(0,0);
     $self;
 }
 
