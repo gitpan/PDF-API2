@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Hue.pm,v 1.4 2004/06/07 19:44:43 fredo Exp $
+#   $Id: Hue.pm,v 1.5 2004/06/15 09:14:52 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::ColorSpace::Indexed );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:43 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:52 $
 
 }
 
@@ -118,6 +118,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Hue.pm,v $
+    Revision 1.5  2004/06/15 09:14:52  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:43  fredo
     cleaned out cr+lf for lf
 

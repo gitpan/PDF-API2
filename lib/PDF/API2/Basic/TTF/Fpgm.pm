@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Fpgm.pm,v 1.4 2004/06/07 19:44:35 fredo Exp $
+#   $Id: Fpgm.pm,v 1.5 2004/06/15 09:13:37 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Fpgm;

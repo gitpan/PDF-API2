@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: symbols.pm,v 1.6 2004/06/07 19:44:36 fredo Exp $
+#   $Id: symbols.pm,v 1.7 2004/06/15 09:14:41 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Content::symbols;
@@ -65,6 +65,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: symbols.pm,v $
+    Revision 1.7  2004/06/15 09:14:41  fredo
+    removed cr+lf
+
     Revision 1.6  2004/06/07 19:44:36  fredo
     cleaned out cr+lf for lf
 

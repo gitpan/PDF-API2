@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.29 2004/06/01 00:09:57 fredo Exp $
+#   $Id: API2.pm,v 1.52 2004/06/22 01:33:43 fredo Exp $
 #
 #=======================================================================
 
@@ -35,16 +35,13 @@ package PDF::API2;
 
 BEGIN {
 
-    use vars qw( $VERSION $RELEASEVERSION $seq @FontDirs );
+    use vars qw( $VERSION $seq @FontDirs );
 
-    ( $VERSION ) = '$Revision: 1.29 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/01 00:09:57 $
+    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.52 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
+    # $Date: 2004/06/22 01:33:43 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
-
-    use PDF::API2::Version;
-    
-    $RELEASEVERSION = $PDF::API2::Version::VERSION;
 
     $seq="AA";
 
@@ -61,6 +58,8 @@ BEGIN {
     use PDF::API2::Outlines;
 
     use PDF::API2::Resource::ExtGState;
+    use PDF::API2::Resource::Pattern;
+    use PDF::API2::Resource::Shading;
 
     use PDF::API2::Resource::Font::CoreFont;
     use PDF::API2::Resource::Font::Postscript;
@@ -101,11 +100,12 @@ BEGIN {
     use Memoize;
 }
 
-    memoize('PDF::API2::corefont');
-    memoize('PDF::API2::psfont');
-    memoize('PDF::API2::ttfont');
-    memoize('PDF::API2::synfont');
-    memoize('PDF::API2::cjkfont');
+memoize('PDF::API2::corefont');
+memoize('PDF::API2::psfont');
+memoize('PDF::API2::ttfont');
+memoize('PDF::API2::synfont');
+memoize('PDF::API2::cjkfont');
+
 
 =head1 NAME
 
@@ -164,7 +164,7 @@ sub new {
         $self->{pdf}->create_file($opt{-file});
     }
     $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
-    $self->info( 'Producer' => "PDF::API2 v=$RELEASEVERSION($VERSION) os=$^O" );
+    $self->info( 'Producer' => "PDF::API2 v=$VERSION os=$^O" );
     return $self;
 }
 
@@ -971,7 +971,7 @@ sub importPageIntoForm {
     die "page not processed via openpage ... " unless($s_page->{' fixed'}==1);
 
     # since the source page comes from openpage it may already
-    # contains the required starting 'q' without the final 'Q'
+    # contain the required starting 'q' without the final 'Q'
     # if forcecompress is in effect
     if(defined $s_page->{Contents}) {
         $s_page->fixcontents;
@@ -1661,6 +1661,40 @@ sub egstate {
     return($obj);
 }
 
+=item $obj = $pdf->pattern
+
+Returns a new pattern-object.
+
+=cut
+
+sub pattern {
+    my ($self,%opts)=@_;
+
+    my $obj=PDF::API2::Resource::Pattern->new_api($self,undef,%opts);
+
+    $self->resource('Pattern',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+=item $obj = $pdf->shading
+
+Returns a new shading-object.
+
+=cut
+
+sub shading {
+    my ($self,%opts)=@_;
+
+    my $obj=PDF::API2::Resource::Shading->new_api($self,undef,%opts);
+
+    $self->resource('Shading',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
 =item $otls = $pdf->outlines
 
 Returns a new or existing outlines object.
@@ -1831,6 +1865,18 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.52  2004/06/22 01:33:43  fredo
+    corrected spelling
+
+    Revision 1.51  2004/06/21 22:33:10  fredo
+    added basic pattern/shading handling
+
+    Revision 1.50  2004/06/15 09:06:26  fredo
+    forced version to 1.50 for beta state
+
+    Revision 1.30  2004/06/15 08:09:07  fredo
+    fixed memoized bug
+
     Revision 1.29  2004/06/01 00:09:57  fredo
     memoized *font methods for braindead invokers
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: adobemingstdlightacro.pm,v 1.5 2004/06/07 19:44:37 fredo Exp $
+#   $Id: adobemingstdlightacro.pm,v 1.6 2004/06/15 09:14:42 fredo Exp $
 #
 #=======================================================================
 
@@ -19027,6 +19027,9 @@ __END__
 =head1 HISTORY
 
     $Log: adobemingstdlightacro.pm,v $
+    Revision 1.6  2004/06/15 09:14:42  fredo
+    removed cr+lf
+
     Revision 1.5  2004/06/07 19:44:37  fredo
     cleaned out cr+lf for lf
 

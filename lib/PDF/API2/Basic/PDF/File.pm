@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.9 2004/06/07 19:44:13 fredo Exp $
+#   $Id: File.pm,v 1.11 2004/06/15 16:44:09 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -1137,6 +1137,7 @@ sub readxrtr
     $fh = $self->{' INFILE'};
     $fh->seek($xpos, 0);
     $fh->read($buf, 22);
+    $buf=update($fh,$buf); # fix for broken JAWS xref calculation.
     if ($buf !~ m/^xref$cr/oi)
     { die "Malformed xref in PDF file $self->{' fname'}"; }
     $buf =~ s/^xref$cr//oi;

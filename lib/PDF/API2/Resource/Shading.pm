@@ -27,52 +27,58 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Resource.pm,v 1.6 2004/06/15 09:11:38 fredo Exp $
+#   $Id: Shading.pm,v 1.8 2004/06/22 00:38:44 fredo Exp $
 #
 #=======================================================================
 
-package PDF::API2::Resource;
+package PDF::API2::Resource::Shading;
 
 BEGIN {
 
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Basic::PDF::Dict;
-    use POSIX;
-
+    use strict;
     use vars qw(@ISA $VERSION);
+    use PDF::API2::Resource;
+    use PDF::API2::Basic::PDF::Utils;
+    use PDF::API2::Util;
+    use Math::Trig;
 
-    @ISA = qw( PDF::API2::Basic::PDF::Dict );
+    @ISA = qw(PDF::API2::Resource);
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/22 00:38:44 $
 
 }
 
-=head1 $res = PDF::API2::Resource->new $pdf, $name
+=item $cs = PDF::API2::Resource::Shading->new $pdf, $key, %parameters
 
-Returns a resource object.
+Returns a new shading object. base class for all shadings.
 
 =cut
 
 sub new {
-    my ($class,$pdf,$name) = @_;
-    my $self;
+    my ($class,$pdf,$key,%opts)=@_;
 
     $class = ref $class if ref $class;
-
-    $self=$class->SUPER::new();
+    $self=$class->SUPER::new($pdf,$key || pdfkey());
     $pdf->new_obj($self) unless($self->is_obj($pdf));
-
-    $self->name($name || pdfkey());
-
     $self->{' apipdf'}=$pdf;
+
+#    $self->{ColorSpace}=PDFName($opts{-colorspace}||'DeviceRGB');
+#
+#    $sh->{ShadingType}=PDFNum(2);
+#    $sh->{Coords}=PDFArray(PDFNum(0),PDFNum(0),PDFNum(1),PDFNum(1));
+#    $sh->{Function}=PDFDict();
+#    $sh->{Function}->{FunctionType}=PDFNum(2);
+#    $sh->{Function}->{Domain}=PDFArray(PDFNum(0),PDFNum(1));
+#    $sh->{Function}->{C0}=PDFArray(PDFNum(1),PDFNum(1),PDFNum(1));
+#    $sh->{Function}->{C1}=PDFArray(PDFNum(0),PDFNum(0),PDFNum(1));
+#    $sh->{Function}->{N}=PDFNum(1);
 
     return($self);
 }
 
-=item $res = PDF::API2::Resource->new_api $api, $name
+=item $cs = PDF::API2::Resource::Shading->new_api $api, $name
 
-Returns a resource object. This method is different from 'new' that
+Returns a shading object. This method is different from 'new' that
 it needs an PDF::API2-object rather than a Text::PDF::File-object.
 
 =cut
@@ -81,34 +87,18 @@ sub new_api {
     my ($class,$api,@opts)=@_;
 
     my $obj=$class->new($api->{pdf},@opts);
-    $obj->{' api'}=$api;
+    $self->{' api'}=$api;
 
     return($obj);
 }
 
-=item $name = $res->name $name
-
-Returns or sets the Name of the resource.
-
-=cut
-
-sub name {
-    my $self=shift @_;
-    if(scalar @_ >0 && defined($_[0])) {
-        $self->{Name}=PDFName($_[0]);
-    }
-    return($self->{Name}->val);
-}
-
 sub outobjdeep {
-    my ($self, $fh, $pdf, %opts) = @_;
-
-    return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
+    my ($self, @opts) = @_;
     foreach my $k (qw/ api apipdf /) {
         $self->{" $k"}=undef;
         delete($self->{" $k"});
     }
-    $self->SUPER::outobjdeep($fh, $pdf, %opts);
+    $self->SUPER::outobjdeep(@opts);
 }
 
 1;
@@ -121,23 +111,29 @@ alfred reibenschuh
 
 =head1 HISTORY
 
-    $Log: Resource.pm,v $
-    Revision 1.6  2004/06/15 09:11:38  fredo
+    $Log: Shading.pm,v $
+    Revision 1.8  2004/06/22 00:38:44  fredo
+    fixed ISA
+
+    Revision 1.7  2004/06/21 22:33:37  fredo
+    added basic pattern/shading handling
+
+    Revision 1.6  2004/06/15 09:14:41  fredo
     removed cr+lf
 
-    Revision 1.5  2004/06/07 19:44:12  fredo
+    Revision 1.5  2004/06/07 19:44:36  fredo
     cleaned out cr+lf for lf
 
-    Revision 1.4  2003/12/08 13:05:19  Administrator
+    Revision 1.4  2003/12/08 13:05:33  Administrator
     corrected to proper licencing statement
 
-    Revision 1.3  2003/11/30 17:18:38  Administrator
+    Revision 1.3  2003/11/30 17:28:55  Administrator
     merged into default
 
-    Revision 1.2.2.1  2003/11/30 16:56:22  Administrator
+    Revision 1.2.2.1  2003/11/30 16:56:35  Administrator
     merged into default
 
-    Revision 1.2  2003/11/29 23:31:21  Administrator
+    Revision 1.2  2003/11/30 11:44:49  Administrator
     added CVS id/log
 
 

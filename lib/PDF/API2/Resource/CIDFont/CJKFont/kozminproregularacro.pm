@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: kozminproregularacro.pm,v 1.4 2004/06/07 19:44:37 fredo Exp $
+#   $Id: kozminproregularacro.pm,v 1.5 2004/06/15 09:14:44 fredo Exp $
 #
 #=======================================================================
 
@@ -15503,6 +15503,9 @@ __END__
 =head1 HISTORY
 
     $Log: kozminproregularacro.pm,v $
+    Revision 1.5  2004/06/15 09:14:44  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:37  fredo
     cleaned out cr+lf for lf
 

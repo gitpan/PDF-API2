@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Postscript.pm,v 1.4 2004/06/07 19:44:43 fredo Exp $
+#   $Id: Postscript.pm,v 1.5 2004/06/15 09:14:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::Postscript;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::Font );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:43 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:53 $
 
 }
 
@@ -515,6 +515,9 @@ __END__
 =head1 HISTORY
 
     $Log: Postscript.pm,v $
+    Revision 1.5  2004/06/15 09:14:53  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:43  fredo
     cleaned out cr+lf for lf
 

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Noncontextual.pm,v 1.4 2004/06/07 19:44:36 fredo Exp $
+#   $Id: Noncontextual.pm,v 1.5 2004/06/15 09:14:41 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Mort::Noncontextual;

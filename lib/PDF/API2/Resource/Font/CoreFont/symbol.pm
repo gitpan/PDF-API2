@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: symbol.pm,v 1.4 2004/06/07 19:44:43 fredo Exp $
+#   $Id: symbol.pm,v 1.5 2004/06/15 09:14:53 fredo Exp $
 #
 #=======================================================================
 
@@ -512,6 +512,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: symbol.pm,v $
+    Revision 1.5  2004/06/15 09:14:53  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:43  fredo
     cleaned out cr+lf for lf
 

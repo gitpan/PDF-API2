@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 1.4 2004/06/07 19:44:37 fredo Exp $
+#   $Id: TrueType.pm,v 1.5 2004/06/15 09:14:42 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -51,7 +51,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:37 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:42 $
 
 }
 
@@ -215,6 +215,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 1.5  2004/06/15 09:14:42  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:37  fredo
     cleaned out cr+lf for lf
 

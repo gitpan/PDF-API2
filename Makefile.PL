@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 1.14 2004/01/22 14:19:31 fredo Exp $
+#   $Id: Makefile.PL,v 1.15 2004/06/15 09:00:00 fredo Exp $
 #
 #=======================================================================
 
@@ -36,7 +36,7 @@ require 5.008;
 
 use ExtUtils::MakeMaker;
 
-my $versionfile = "lib/PDF/API2/Version.pm";
+my $versionfile = "lib/PDF/API2.pm";
 
 print STDERR <<'EOT';
       _   _    ____  ____  _____      _    ____ ___   ____
@@ -49,12 +49,12 @@ EOT
 eval { require $versionfile; };
 
 print <<EOT;
-                                        VERSION $PDF::API2::Version::VERSION
+                                        VERSION $PDF::API2::VERSION
 EOT
 
 WriteMakefile (
     NAME         =>  "PDF::API2",
-    VERSION_FROM =>  $versionfile,
+    VERSION      =>  $PDF::API2::VERSION,
     AUTHOR       =>  "areibens\@cpan.org",
     ABSTRACT     =>  "TheNextGen PDF Create/Modify API",
     dist         =>  {
@@ -75,6 +75,9 @@ exit;
 __END__
          
 # $Log: Makefile.PL,v $
+# Revision 1.15  2004/06/15 09:00:00  fredo
+# changed versioning to API.pm
+#
 # Revision 1.14  2004/01/22 14:19:31  fredo
 # final versioning update for 0.40_17 and beyond
 #

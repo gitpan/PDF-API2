@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Separation.pm,v 1.3 2004/06/07 19:44:43 fredo Exp $
+#   $Id: Separation.pm,v 1.4 2004/06/15 09:14:52 fredo Exp $
 #
 #=======================================================================
 
@@ -43,7 +43,7 @@ BEGIN {
     use Math::Trig;
 
     @ISA = qw( PDF::API2::Resource::ColorSpace );
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:43 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:52 $
 
 }
 
@@ -163,6 +163,9 @@ __END__
 =head1 HISTORY
 
     $Log: Separation.pm,v $
+    Revision 1.4  2004/06/15 09:14:52  fredo
+    removed cr+lf
+
     Revision 1.3  2004/06/07 19:44:43  fredo
     cleaned out cr+lf for lf
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.11 2004/06/07 19:44:12 fredo Exp $
+#   $Id: Content.pm,v 1.13 2004/06/21 22:33:36 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
+    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/21 22:33:36 $
 
 }
 
@@ -524,7 +524,7 @@ sub fillcolor {
         $self->add($self->_makecolor(1,@clrs));
         if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) {
             $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
-        } elsif(ref($clrs[0]) eq 'PDF::API2::Pattern') {
+        } elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) {
             $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
         }
     }
@@ -1665,6 +1665,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.13  2004/06/21 22:33:36  fredo
+    added basic pattern/shading handling
+
+    Revision 1.12  2004/06/15 09:11:37  fredo
+    removed cr+lf
+
     Revision 1.11  2004/06/07 19:44:12  fredo
     cleaned out cr+lf for lf
 

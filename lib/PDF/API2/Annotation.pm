@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Annotation.pm,v 1.8 2004/06/07 19:43:58 fredo Exp $
+#   $Id: Annotation.pm,v 1.9 2004/06/15 09:11:37 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Annotation;
@@ -43,7 +43,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:43:58 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:37 $
 
     use utf8;
     use Encode qw(:all);
@@ -347,6 +347,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Annotation.pm,v $
+    Revision 1.9  2004/06/15 09:11:37  fredo
+    removed cr+lf
+
     Revision 1.8  2004/06/07 19:43:58  fredo
     cleaned out cr+lf for lf
 

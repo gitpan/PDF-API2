@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: wingdings.pm,v 1.4 2004/06/07 19:44:44 fredo Exp $
+#   $Id: wingdings.pm,v 1.5 2004/06/15 09:14:54 fredo Exp $
 #
 #=======================================================================
 
@@ -543,6 +543,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: wingdings.pm,v $
+    Revision 1.5  2004/06/15 09:14:54  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:44  fredo
     cleaned out cr+lf for lf
 

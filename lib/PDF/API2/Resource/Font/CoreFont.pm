@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CoreFont.pm,v 1.4 2004/06/07 19:44:43 fredo Exp $
+#   $Id: CoreFont.pm,v 1.6 2004/06/21 22:25:44 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::CoreFont;
@@ -56,6 +56,8 @@ BEGIN {
     use utf8;
     use Encode qw(:all);
 
+    use File::Basename;
+
     use vars qw( @ISA $fonts $alias $subs $encodings $VERSION );
     use PDF::API2::Resource::Font;
     use PDF::API2::Util;
@@ -63,7 +65,7 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:43 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/21 22:25:44 $
 
 }
 
@@ -117,6 +119,10 @@ sub new {
     my ($class,$pdf,$name,@opts) = @_;
     my ($self,$data);
     my %opts=();
+    if(-f $name) {
+        eval "require '$name'; ";
+        $name=basename($name,'.pm');
+    }
     my $lookname=lc($name);
     $lookname=~s/[^a-z0-9]+//gi;
     %opts=@opts if((scalar @opts)%2 == 0);
@@ -411,6 +417,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CoreFont.pm,v $
+    Revision 1.6  2004/06/21 22:25:44  fredo
+    added custom corefont handling
+
+    Revision 1.5  2004/06/15 09:14:53  fredo
+    removed cr+lf
+
     Revision 1.4  2004/06/07 19:44:43  fredo
     cleaned out cr+lf for lf
 

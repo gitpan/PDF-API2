@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Page.pm,v 1.6 2004/06/09 16:29:12 fredo Exp $
+#   $Id: Page.pm,v 1.7 2004/06/15 09:11:38 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Page;
@@ -51,7 +51,7 @@ BEGIN {
 
     use Math::Trig;
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/09 16:29:12 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
 
 }
 
@@ -429,6 +429,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Page.pm,v $
+    Revision 1.7  2004/06/15 09:11:38  fredo
+    removed cr+lf
+
     Revision 1.6  2004/06/09 16:29:12  fredo
     fixed named page size handling for *box methods
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: PNG.pm,v 1.5 2004/06/07 19:44:44 fredo Exp $
+#   $Id: PNG.pm,v 1.6 2004/06/15 09:14:54 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::PNG;
@@ -43,7 +43,7 @@ BEGIN {
 
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:44 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:54 $
 }
 
 =item $res = PDF::API2::Resource::XObject::Image::PNG->new $pdf, $file [, $name]
@@ -368,6 +368,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: PNG.pm,v $
+    Revision 1.6  2004/06/15 09:14:54  fredo
+    removed cr+lf
+
     Revision 1.5  2004/06/07 19:44:44  fredo
     cleaned out cr+lf for lf
 

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Utils.pm,v 1.6 2004/06/07 19:44:35 fredo Exp $
+#   $Id: Utils.pm,v 1.7 2004/06/15 09:13:13 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Utils;

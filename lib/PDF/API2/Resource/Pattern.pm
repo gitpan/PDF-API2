@@ -27,35 +27,86 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Version.pm,v 1.8 2004/06/09 16:30:38 fredo Exp $
+#   $Id: Pattern.pm,v 1.2 2004/06/22 00:38:44 fredo Exp $
 #
 #=======================================================================
 
-package PDF::API2::Version;
+package PDF::API2::Resource::Pattern;
 
 BEGIN {
 
-    use vars qw( $VERSION );
+    use strict;
+    use vars qw(@ISA $VERSION);
+    use PDF::API2::Basic::PDF::Array;
+    use PDF::API2::Basic::PDF::Utils;
+    use PDF::API2::Util;
+    use Math::Trig;
 
-    ( $VERSION ) = '0.40_22';
+    @ISA = qw(PDF::API2::Resource);
+
+    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/22 00:38:44 $
 
 }
 
+=item $cs = PDF::API2::Resource::Pattern->new $pdf, $key, %parameters
 
-=head1 NAME
-
-PDF::API2::Version - Helper Modules for Release Versioning
+Returns a new pattern object. base class for all patterns.
 
 =cut
+
+sub new {
+    my ($class,$pdf,$key,%opts)=@_;
+
+    $class = ref $class if ref $class;
+    $self=$class->SUPER::new($pdf,$key || pdfkey());
+    $pdf->new_obj($self) unless($self->is_obj($pdf));
+    $self->{Type}=PDFName('Pattern');
+    $self->{' apipdf'}=$pdf;
+
+    return($self);
+}
+
+=item $cs = PDF::API2::Resource::Pattern->new_api $api, $name
+
+Returns a pattern object. This method is different from 'new' that
+it needs an PDF::API2-object rather than a Text::PDF::File-object.
+
+=cut
+
+sub new_api {
+    my ($class,$api,@opts)=@_;
+
+    my $obj=$class->new($api->{pdf},@opts);
+    $self->{' api'}=$api;
+
+    return($obj);
+}
+
+sub outobjdeep {
+    my ($self, @opts) = @_;
+    foreach my $k (qw/ api apipdf /) {
+        $self->{" $k"}=undef;
+        delete($self->{" $k"});
+    }
+    $self->SUPER::outobjdeep(@opts);
+}
 
 1;
 
 __END__
 
-=back
-
 =head1 AUTHOR
 
 alfred reibenschuh
+
+=head1 HISTORY
+
+    $Log: Pattern.pm,v $
+    Revision 1.2  2004/06/22 00:38:44  fredo
+    fixed ISA
+
+    Revision 1.1  2004/06/21 22:33:37  fredo
+    added basic pattern/shading handling
+
 
 =cut
