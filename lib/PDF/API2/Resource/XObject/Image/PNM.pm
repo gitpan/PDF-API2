@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: PNM.pm,v 1.6 2004/07/24 23:38:47 fredo Exp $
+#   $Id: PNM.pm,v 1.7 2004/12/16 00:30:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::PNM;
@@ -42,8 +42,9 @@ BEGIN {
 
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/24 23:38:47 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:55 $
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $res = PDF::API2::Resource::XObject::Image::PNM->new $pdf, $file [, $name]
 
@@ -236,6 +237,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: PNM.pm,v $
+    Revision 1.7  2004/12/16 00:30:55  fredo
+    added no warn for recursion
+
     Revision 1.6  2004/07/24 23:38:47  fredo
     added new headerparser and simplified loading
 

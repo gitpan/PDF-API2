@@ -21,17 +21,18 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Array.pm,v 1.5 2004/06/15 09:13:12 fredo Exp $
+#   $Id: Array.pm,v 1.6 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Array;
 
 use strict;
 use vars qw(@ISA);
-# no warnings qw(uninitialized);
 
 use PDF::API2::Basic::PDF::Objind;
 @ISA = qw(PDF::API2::Basic::PDF::Objind);
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 

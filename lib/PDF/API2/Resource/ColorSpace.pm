@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: ColorSpace.pm,v 1.7 2004/07/15 14:35:14 fredo Exp $
+#   $Id: ColorSpace.pm,v 1.8 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 
@@ -44,9 +44,10 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Array);
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/15 14:35:14 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $cs = PDF::API2::Resource::ColorSpace->new $pdf, $key, %parameters
 
@@ -134,6 +135,9 @@ alfred reibenschuh
 =head1
 
     $Log: ColorSpace.pm,v $
+    Revision 1.8  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.7  2004/07/15 14:35:14  fredo
     added type accessor
 

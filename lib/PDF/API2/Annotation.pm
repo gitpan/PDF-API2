@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Annotation.pm,v 1.12 2004/10/13 18:30:34 fredo Exp $
+#   $Id: Annotation.pm,v 1.13 2004/12/16 00:30:51 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Annotation;
@@ -43,12 +43,14 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/10/13 18:30:34 $
+    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:51 $
 
     use utf8;
     use Encode qw(:all);
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 $ant = PDF::API2::Annotation->new
 
@@ -368,6 +370,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Annotation.pm,v $
+    Revision 1.13  2004/12/16 00:30:51  fredo
+    added no warn for recursion
+
     Revision 1.12  2004/10/13 18:30:34  fredo
     fixed pdfile method from utf8 back to ascii
 

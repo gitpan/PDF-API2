@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: String.pm,v 1.9 2004/11/22 02:31:04 fredo Exp $
+#   $Id: String.pm,v 1.10 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::String;
@@ -37,7 +37,7 @@ that are basically stringlike (Number, Name, etc.)
 
 use strict;
 use vars qw(@ISA %trans %out_trans);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 use PDF::API2::Basic::PDF::Objind;
 @ISA = qw(PDF::API2::Basic::PDF::Objind);

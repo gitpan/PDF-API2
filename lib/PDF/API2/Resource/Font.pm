@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Font.pm,v 1.11 2004/11/26 01:25:28 fredo Exp $
+#   $Id: Font.pm,v 1.12 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font;
@@ -47,9 +47,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/26 01:25:28 $
+    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $font->encodeByData $encoding
 
@@ -254,6 +255,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Font.pm,v $
+    Revision 1.12  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.11  2004/11/26 01:25:28  fredo
     added unicode block mapping
 

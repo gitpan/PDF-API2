@@ -21,10 +21,12 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Filter.pm,v 1.8 2004/11/25 15:30:36 fredo Exp $
+#   $Id: Filter.pm,v 1.9 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Filter;
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
@@ -118,7 +120,7 @@ package PDF::API2::Basic::PDF::ASCII85Decode;
 use strict;
 use vars qw(@ISA);
 @ISA = qw(PDF::API2::Basic::PDF::Filter);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
@@ -208,7 +210,7 @@ package PDF::API2::Basic::PDF::RunLengthDecode;
 use strict;
 use vars qw(@ISA);
 @ISA = qw(PDF::API2::Basic::PDF::Filter);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
@@ -298,7 +300,7 @@ package PDF::API2::Basic::PDF::ASCIIHexDecode;
 use strict;
 use vars qw(@ISA);
 @ISA = qw(PDF::API2::Basic::PDF::Filter);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
@@ -331,6 +333,7 @@ package PDF::API2::Basic::PDF::FlateDecode;
 
 use strict;
 use vars qw(@ISA $havezlib);
+no warnings qw[ deprecated recursion uninitialized ];
 @ISA = qw(PDF::API2::Basic::PDF::Filter);
 BEGIN
 {
@@ -374,7 +377,7 @@ package PDF::API2::Basic::PDF::LZWDecode;
 use vars qw(@ISA @basedict);
 @ISA = qw(PDF::API2::Basic::PDF::FlateDecode);
 @basedict = map {pack("C", $_)} (0 .. 255, 0, 0);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 sub new
 {

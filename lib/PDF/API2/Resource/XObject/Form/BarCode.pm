@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BarCode.pm,v 1.6 2004/06/15 09:14:54 fredo Exp $
+#   $Id: BarCode.pm,v 1.7 2004/12/16 00:30:54 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Form::BarCode;
@@ -44,9 +44,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Form::Hybrid );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:54 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:54 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $res = PDF::API2::Resource::XObject::Form::BarCode->new $pdf, %opts
 
@@ -261,6 +262,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: BarCode.pm,v $
+    Revision 1.7  2004/12/16 00:30:54  fredo
+    added no warn for recursion
+
     Revision 1.6  2004/06/15 09:14:54  fredo
     removed cr+lf
 

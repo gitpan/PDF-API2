@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniFont.pm,v 1.3 2004/11/29 15:57:42 fredo Exp $
+#   $Id: UniFont.pm,v 1.4 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::UniFont;
@@ -43,9 +43,10 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/29 15:57:42 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $font = PDF::API2::Resource::UniFont->new $pdf, @fontspecs, %options
 

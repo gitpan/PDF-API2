@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Page.pm,v 1.8 2004/09/13 15:27:59 fredo Exp $
+#   $Id: Page.pm,v 1.9 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Page;
@@ -52,9 +52,11 @@ BEGIN {
     use POSIX qw(floor ceil);
     use Math::Trig;
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/09/13 15:27:59 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:52 $
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 $page = PDF::API2::Page->new $pdf, $parent, $index
 
@@ -455,6 +457,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Page.pm,v $
+    Revision 1.9  2004/12/16 00:30:52  fredo
+    added no warn for recursion
+
     Revision 1.8  2004/09/13 15:27:59  fredo
     added rotate for acrobat-wise pdf-creators
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniWrap.pm,v 1.1 2004/11/25 19:56:24 fredo Exp $
+#   $Id: UniWrap.pm,v 1.2 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 
@@ -43,7 +43,6 @@ BEGIN {
 
     use 5.008;
     use strict;
-    use warnings;
     use base 'Exporter';
 
     use Unicode::UCD;
@@ -51,9 +50,11 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = '$Revision: 1.1 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/25 19:56:24 $
+    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:52 $
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 our $DEBUG = 0;
 our $columns = 75;

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Pattern.pm,v 1.2 2004/06/22 00:38:44 fredo Exp $
+#   $Id: Pattern.pm,v 1.3 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 
@@ -44,9 +44,10 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Resource);
 
-    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/22 00:38:44 $
+    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $cs = PDF::API2::Resource::Pattern->new $pdf, $key, %parameters
 
@@ -102,6 +103,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Pattern.pm,v $
+    Revision 1.3  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.2  2004/06/22 00:38:44  fredo
     fixed ISA
 

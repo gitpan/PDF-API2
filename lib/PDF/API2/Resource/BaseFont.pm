@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 1.12 2004/11/24 20:10:55 fredo Exp $
+#   $Id: BaseFont.pm,v 1.13 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -45,9 +45,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:10:55 $
+    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $font = PDF::API2::Resource::BaseFont->new $pdf, $name
 
@@ -692,6 +693,9 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 1.13  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.12  2004/11/24 20:10:55  fredo
     added virtual font handling
 

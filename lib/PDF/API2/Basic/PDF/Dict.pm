@@ -21,14 +21,14 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Dict.pm,v 1.7 2004/09/22 14:12:49 fredo Exp $
+#   $Id: Dict.pm,v 1.8 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
 
 use strict;
 use vars qw(@ISA $mincache $tempbase $cr);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 use PDF::API2::Basic::PDF::Objind;
 @ISA = qw(PDF::API2::Basic::PDF::Objind);

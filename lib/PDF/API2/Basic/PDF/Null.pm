@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Null.pm,v 1.5 2004/06/15 09:13:13 fredo Exp $
+#   $Id: Null.pm,v 1.6 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Null;
@@ -39,6 +39,8 @@ use strict;
 
 use vars qw(@ISA);
 @ISA = qw(PDF::API2::Basic::PDF::Objind);
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 # There is only one null object  (section 3.2.8).
 my ($null_obj) = {};

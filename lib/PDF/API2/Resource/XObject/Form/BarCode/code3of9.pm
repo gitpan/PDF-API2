@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: code3of9.pm,v 1.6 2004/06/15 09:14:54 fredo Exp $
+#   $Id: code3of9.pm,v 1.7 2004/12/16 00:30:54 fredo Exp $
 #
 #=======================================================================
 
@@ -45,9 +45,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Form::BarCode );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:54 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:54 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $res = PDF::API2::Resource::XObject::Form::BarCode::code3of9->new $pdf
 
@@ -323,6 +324,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: code3of9.pm,v $
+    Revision 1.7  2004/12/16 00:30:54  fredo
+    added no warn for recursion
+
     Revision 1.6  2004/06/15 09:14:54  fredo
     removed cr+lf
 

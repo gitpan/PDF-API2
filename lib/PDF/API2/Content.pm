@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.18 2004/11/25 20:53:59 fredo Exp $
+#   $Id: Content.pm,v 1.21 2004/12/20 12:11:54 fredo Exp $
 #
 #=======================================================================
 
@@ -45,9 +45,11 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.18 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/25 20:53:59 $
+    ( $VERSION ) = '$Revision: 1.21 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/20 12:11:54 $
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 $co = PDF::API2::Content->new @parameters
 
@@ -61,6 +63,7 @@ sub new {
     $self->{' stream'}='';
     $self->{' poststream'}='';
     $self->{' font'}=undef;
+    $self->{' fontset'}=0;
     $self->{' fontsize'}=0;
     $self->{' charspace'}=0;
     $self->{' hspace'}=100;
@@ -69,6 +72,8 @@ sub new {
     $self->{' rise'}=0;
     $self->{' render'}=0;
     $self->{' matrix'}=[1,0,0,1,0,0];
+    $self->{' textmatrix'}=[1,0,0,1,0,0];
+    $self->{' textlinematrix'}=[0,0];
     $self->{' fillcolor'}=[0];
     $self->{' strokecolor'}=[0];
     $self->{' translate'}=[0,0];
@@ -83,7 +88,10 @@ sub new {
 sub outobjdeep {
     my $self = shift @_;
     $self->textend;
-    foreach my $k (qw/ api apipdf apiistext apipage font fontsize charspace hspace wordspace lead rise render matrix fillcolor strokecolor translate scale skew rotate /) {
+    foreach my $k (qw[ api apipdf apiistext apipage font fontset fontsize 
+        charspace hspace wordspace lead rise render matrix textmatrix textlinematrix 
+        fillcolor strokecolor translate scale skew rotate ]) 
+    {
         $self->{" $k"}=undef;
         delete($self->{" $k"});
     }
@@ -96,16 +104,20 @@ Adds @content to the object.
 
 =cut
 
-sub add_post {
+sub add_post 
+{
     my $self=shift @_;
-    if(scalar @_>0) {
+    if(scalar @_>0) 
+    {
         $self->{' poststream'}.=($self->{' poststream'}=~m|\s$|o?'':' ').join(' ',@_).' ';
     }
     $self;
 }
-sub add {
+sub add 
+{
     my $self=shift @_;
-    if(scalar @_>0) {
+    if(scalar @_>0) 
+    {
         $self->{' stream'}.=encode("iso-8859-1",($self->{' stream'}=~m|\s$|o?'':' ').join(' ',@_).' ');
     }
     $self;
@@ -117,13 +129,16 @@ Saves the state of the object.
 
 =cut
 
-sub _save {
+sub _save 
+{
     return('q');
 }
 
-sub save {
+sub save 
+{
     my $self=shift @_;
-    unless(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+    unless(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+    {
         $self->add(_save());
     }
 }
@@ -134,11 +149,13 @@ Restores the state of the object.
 
 =cut
 
-sub _restore {
+sub _restore 
+{
     return('Q');
 }
 
-sub restore {
+sub restore 
+{
     my $self=shift @_;
     unless(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
         $self->add(_restore());
@@ -151,7 +168,8 @@ Marks content for compression on output.
 
 =cut
 
-sub compress {
+sub compress 
+{
     my $self=shift @_;
     $self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
     return($self);
@@ -163,11 +181,13 @@ Sets flatness.
 
 =cut
 
-sub _flatness {
+sub _flatness 
+{
     my ($flatness)=@_;
     return($flatness,'i');
 }
-sub flatness {
+sub flatness 
+{
     my ($self,$flatness)=@_;
     $self->add(_flatness($flatness));
 }
@@ -178,11 +198,13 @@ Sets linecap.
 
 =cut
 
-sub _linecap {
+sub _linecap 
+{
     my ($linecap)=@_;
     return($linecap,'J');
 }
-sub linecap {
+sub linecap 
+{
     my ($self,$linecap)=@_;
     $self->add(_linecap($linecap));
 }
@@ -193,21 +215,29 @@ Sets linedash.
 
 =cut
 
-sub _linedash {
+sub _linedash 
+{
     my (@a)=@_;
-    if(scalar @a < 1) {
+    if(scalar @a < 1) 
+    {
             return('[',']','0','d');
-    } else {
-        if($a[0]=~/^\-/){
+    } 
+    else 
+    {
+        if($a[0]=~/^\-/)
+        {
             my %a=@a;
-            $a{-pattern}=[$a{-full}||0,$a{-clear}||0] unless($a{-pattern});
+            $a{-pattern}=[$a{-full}||0,$a{-clear}||0] unless(ref $a{-pattern});
             return('[',floats(@{$a{-pattern}}),']',($a{-shift}||0),'d');
-        } else {
+        } 
+        else 
+        {
             return('[',floats(@a),'] 0 d');
         }
     }
 }
-sub linedash {
+sub linedash 
+{
     my ($self,@a)=@_;
     $self->add(_linedash(@a));
 }
@@ -218,11 +248,13 @@ Sets linejoin.
 
 =cut
 
-sub _linejoin {
+sub _linejoin 
+{
     my ($linejoin)=@_;
     return($linejoin,'j');
 }
-sub linejoin {
+sub linejoin 
+{
     my ($this,$linejoin)=@_;
     $this->add(_linejoin($linejoin));
 }
@@ -233,11 +265,13 @@ Sets linewidth.
 
 =cut
 
-sub _linewidth {
+sub _linewidth 
+{
     my ($linewidth)=@_;
     return($linewidth,'w');
 }
-sub linewidth {
+sub linewidth 
+{
     my ($this,$linewidth)=@_;
     $this->add(_linewidth($linewidth));
 }
@@ -248,11 +282,13 @@ Sets meterlimit.
 
 =cut
 
-sub _meterlimit {
+sub _meterlimit 
+{
     my ($limit)=@_;
     return($limit,'M');
 }
-sub meterlimit {
+sub meterlimit 
+{
     my ($this, $limit)=@_;
     $this->add(_meterlimit($limit));
 }
@@ -263,28 +299,38 @@ Sets matrix transformation.
 
 =cut
 
-sub _matrix_text {
+sub _matrix_text 
+{
     my ($a,$b,$c,$d,$e,$f)=@_;
     return(floats($a,$b,$c,$d,$e,$f),'Tm');
 }
-sub _matrix_gfx {
+sub _matrix_gfx 
+{
     my ($a,$b,$c,$d,$e,$f)=@_;
     return(floats($a,$b,$c,$d,$e,$f),'cm');
 }
-sub matrix {
+sub matrix 
+{
     my $self=shift @_;
     my ($a,$b,$c,$d,$e,$f)=@_;
-    if(defined $a) {
-        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+    if(defined $a) 
+    {
+        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+        {
             $self->add(_matrix_text($a,$b,$c,$d,$e,$f));
-            @{$self->{' matrix'}}=($a,$b,$c,$d,$e,$f);
-        } else {
+            @{$self->{' textmatrix'}}=($a,$b,$c,$d,$e,$f);
+        } 
+        else 
+        {
             $self->add(_matrix_gfx($a,$b,$c,$d,$e,$f));
         }
     }
-    if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
-        return(@{$self->{' matrix'}});
-    } else {
+    if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+    {
+        return(@{$self->{' textmatrix'}});
+    } 
+    else 
+    {
         return($self);
     }
 }
@@ -295,11 +341,13 @@ Sets translation transformation.
 
 =cut
 
-sub _translate {
+sub _translate 
+{
     my ($x,$y)=@_;
     return(1,0,0,1,$x,$y);
 }
-sub translate {
+sub translate 
+{
   my ($self,$x,$y)=@_;
   $self->transform(-translate=>[$x,$y]);
 }
@@ -310,11 +358,13 @@ Sets scaleing transformation.
 
 =cut
 
-sub _scale {
+sub _scale 
+{
     my ($x,$y)=@_;
     return($x,0,0,$y,0,0);
 }
-sub scale {
+sub scale 
+{
   my ($self,$sx,$sy)=@_;
   $self->transform(-scale=>[$sx,$sy]);
 }
@@ -325,11 +375,13 @@ Sets skew transformation.
 
 =cut
 
-sub _skew {
+sub _skew 
+{
     my ($a,$b)=@_;
     return(1, tan(deg2rad($a)),tan(deg2rad($b)),1,0,0);
 }
-sub skew {
+sub skew 
+{
   my ($self,$a,$b)=@_;
   $self->transform(-skew=>[$a,$b]);
 }
@@ -340,11 +392,13 @@ Sets rotation transformation.
 
 =cut
 
-sub _rotate {
+sub _rotate 
+{
     my ($a)=@_;
     return(cos(deg2rad($a)), sin(deg2rad($a)),-sin(deg2rad($a)), cos(deg2rad($a)),0,0);
 }
-sub rotate {
+sub rotate 
+{
   my ($self,$a)=@_;
   $self->transform(-rotate=>$a);
 }
@@ -364,10 +418,11 @@ B<Example:>
 
 =cut
 
-sub _transform {
+sub _transform 
+{
     my (%opt)=@_;
     my $mtx=PDF::API2::Matrix->new([1,0,0],[0,1,0],[0,0,1]);
-    foreach my $o (qw( -skew -scale -rotate -translate )) {
+    foreach my $o (qw( -matrix -skew -scale -rotate -translate )) {
         next unless(defined($opt{$o}));
         if($o eq '-translate') {
             my @mx=_translate(@{$opt{$o}});
@@ -397,7 +452,20 @@ sub _transform {
                 [$mx[2],$mx[3],0],
                 [$mx[4],$mx[4],1]
             ));
+        } elsif($o eq '-matrix') {
+            my @mx=@{$opt{$o}};
+            $mtx=$mtx->multiply(PDF::API2::Matrix->new(
+                [$mx[0],$mx[1],0],
+                [$mx[2],$mx[3],0],
+                [$mx[4],$mx[4],1]
+            ));
         }
+    }
+    if($opt{-point})
+    {
+        my $mp=PDF::API2::Matrix->new([$opt{-point}->[0],$opt{-point}->[1],1]);
+        $mp=$mp->multiply($mtx);
+        return($mp->[0][0],$mp->[0][1]);
     }
     return(
         $mtx->[0][0],$mtx->[0][1],
@@ -499,14 +567,14 @@ sub _makecolor {
         return('/'.($clr[0]->name),($sf?'cs':'CS'),$clr[0]->param($clr[1]),($sf?'sc':'SC'));
     } elsif(scalar @clr == 3) {
         # legacy rgb color-spec (0 <= x <= 1)
-        if(!defined $self->resource('ColorSpace','RgbS')) {
-            my $dc=PDFDict();
-            my $cs=PDFArray(PDFName('CalRGB'),$dc);
-            $dc->{WhitePoint}=PDFArray(map { PDFNum($_) } qw(0.9505 1.0000 1.0890));
-            $dc->{Gamma}=PDFArray(map { PDFNum($_) } qw(2.2 2.2 2.2));
-            $self->resource('ColorSpace','RgbS',$cs);
-        }
-        return('/RgbS',($sf?'cs':'CS'),floats5(@clr),($sf?'sc':'SC'));
+        #if(!defined $self->resource('ColorSpace','RgbS')) {
+        #    my $dc=PDFDict();
+        #    my $cs=PDFArray(PDFName('CalRGB'),$dc);
+        #    $dc->{WhitePoint}=PDFArray(map { PDFNum($_) } qw(0.9505 1.0000 1.0890));
+        #    $dc->{Gamma}=PDFArray(map { PDFNum($_) } qw(2.2 2.2 2.2));
+        #    $self->resource('ColorSpace','RgbS',$cs);
+        #}
+        #return('/RgbS',($sf?'cs':'CS'),floats5(@clr),($sf?'sc':'SC'));
         return(floats($clr[0],$clr[1],$clr[2]),($sf?'rg':'RG'));
     } elsif(scalar @clr == 4) {
         # legacy cmyk color-spec (0 <= x <= 1)
@@ -516,30 +584,40 @@ sub _makecolor {
     }
 }
 
-sub fillcolor {
+sub fillcolor 
+{
     my $self=shift @_;
-    if(scalar @_) {
+    if(scalar @_) 
+    {
         @{$self->{' fillcolor'}}=@_;
         my @clrs=@_;
         $self->add($self->_makecolor(1,@clrs));
-        if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) {
+        if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) 
+        {
             $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
-        } elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) {
+        } 
+        elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) 
+        {
             $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
         }
     }
     return(@{$self->{' fillcolor'}});
 }
 
-sub strokecolor {
+sub strokecolor 
+{
     my $self=shift @_;
-    if(scalar @_) {
+    if(scalar @_) 
+    {
         @{$self->{' strokecolor'}}=@_;
         my @clrs=@_;
         $self->add($self->_makecolor(0,@clrs));
-        if(ref($clrs[0]) eq 'PDF::API2::ColorSpace') {
+        if(ref($clrs[0]) =~ m|^PDF::API2::Resource::ColorSpace|) 
+        {
             $self->resource('ColorSpace',$clrs[0]->name,$clrs[0]);
-        } elsif(ref($clrs[0]) eq 'PDF::API2::Pattern') {
+        } 
+        elsif(ref($clrs[0]) =~ m|^PDF::API2::Resource::Pattern|) 
+        {
             $self->resource('Pattern',$clrs[0]->name,$clrs[0]);
         }
     }
@@ -554,18 +632,23 @@ sub strokecolor {
 
 =cut
 
-sub move { # x,y ...
+sub move 
+{ # x,y ...
     my $self=shift @_;
     my($x,$y);
-    while(defined($x=shift @_)) {
+    while(defined($x=shift @_)) 
+    {
         $y=shift @_;
         $self->{' x'}=$x;
         $self->{' y'}=$y;
         $self->{' mx'}=$x;
         $self->{' my'}=$y;
-        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+        {
             $self->add_post(floats($x,$y),'m');
-        } else {
+        } 
+        else 
+        {
             $self->add(floats($x,$y),'m');
         }
     }
@@ -576,16 +659,21 @@ sub move { # x,y ...
 
 =cut
 
-sub line { # x,y ...
+sub line 
+{ # x,y ...
     my $self=shift @_;
     my($x,$y);
-    while(defined($x=shift @_)) {
+    while(defined($x=shift @_)) 
+    {
         $y=shift @_;
         $self->{' x'}=$x;
         $self->{' y'}=$y;
-        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+        {
             $self->add_post(floats($x,$y),'l');
-        } else {
+        } 
+        else 
+        {
             $self->add(floats($x,$y),'l');
         }
     }
@@ -596,11 +684,15 @@ sub line { # x,y ...
 
 =cut
 
-sub hline {
+sub hline 
+{
     my($self,$x)=@_;
-    if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+    if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+    {
         $self->add_post(floats($x,$self->{' y'}),'l');
-    } else {
+    } 
+    else 
+    {
         $self->add(floats($x,$self->{' y'}),'l');
     }
     $self->{' x'}=$x;
@@ -611,11 +703,15 @@ sub hline {
 
 =cut
 
-sub vline {
+sub vline 
+{
     my($self,$y)=@_;
-    if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+    if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+    {
         $self->add_post(floats($self->{' x'},$y),'l');
-    } else {
+    } 
+    else 
+    {
         $self->add(floats($self->{' x'},$y),'l');
     }
     $self->{' y'}=$y;
@@ -626,18 +722,23 @@ sub vline {
 
 =cut
 
-sub curve { # x1,y1,x2,y2,x3,y3 ...
+sub curve 
+{ # x1,y1,x2,y2,x3,y3 ...
     my $self=shift @_;
     my($x1,$y1,$x2,$y2,$x3,$y3);
-    while(defined($x1=shift @_)) {
+    while(defined($x1=shift @_)) 
+    {
         $y1=shift @_;
         $x2=shift @_;
         $y2=shift @_;
         $x3=shift @_;
         $y3=shift @_;
-        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
+        if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) 
+        {
             $self->add_post(floats($x1,$y1,$x2,$y2,$x3,$y3),'c');
-        } else {
+        } 
+        else 
+        {
             $self->add(floats($x1,$y1,$x2,$y2,$x3,$y3),'c');
         }
         $self->{' x'}=$x3;
@@ -646,14 +747,18 @@ sub curve { # x1,y1,x2,y2,x3,y3 ...
     return($self);
 }
 
-sub arctocurve {
+sub arctocurve 
+{
     my ($a,$b,$alpha,$beta)=@_;
-    if(abs($beta-$alpha) > 30) {
+    if(abs($beta-$alpha) > 30) 
+    {
         return (
             arctocurve($a,$b,$alpha,($beta+$alpha)/2),
             arctocurve($a,$b,($beta+$alpha)/2,$beta)
         );
-    } else {
+    } 
+    else 
+    {
         $alpha = ($alpha * pi / 180);
         $beta  = ($beta * pi / 180);
 
@@ -683,7 +788,8 @@ set to 1, unless you want to continue an existing path.
 
 =cut
 
-sub arc { # x,y,a,b,alf,bet[,mov]
+sub arc 
+{ # x,y,a,b,alf,bet[,mov]
     my ($self,$x,$y,$a,$b,$alpha,$beta,$move)=@_;
     my @points=arctocurve($a,$b,$alpha,$beta);
     my ($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
@@ -693,7 +799,8 @@ sub arc { # x,y,a,b,alf,bet[,mov]
 
     $self->move($p0_x,$p0_y) if($move);
 
-    while(scalar @points > 0) {
+    while(scalar @points > 0) 
+    {
         $p1_x= $x + shift @points;
         $p1_y= $y + shift @points;
         $p2_x= $x + shift @points;
@@ -713,7 +820,8 @@ sub arc { # x,y,a,b,alf,bet[,mov]
 
 =cut
 
-sub ellipse {
+sub ellipse 
+{
     my ($self,$x,$y,$a,$b) = @_;
     $self->arc($x,$y,$a,$b,0,360,1);
     $self->close;
@@ -724,7 +832,8 @@ sub ellipse {
 
 =cut
 
-sub circle {
+sub circle 
+{
     my ($self,$x,$y,$r) = @_;
     $self->arc($x,$y,$r,$r,0,360,1);
     $self->close;
@@ -742,7 +851,8 @@ from x1,y1 to x2,y2.
 
 =cut
 
-sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
+sub bogen 
+{ # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
     my ($self,$x1,$y1,$x2,$y2,$r,$move,$larc,$spf) = @_;
     my ($p0_x,$p0_y,$p1_x,$p1_y,$p2_x,$p2_y,$p3_x,$p3_y);
     my $x=$x2-$x1;
@@ -752,10 +862,13 @@ sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
     my $z=sqrt($x**2+$y**2);
     my $alfa_rad=asin($y/$z);
 
-    if($spf>0) {
+    if($spf>0) 
+    {
         $alfa_rad-=pi/2 if($x<0);
         $alfa_rad=-$alfa_rad if($y>0);
-    } else {
+    } 
+    else 
+    {
         $alfa_rad+=pi/2 if($x<0);
         $alfa_rad=-$alfa_rad if($y<0);
     }
@@ -771,7 +884,8 @@ sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
 
     @points=arctocurve($r,$r,90+$alfa+$beta/2,90+$alfa-$beta/2);
 
-    if($spf>0) {
+    if($spf>0) 
+    {
         my @pts=@points;
         @points=();
         while($y=pop @pts){
@@ -787,7 +901,8 @@ sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
 
     $self->move($x,$y) if($move);
 
-    while(scalar @points > 0) {
+    while(scalar @points > 0) 
+    {
         $p1_x= $x + shift @points;
         $p1_y= $y + shift @points;
         $p2_x= $x + shift @points;
@@ -805,7 +920,8 @@ sub bogen { # x1,y1,x2,y2,r[,move[,large-arc[,span-factor]]]
 
 =cut
 
-sub pie {
+sub pie 
+{
     my $self=shift @_;
     my ($x,$y,$a,$b,$alfa,$beta)=@_;
     my ($p0_x,$p0_y)=arctocurve($a,$b,$alfa,$beta);
@@ -819,10 +935,12 @@ sub pie {
 
 =cut
 
-sub rect { # x,y,w,h ...
+sub rect 
+{ # x,y,w,h ...
     my $self=shift @_;
     my($x,$y,$w,$h);
-    while(defined($x=shift @_)) {
+    while(defined($x=shift @_)) 
+    {
         $y=shift @_;
         $w=shift @_;
         $h=shift @_;
@@ -837,7 +955,8 @@ sub rect { # x,y,w,h ...
 
 =cut
 
-sub rectxy {
+sub rectxy 
+{
     my ($self,$x,$y,$x2,$y2)=@_;
     $self->rect($x,$y,($x2-$x),($y2-$y));
     return($self);
@@ -847,7 +966,8 @@ sub rectxy {
 
 =cut
 
-sub poly {
+sub poly 
+{
     my $self=shift @_;
     my($x,$y);
     $x=shift @_;
@@ -861,7 +981,8 @@ sub poly {
 
 =cut
 
-sub close {
+sub close 
+{
     my $self=shift @_;
     $self->add('h');
     $self->{' x'}=$self->{' mx'};
@@ -873,7 +994,8 @@ sub close {
 
 =cut
 
-sub endpath {
+sub endpath 
+{
     my $self=shift @_;
     $self->add('n');
     return($self);
@@ -883,7 +1005,8 @@ sub endpath {
 
 =cut
 
-sub clip { # nonzero
+sub clip 
+{ # nonzero
     my $self=shift @_;
     $self->add(!(shift @_)?'W':'W*');
     return($self);
@@ -893,7 +1016,8 @@ sub clip { # nonzero
 
 =cut
 
-sub stroke {
+sub stroke 
+{
     my $self=shift @_;
     $self->add('S');
     return($self);
@@ -903,7 +1027,8 @@ sub stroke {
 
 =cut
 
-sub fill { # nonzero
+sub fill 
+{ # nonzero
     my $self=shift @_;
     $self->add(!(shift @_)?'f':'f*');
     return($self);
@@ -913,7 +1038,8 @@ sub fill { # nonzero
 
 =cut
 
-sub fillstroke { # nonzero
+sub fillstroke 
+{ # nonzero
     my $self=shift @_;
     $self->add(!(shift @_)?'B':'B*');
     return($self);
@@ -935,15 +1061,19 @@ a scale of 72/150 (or 72/300) or adjust width/height accordingly.
 
 =cut
 
-sub image {
+sub image 
+{
     my $self=shift @_;
     my $img=shift @_;
     my ($x,$y,$w,$h)=@_;
     $self->save;
-    if(!defined $w) {
+    if(!defined $w) 
+    {
         $h=$img->height;
         $w=$img->width;
-    } elsif(!defined $h) {
+    } 
+    elsif(!defined $h) 
+    {
         $h=$img->height*$w;
         $w=$img->width*$w;
     }
@@ -964,14 +1094,18 @@ B<Please Note:> *TODO*
 
 =cut
 
-sub formimage {
+sub formimage 
+{
     my $self=shift @_;
     my $img=shift @_;
     my ($x,$y,$s)=@_;
     $self->save;
-    if(!defined $s) {
+    if(!defined $s) 
+    {
         $self->matrix(1,0,0,1,$x,$y);
-    } else {
+    } 
+    else 
+    {
         $self->matrix($s,0,0,$s,$x,$y);
     }
     $self->add("/".$img->name,'Do');
@@ -984,7 +1118,8 @@ sub formimage {
 
 =cut
 
-sub shade {
+sub shade 
+{
     my $self=shift @_;
     my $shade=shift @_;
     my @cord=@_;
@@ -1007,7 +1142,8 @@ sub shade {
 
 =cut
 
-sub egstate {
+sub egstate 
+{
     my $self=shift @_;
     my $egs=shift @_;
     $self->add("/".$egs->name,'gs');
@@ -1019,12 +1155,15 @@ sub egstate {
 
 =cut
 
-sub textstart {
+sub textstart 
+{
     my ($self)=@_;
-    if(!defined($self->{' apiistext'}) || $self->{' apiistext'} != 1) {
+    if(!defined($self->{' apiistext'}) || $self->{' apiistext'} != 1) 
+    {
         $self->add(' BT ');
         $self->{' apiistext'}=1;
         $self->{' font'}=undef;
+        $self->{' fontset'}=0;
         $self->{' fontsize'}=0;
         $self->{' charspace'}=0;
         $self->{' hspace'}=100;
@@ -1033,6 +1172,8 @@ sub textstart {
         $self->{' rise'}=0;
         $self->{' render'}=0;
         @{$self->{' matrix'}}=(1,0,0,1,0,0);
+        @{$self->{' textmatrix'}}=(1,0,0,1,0,0);
+        @{$self->{' textlinematrix'}}=(0,0);
         @{$self->{' fillcolor'}}=(0);
         @{$self->{' strokecolor'}}=(0);
         @{$self->{' translate'}}=(0,0);
@@ -1049,57 +1190,75 @@ Sets or gets the current text-object state.
 
 =cut
 
-sub textstate {
-  my $self=shift @_;
-  my %state;
-  if(scalar @_) {
-    %state=@_;
-    foreach my $k (qw( charspace hspace wordspace lead rise render )) {
-      next unless($state{$k});
-      eval ' $self->'.$k.'($state{$k}); ';
+sub textstate 
+{
+    my $self=shift @_;
+    my %state;
+    if(scalar @_) 
+    {
+        %state=@_;
+        foreach my $k (qw( charspace hspace wordspace lead rise render )) 
+        {
+            next unless($state{$k});
+            eval ' $self->'.$k.'($state{$k}); ';
+        }
+        if($state{font} && $state{fontsize}) 
+        {
+            $self->font($state{font},$state{fontsize});
+        }
+        if($state{textmatrix}) 
+        {
+            $self->matrix(@{$state{textmatrix}});
+            @{$self->{' translate'}}=@{$state{translate}};
+            $self->{' rotate'}=$state{rotate};
+            @{$self->{' scale'}}=@{$state{scale}};
+            @{$self->{' skew'}}=@{$state{skew}};
+        }
+        if($state{fillcolor}) 
+        {
+            $self->fillcolor(@{$state{fillcolor}});
+        }
+        if($state{strokecolor}) 
+        {
+            $self->strokecolor(@{$state{strokecolor}});
+        }
+        %state=();
+    } 
+    else 
+    {
+        foreach my $k (qw( font fontsize charspace hspace wordspace lead rise render )) 
+        {
+            $state{$k}=$self->{" $k"};
+        }
+        $state{matrix}=[@{$self->{" matrix"}}];
+        $state{textmatrix}=[@{$self->{" textmatrix"}}];
+        $state{textlinematrix}=[@{$self->{" textlinematrix"}}];
+        $state{rotate}=$self->{" rotate"};
+        $state{scale}=[@{$self->{" scale"}}];
+        $state{skew}=[@{$self->{" skew"}}];
+        $state{translate}=[@{$self->{" translate"}}];
+        $state{fillcolor}=[@{$self->{" fillcolor"}}];
+        $state{strokecolor}=[@{$self->{" strokecolor"}}];
     }
-    if($state{font} && $state{fontsize}) {
-      $self->font($state{font},$state{fontsize});
-    }
-    if($state{matrix}) {
-      $self->matrix(@{$state{matrix}});
-      @{$self->{' translate'}}=@{$state{translate}};
-      $self->{' rotate'}=$state{rotate};
-      @{$self->{' scale'}}=@{$state{scale}};
-      @{$self->{' skew'}}=@{$state{skew}};
-    }
-    if($state{fillcolor}) {
-      $self->fillcolor(@{$state{fillcolor}});
-    }
-    if($state{strokecolor}) {
-      $self->strokecolor(@{$state{strokecolor}});
-    }
-    %state=();
-  } else {
-    foreach my $k (qw( font fontsize charspace hspace wordspace lead rise render )) {
-      $state{$k}=$self->{" $k"};
-    }
-    $state{matrix}=[@{$self->{" matrix"}}];
-    $state{rotate}=$self->{" rotate"};
-    $state{scale}=[@{$self->{" scale"}}];
-    $state{skew}=[@{$self->{" skew"}}];
-    $state{translate}=[@{$self->{" translate"}}];
-    $state{fillcolor}=[@{$self->{" fillcolor"}}];
-    $state{strokecolor}=[@{$self->{" strokecolor"}}];
-  }
-  return(%state);
+    return(%state);
 }
 
 =item ($tx,$ty) = $txt->textpos
 
 Gets the current estimated text position.
 
+B<Note:> This is relative to text-space.
+
 =cut
 
-sub textpos {
-  my $self=shift @_;
-  my (@m)=$self->matrix;
-  return($m[4],$m[5]);
+sub textpos 
+{
+    my $self=shift @_;
+    my (@m)=_transform(
+        -matrix=>$self->{" textmatrix"},
+        -point=>$self->{" textlinematrix"}
+    );
+    return($m[0],$m[1]);
 }
 
 =item $txt->transform_rel %opts
@@ -1145,31 +1304,46 @@ sub transform_rel {
 sub matrix_update {
   use PDF::API2::Matrix;
   my ($self,$tx,$ty)=@_;
-  my ($a,$b,$c,$d,$e,$f)=$self->matrix;
-  my $mtx=PDF::API2::Matrix->new([$a,$b,0],[$c,$d,0],[$e,$f,1]);
-  my $tmtx=PDF::API2::Matrix->new([$tx,$ty,1]);
-  $tmtx=$tmtx->multiply($mtx);
-  @{$self->{' matrix'}}=(
-    $a,$b,
-    $c,$d,
-    $tmtx->[0][0],$tmtx->[0][1]
-  );
-  @{$self->{' translate'}}=($tmtx->[0][0],$tmtx->[0][1]);
+  $self->{' textlinematrix'}->[0]+=$tx;
+  $self->{' textlinematrix'}->[1]+=$ty;
   return($self);
 }
 
 =item $txt->font $fontobj,$size
 
+=item $txt->fontset $fontobj,$size
+
+I<The fontset method WILL NOT APPLY the font+size to the pdf-stream, but
+which will later be done by the text-methods.>
+
+B<Only use fontset if you know what you are doing, there is no super-secret failsave!>
+
 =cut
 
-sub font {
+sub font 
+{
+    my ($self,$font,$size)=@_;
+    $self->fontset($font,$size);
+    if($self->{' font'}->isvirtual)
+    {
+        $self->add("/".$self->{' font'}->fontlist->[0]->name,float($self->{' fontsize'}),'Tf');
+    }
+    else
+    {
+        $self->add("/".$self->{' font'}->name,float($self->{' fontsize'}),'Tf');
+    }
+    $self->{' fontset'}=1;
+    return($self);
+}
+
+sub fontset {
   my ($self,$font,$size)=@_;
   $self->{' font'}=$font;
   $self->{' fontsize'}=$size;
+  $self->{' fontset'}=0;
 
   if($font->isvirtual)
   {
-    ## $self->add("/".$font->fontlist->[0]->name,float($size),'Tf');
     foreach my $f (@{$font->fontlist})
     {
         $self->resource('Font',$f->name,$f);
@@ -1177,7 +1351,6 @@ sub font {
   }
   else
   {
-    $self->add("/".$font->name,float($size),'Tf');
     $self->resource('Font',$font->name,$font);
   }
 
@@ -1272,35 +1445,44 @@ takes an optional argument giving a custom leading between lines.
 
 =cut
 
-sub cr {
-  my ($self,$para)=@_;
-  if(defined($para)) {
-    $self->add(0,float($para),'Td');
-    $self->matrix_update(0,$para);
-  } else {
-    $self->add('T*');
-    $self->matrix_update(0,$self->lead);
-  }
+sub cr 
+{
+    my ($self,$para)=@_;
+    if(defined($para)) 
+    {
+        $self->add(0,float($para),'Td');
+        $self->matrix_update(0,$para);
+    } 
+    else 
+    {
+        $self->add('T*');
+        $self->matrix_update(0,$self->lead);
+    }
+    $self->{' textlinematrix'}->[0]=0;
 }
 
 =item $txt->nl
 
 =cut
 
-sub nl {
-  my ($self,$width)=@_;
-  $self->add('T*');
-  $self->matrix_update(-($width||0),$self->lead);
+sub nl 
+{
+    my ($self,$width)=@_;
+    $self->add('T*');
+    $self->matrix_update(-($width||0),$self->lead);
+    $self->{' textlinematrix'}->[0]=0;
 }
 
 =item $txt->distance $dx,$dy
 
 =cut
 
-sub distance {
-  my ($self,$dx,$dy)=@_;
-  $self->add(float($dx),float($dy),'Td');
-  $self->matrix_update($dx,$dy);
+sub distance 
+{
+    my ($self,$dx,$dy)=@_;
+    $self->add(float($dx),float($dy),'Td');
+    $self->matrix_update($dx,$dy);
+    $self->{' textlinematrix'}->[0]=$dx;
 }
 
 =item $width = $txt->advancewidth $string
@@ -1332,6 +1514,18 @@ sub text
 {
     my ($self,$text,%opt)=@_;
     my $wd=0;
+    if($self->{' fontset'}==0)
+    {
+        if($self->{' font'}->isvirtual)
+        {
+            $self->add("/".$self->{' font'}->fontlist->[0]->name,float($self->{' fontsize'}),'Tf');
+        }
+        else
+        {
+            $self->add("/".$self->{' font'}->name,float($self->{' fontsize'}),'Tf');
+        }
+        $self->{' fontset'}=1;
+    }
     if(defined $opt{-indent}) 
     {
         $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),']','TJ');
@@ -1586,6 +1780,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.21  2004/12/20 12:11:54  fredo
+    added fontset method to not set via 'Tf'
+
+    Revision 1.20  2004/12/16 00:30:51  fredo
+    added no warn for recursion
+
+    Revision 1.19  2004/12/15 16:44:43  fredo
+    added condition to apply font (Tf) only when needed
+
     Revision 1.18  2004/11/25 20:53:59  fredo
     fixed unifont registration
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 1.6 2004/11/22 21:07:55 fredo Exp $
+#   $Id: TrueType.pm,v 1.7 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -51,9 +51,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 21:07:55 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $font = PDF::API2::Resource::CIDFont::TrueType->new $pdf, $file, %options
 
@@ -193,6 +194,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 1.7  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.6  2004/11/22 21:07:55  fredo
     fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
 

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Objind.pm,v 1.6 2004/11/25 15:30:37 fredo Exp $
+#   $Id: Objind.pm,v 1.7 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Objind;
@@ -71,7 +71,7 @@ Holds a direct reference to the next free object in the free list.
 
 use strict;
 use vars qw(@inst %inst $uidc);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 # protected keys during emptying and copying, etc.
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Outline.pm,v 1.8 2004/07/29 10:47:39 fredo Exp $
+#   $Id: Outline.pm,v 1.9 2004/12/16 00:30:51 fredo Exp $
 #
 #=======================================================================
 
@@ -35,18 +35,18 @@ package PDF::API2::Outline;
 
 BEGIN {
     use strict;
-    use vars qw( @ISA $hasWeakRef  $VERSION);
-    eval " use WeakRef; ";
-    $hasWeakRef= $@ ? 0 : 1;
+    use vars qw( @ISA $VERSION);
     use PDF::API2::Util;
     use PDF::API2::Basic::PDF::Utils;
     use PDF::API2::Basic::PDF::Dict;
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/29 10:47:39 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:51 $
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 $otl = PDF::API2::Outline->new $api,$parent,$prev
 
@@ -58,9 +58,7 @@ sub new {
     my ($class,$api,$parent,$prev)=@_;
     my $self = $class->SUPER::new;
     $self->{' apipdf'}=$api->{pdf};
-    weaken($self->{' apipdf'}) if($hasWeakRef);
     $self->{' api'}=$api;
-    weaken($self->{' api'}) if($hasWeakRef);
     $self->{Parent}=$parent if(defined $parent);
     $self->{Prev}=$prev if(defined $prev);
     return($self);
@@ -356,6 +354,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Outline.pm,v $
+    Revision 1.9  2004/12/16 00:30:51  fredo
+    added no warn for recursion
+
     Revision 1.8  2004/07/29 10:47:39  fredo
     fixed "null vs. 0" bug of -xyz option
 

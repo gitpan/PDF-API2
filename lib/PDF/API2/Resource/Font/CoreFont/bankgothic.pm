@@ -530,6 +530,7 @@ $fonts->{bankgothic}= {
         'ogonek' => '500',                       # U+0x02DB
         'hungarumlaut' => '500',                 # U+0x02DD
         'fraction' => '167',                     # U+0x2044
+        'Euro' => '773',                         # U+0x20AC
         'euro' => '773',                         # U+0x20AC
         'minus' => '834',                        # U+0x2212
         'fi' => '841',                           # U+0xFB01

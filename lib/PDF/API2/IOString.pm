@@ -33,16 +33,17 @@
 #   Original Copyright 1998-2000 Gisle Aas.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: IOString.pm,v 1.7 2004/06/15 09:11:38 fredo Exp $
+#   $Id: IOString.pm,v 1.8 2004/12/16 00:30:51 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::IOString;
 
 require 5.006;
     use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:51 $
 use Symbol ();
 use FileHandle;
+no warnings qw[ deprecated recursion uninitialized ];
 
 sub new  {
     my $class = shift;

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: int2of5.pm,v 1.7 2004/07/29 11:06:19 fredo Exp $
+#   $Id: int2of5.pm,v 1.8 2004/12/16 00:30:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Form::BarCode::int2of5;
@@ -44,9 +44,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Form::BarCode );
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/29 11:06:19 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:55 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $res = PDF::API2::Resource::XObject::Form::BarCode::int2of5->new $pdf
 
@@ -121,6 +122,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: int2of5.pm,v $
+    Revision 1.8  2004/12/16 00:30:55  fredo
+    added no warn for recursion
+
     Revision 1.7  2004/07/29 11:06:19  fredo
     fixed encode
 

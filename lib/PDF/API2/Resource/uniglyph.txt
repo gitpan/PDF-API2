@@ -1,36 +1,45 @@
 #Code  ; Glyph                               ; Prio # Source
-0x0000 ; controlNUL                          ; 0    #
-0x0001 ; controlSTX                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0002 ; controlSOT                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0003 ; controlETX                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0004 ; controlEOT                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0005 ; controlENQ                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0006 ; controlACK                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0007 ; controlBEL                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0008 ; controlBS                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0009 ; controlHT                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x000A ; controlLF                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x000B ; controlVT                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x000C ; controlFF                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x000D ; controlCR                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x000E ; controlSO                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x000F ; controlSI                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0010 ; controlDLE                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0011 ; controlDC1                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0012 ; controlDC2                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0013 ; controlDC3                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0014 ; controlDC4                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0015 ; controlNAK                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0016 ; controlSYN                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0017 ; controlETB                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0018 ; controlCAN                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x0019 ; controlEM                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x001A ; controlSUB                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x001B ; controlESC                          ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x001C ; controlFS                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x001D ; controlGS                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x001E ; controlRS                           ; 0    # Adobe Glyph List (Sept/02) # <control>
-0x001F ; controlUS                           ; 0    # Adobe Glyph List (Sept/02) # <control>
+0x0000 ; controlNUL                          ; 0    # Adobe Glyph List (Sept/02) # <control>
+0x0001 ; acute                               ; 1    # Substitution Candidate
+0x0001 ; controlSTX                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0002 ; caron                               ; 1    # Substitution Candidate
+0x0002 ; controlSOT                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0003 ; circumflex                          ; 1    # Substitution Candidate
+0x0003 ; controlETX                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0004 ; dieresis                            ; 1    # Substitution Candidate
+0x0004 ; controlEOT                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0005 ; grave                               ; 1    # Substitution Candidate
+0x0005 ; controlENQ                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0006 ; macron                              ; 1    # Substitution Candidate
+0x0006 ; controlACK                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0007 ; ring                                ; 1    # Substitution Candidate
+0x0007 ; controlBEL                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0008 ; tilde                               ; 1    # Substitution Candidate
+0x0008 ; controlBS                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0009 ; dotlessi                            ; 1    # Substitution Candidate
+0x0009 ; controlHT                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x000A ; controlLF                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x000B ; controlVT                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x000C ; controlFF                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x000D ; controlCR                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x000E ; controlSO                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x000F ; controlSI                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0010 ; controlDLE                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0011 ; controlDC1                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0012 ; controlDC2                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0013 ; controlDC3                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0014 ; controlDC4                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0015 ; controlNAK                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0016 ; controlSYN                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0017 ; controlETB                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0018 ; controlCAN                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x0019 ; controlEM                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x001A ; controlSUB                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x001B ; controlESC                          ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x001C ; controlFS                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x001D ; controlGS                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x001E ; controlRS                           ; 6    # Adobe Glyph List (Sept/02) # <control>
+0x001F ; controlUS                           ; 6    # Adobe Glyph List (Sept/02) # <control>
 0x0020 ; space                               ; 0    # Adobe Glyph List FN (v1.3) # SPACE
 0x0020 ; spacehackarabic                     ; 6    # Adobe Glyph List (Sept/02)
 0x0021 ; exclam                              ; 0    # Adobe Glyph List FN (v1.3) # EXCLAMATION MARK

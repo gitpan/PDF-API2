@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Shading.pm,v 1.8 2004/06/22 00:38:44 fredo Exp $
+#   $Id: Shading.pm,v 1.9 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 
@@ -44,9 +44,10 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Resource);
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/22 00:38:44 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $cs = PDF::API2::Resource::Shading->new $pdf, $key, %parameters
 
@@ -112,6 +113,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Shading.pm,v $
+    Revision 1.9  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.8  2004/06/22 00:38:44  fredo
     fixed ISA
 

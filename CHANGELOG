@@ -1,3 +1,71 @@
+2004-12-20 13:11  fredo
+
+	* lib/PDF/API2/Content.pm: added fontset method to not set via 'Tf'
+
+2004-12-17 19:35  fredo
+
+	* lib/PDF/API2/Resource/uniglyph.txt: added adobe combining
+	  characters
+
+2004-12-16 02:09  fredo
+
+	* lib/PDF/API2/Resource/Font/CoreFont/: courier.pm,
+	  zapfdingbats.pm: updated to new adobe afm
+
+2004-12-16 01:43  fredo
+
+	* examples/020_corefonts: added full list of fonts and encoding
+	  latin1-10
+
+2004-12-16 01:30  fredo
+
+	* lib/PDF/: API2.pm, API2/Annotation.pm, API2/Content.pm,
+	  API2/IOString.pm, API2/Lite.pm, API2/Matrix.pm, API2/Outline.pm,
+	  API2/Outlines.pm, API2/Page.pm, API2/Resource.pm, API2/Shape.pm,
+	  API2/UniWrap.pm, API2/Util.pm, API2/Version.pm, API2/Win32.pm,
+	  API2/Basic/PDF/Array.pm, API2/Basic/PDF/Bool.pm,
+	  API2/Basic/PDF/Dict.pm, API2/Basic/PDF/File.pm,
+	  API2/Basic/PDF/Filter.pm, API2/Basic/PDF/Literal.pm,
+	  API2/Basic/PDF/Name.pm, API2/Basic/PDF/Null.pm,
+	  API2/Basic/PDF/Number.pm, API2/Basic/PDF/Objind.pm,
+	  API2/Basic/PDF/Page.pm, API2/Basic/PDF/Pages.pm,
+	  API2/Basic/PDF/String.pm, API2/Basic/PDF/Utils.pm,
+	  API2/Content/Text.pm, API2/Resource/BaseFont.pm,
+	  API2/Resource/CIDFont.pm, API2/Resource/ColorSpace.pm,
+	  API2/Resource/ExtGState.pm, API2/Resource/Font.pm,
+	  API2/Resource/Pattern.pm, API2/Resource/Shading.pm,
+	  API2/Resource/UniFont.pm, API2/Resource/XObject.pm,
+	  API2/Resource/CIDFont/CJKFont.pm,
+	  API2/Resource/CIDFont/TrueType.pm,
+	  API2/Resource/CIDFont/TrueType/FontFile.pm,
+	  API2/Resource/ColorSpace/DeviceN.pm,
+	  API2/Resource/ColorSpace/Indexed.pm,
+	  API2/Resource/ColorSpace/Separation.pm,
+	  API2/Resource/ColorSpace/Indexed/ACTFile.pm,
+	  API2/Resource/ColorSpace/Indexed/Hue.pm,
+	  API2/Resource/ColorSpace/Indexed/WebColor.pm,
+	  API2/Resource/Font/BdFont.pm, API2/Resource/Font/CoreFont.pm,
+	  API2/Resource/Font/Postscript.pm, API2/Resource/Font/SynFont.pm,
+	  API2/Resource/XObject/Form.pm, API2/Resource/XObject/Image.pm,
+	  API2/Resource/XObject/Form/BarCode.pm,
+	  API2/Resource/XObject/Form/Hybrid.pm,
+	  API2/Resource/XObject/Form/BarCode/codabar.pm,
+	  API2/Resource/XObject/Form/BarCode/code128.pm,
+	  API2/Resource/XObject/Form/BarCode/code3of9.pm,
+	  API2/Resource/XObject/Form/BarCode/ean13.pm,
+	  API2/Resource/XObject/Form/BarCode/int2of5.pm,
+	  API2/Resource/XObject/Image/GD.pm,
+	  API2/Resource/XObject/Image/GIF.pm,
+	  API2/Resource/XObject/Image/JPEG.pm,
+	  API2/Resource/XObject/Image/PNG.pm,
+	  API2/Resource/XObject/Image/PNM.pm,
+	  API2/Resource/XObject/Image/TIFF.pm: added no warn for recursion
+
+2004-12-15 17:44  fredo
+
+	* lib/PDF/API2/Content.pm: added condition to apply font (Tf) only
+	  when needed
+
 2004-11-29 16:57  fredo
 
 	* lib/PDF/API2/Resource/UniFont.pm: added docs for unifont

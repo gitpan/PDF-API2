@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CIDFont.pm,v 1.10 2004/11/24 20:10:55 fredo Exp $
+#   $Id: CIDFont.pm,v 1.11 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont;
@@ -48,9 +48,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/24 20:10:55 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $font = PDF::API2::Resource::CIDFont->new $pdf, $name
 
@@ -288,6 +289,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CIDFont.pm,v $
+    Revision 1.11  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.10  2004/11/24 20:10:55  fredo
     added virtual font handling
 

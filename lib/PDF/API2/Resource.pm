@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Resource.pm,v 1.6 2004/06/15 09:11:38 fredo Exp $
+#   $Id: Resource.pm,v 1.7 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 
@@ -44,9 +44,11 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:52 $
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 $res = PDF::API2::Resource->new $pdf, $name
 
@@ -122,6 +124,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Resource.pm,v $
+    Revision 1.7  2004/12/16 00:30:52  fredo
+    added no warn for recursion
+
     Revision 1.6  2004/06/15 09:11:38  fredo
     removed cr+lf
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.67 2004/11/29 15:19:23 fredo Exp $
+#   $Id: API2.pm,v 1.68 2004/12/16 00:30:51 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = ('$Revision: 1.67 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/11/29 15:19:23 $
+    ($VERSION) = ('$Revision: 1.68 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/12/16 00:30:51 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -101,16 +101,9 @@ BEGIN {
     use utf8;
     use Encode qw(:all);
 
-    use Memoize;
 }
 
-# memoize('PDF::API2::corefont');
-# memoize('PDF::API2::psfont');
-# memoize('PDF::API2::ttfont');
-# memoize('PDF::API2::bdfont');
-# memoize('PDF::API2::synfont');
-# memoize('PDF::API2::cjkfont');
-
+no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
@@ -2111,6 +2104,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.68  2004/12/16 00:30:51  fredo
+    added no warn for recursion
+
     Revision 1.67  2004/11/29 15:19:23  fredo
     added docs for bdfont, synfont and unifont
 

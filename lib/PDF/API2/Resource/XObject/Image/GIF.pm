@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: GIF.pm,v 1.7 2004/06/15 09:14:54 fredo Exp $
+#   $Id: GIF.pm,v 1.8 2004/12/16 00:30:55 fredo Exp $
 #
 #=======================================================================
 
@@ -44,9 +44,10 @@ BEGIN {
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:54 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:55 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $res = PDF::API2::Resource::XObject::Image::GIF->new $pdf, $file [, $name]
 
@@ -286,6 +287,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: GIF.pm,v $
+    Revision 1.8  2004/12/16 00:30:55  fredo
+    added no warn for recursion
+
     Revision 1.7  2004/06/15 09:14:54  fredo
     removed cr+lf
 

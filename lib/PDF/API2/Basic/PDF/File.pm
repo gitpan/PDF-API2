@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.14 2004/11/25 15:30:36 fredo Exp $
+#   $Id: File.pm,v 1.15 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -197,6 +197,8 @@ use PDF::API2::Basic::PDF::String;
 use PDF::API2::Basic::PDF::Page;
 use PDF::API2::Basic::PDF::Pages;
 use PDF::API2::Basic::PDF::Null;
+
+no warnings qw[ deprecated recursion uninitialized ];
 
     # $Revisioning: 0.40_11 on Mon Oct  6 18:39:40 2003 $
     ( $VERSION ) = '0.40_10';

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Separation.pm,v 1.6 2004/07/20 20:28:45 fredo Exp $
+#   $Id: Separation.pm,v 1.7 2004/12/16 00:30:53 fredo Exp $
 #
 #=======================================================================
 
@@ -43,9 +43,10 @@ BEGIN {
     use Math::Trig;
 
     @ISA = qw( PDF::API2::Resource::ColorSpace );
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/20 20:28:45 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:53 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $cs = PDF::API2::Resource::ColorSpace::Separation->new $pdf, $key, %parameters
 
@@ -193,6 +194,9 @@ __END__
 =head1 HISTORY
 
     $Log: Separation.pm,v $
+    Revision 1.7  2004/12/16 00:30:53  fredo
+    added no warn for recursion
+
     Revision 1.6  2004/07/20 20:28:45  fredo
     added tintname accessor
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Hue.pm,v 1.5 2004/06/15 09:14:52 fredo Exp $
+#   $Id: Hue.pm,v 1.6 2004/12/16 00:30:54 fredo Exp $
 #
 #=======================================================================
 
@@ -45,9 +45,10 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::ColorSpace::Indexed );
 
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:52 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:54 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $cs = PDF::API2::Resource::ColorSpace::Indexed::Hue->new $pdf
 
@@ -118,6 +119,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Hue.pm,v $
+    Revision 1.6  2004/12/16 00:30:54  fredo
+    added no warn for recursion
+
     Revision 1.5  2004/06/15 09:14:52  fredo
     removed cr+lf
 

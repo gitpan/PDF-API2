@@ -38,7 +38,7 @@
 #   FREE SOFTWARE FOUNDATION, INC., 59 TEMPLE PLACE - SUITE 330,
 #   BOSTON, MA 02111-1307, USA.
 #
-#   $Id: CoreFont.pm,v 1.7 2004/11/22 02:08:42 fredo Exp $
+#   $Id: CoreFont.pm,v 1.8 2004/12/16 00:30:54 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::CoreFont;
@@ -76,9 +76,10 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:08:42 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:54 $
 
 }
+no warnings qw[ deprecated recursion uninitialized ];
 
 =item $font = PDF::API2::Resource::Font::CoreFont->new $pdf, $fontname, %options
 
@@ -428,6 +429,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CoreFont.pm,v $
+    Revision 1.8  2004/12/16 00:30:54  fredo
+    added no warn for recursion
+
     Revision 1.7  2004/11/22 02:08:42  fredo
     aaa
 

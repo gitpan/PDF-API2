@@ -21,14 +21,14 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Name.pm,v 1.6 2004/06/15 09:13:13 fredo Exp $
+#   $Id: Name.pm,v 1.7 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Name;
 
 use strict;
 use vars qw(@ISA);
-# no warnings qw(uninitialized);
+no warnings qw[ deprecated recursion uninitialized ];
 
 use PDF::API2::Basic::PDF::String;
 @ISA = qw(PDF::API2::Basic::PDF::String);

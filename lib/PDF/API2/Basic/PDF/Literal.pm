@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Literal.pm,v 1.5 2004/06/15 09:13:13 fredo Exp $
+#   $Id: Literal.pm,v 1.6 2004/12/16 00:30:52 fredo Exp $
 #
 #=======================================================================
 # Literal PDF Object for Dirty Hacks ...
@@ -42,6 +42,8 @@ use PDF::API2::Basic::PDF::Objind;
 
 use PDF::API2::Basic::PDF::Filter;
 use PDF::API2::Basic::PDF::Name;
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 sub new
 {
@@ -66,31 +68,47 @@ sub new
 sub outobjdeep
 {
     my ($self, $fh, $pdf, %opts) = @_;
-    if($self->{-isdict}) {
-        if(defined $self->{' stream'}) {
+    if($self->{-isdict}) 
+    {
+        if(defined $self->{' stream'}) 
+        {
             $self->{Length} = length($self->{' stream'}) + 1;
-        } else {
+        } 
+        else 
+        {
             delete $self->{Length};
         }
         $fh->print("<< ");
-        foreach my $k (sort keys %{$self}) {
+        foreach my $k (sort keys %{$self}) 
+        {
+            next if($k=~m|^[ \-]|o);
             $fh->print('/'.PDF::API2::Basic::PDF::Name::string_to_name($k).' ');
-            if(ref($self->{$k}) eq 'ARRAY') {
+            if(ref($self->{$k}) eq 'ARRAY') 
+            {
                 $fh->print('['.join(' ',@{$self->{$k}})."]\n");
-            } elsif(ref($self->{$k}) eq 'HASH') {
+            } 
+            elsif(ref($self->{$k}) eq 'HASH') 
+            {
                 $fh->print('<<'.join(' ', map { '/'.PDF::API2::Basic::PDF::Name::string_to_name($_).' '.$self->{$k}->{$_} } sort keys %{$self->{$k}})." >>\n");
-            } elsif(UNIVERSAL::can($self->{$k},'outobj')) {
+            } 
+            elsif(UNIVERSAL::can($self->{$k},'outobj')) 
+            {
                 $self->{$k}->outobj($fh, $pdf, %opts);
                 $fh->print("\n");
-            } else {
+            } 
+            else 
+            {
                 $fh->print("$self->{$k}\n");
             }
         }
         $fh->print(">>\n");
-        if(defined $self->{' stream'}) {
+        if(defined $self->{' stream'}) 
+        {
             $fh->print("stream\n$self->{' stream'}\nendstream"); # next is endobj which has the final cr
         }
-    } else {
+    } 
+    else 
+    {
         $fh->print($self->{-literal}); # next is endobj which has the final cr
     }
 }

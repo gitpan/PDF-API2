@@ -16,14 +16,16 @@
 #   Original Copyright 1995-96 Ulrich Pfeifer.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: Matrix.pm,v 1.6 2004/06/15 09:11:38 fredo Exp $
+#   $Id: Matrix.pm,v 1.7 2004/12/16 00:30:51 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Matrix;
 
     use vars qw( $VERSION );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:51 $
+
+no warnings qw[ deprecated recursion uninitialized ];
 
 sub new {
     my $type = shift;

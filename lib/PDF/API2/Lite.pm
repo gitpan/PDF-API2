@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Lite.pm,v 1.7 2004/06/15 09:11:38 fredo Exp $
+#   $Id: Lite.pm,v 1.8 2004/12/16 00:30:51 fredo Exp $
 #
 #=======================================================================
 
@@ -43,9 +43,12 @@ BEGIN {
 
     use vars qw( $VERSION $hasWeakRef );
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/12/16 00:30:51 $
 
 }
+
+no warnings qw[ deprecated recursion uninitialized ];
+
 
 =head1 NAME 
 
@@ -667,6 +670,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Lite.pm,v $
+    Revision 1.8  2004/12/16 00:30:51  fredo
+    added no warn for recursion
+
     Revision 1.7  2004/06/15 09:11:38  fredo
     removed cr+lf
 
