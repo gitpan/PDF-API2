@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Page.pm,v 1.7 2004/06/15 09:11:38 fredo Exp $
+#   $Id: Page.pm,v 1.8 2004/09/13 15:27:59 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Page;
@@ -49,9 +49,10 @@ BEGIN {
 
     use PDF::API2::Util;
 
+    use POSIX qw(floor ceil);
     use Math::Trig;
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/09/13 15:27:59 $
 
 }
 
@@ -265,6 +266,31 @@ sub artbox {
     $self;
 }
 
+=item $page->rotate $deg
+
+Rotates the page by the given degrees, which must be a multiple of 90.
+
+(This allows you to auto-rotate to landscape without changing the mediabox!)
+
+=cut
+
+sub rotate {
+    my ($self,$deg) = @_;
+    $deg=floor($deg/90);
+    while($deg>4) {
+        $deg-=4;
+    }
+    while($deg<0) {
+        $deg+=4;
+    }
+    if($deg==0) {
+        delete $self->{Rotate};
+    } else {
+        $self->{Rotate}=PDFNum($deg*90);
+    }
+    return($self);
+}
+
 =item $gfx = $page->gfx $prepend
 
 Returns a graphics content object. If $prepend is true the content
@@ -429,6 +455,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Page.pm,v $
+    Revision 1.8  2004/09/13 15:27:59  fredo
+    added rotate for acrobat-wise pdf-creators
+
     Revision 1.7  2004/06/15 09:11:38  fredo
     removed cr+lf
 

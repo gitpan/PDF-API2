@@ -1,3 +1,7 @@
+2004-09-13 17:27  fredo
+
+	* lib/PDF/API2/Page.pm: added rotate for acrobat-wise pdf-creators
+
 2004-09-03 14:35  fredo
 
 	* lib/PDF/API2.pm: pop'd to new version

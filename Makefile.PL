@@ -35,6 +35,7 @@
 require 5.008;
 
 use ExtUtils::MakeMaker;
+use Getopt::Long;
 
 my $versionfile = "lib/PDF/API2.pm";
 
@@ -46,10 +47,8 @@ print STDERR <<'EOT';
 |_|  |_|_|_|  |_|   |____/|_|     /_/   \_\_|  |___| |_____|
 EOT
 
-
-WriteMakefile (
+my %makehash=(
     NAME         =>  "PDF::API2",
-    VERSION_FROM =>  $versionfile,
     AUTHOR       =>  "areibens\@cpan.org",
     ABSTRACT     =>  "TheNextGen PDF Create/Modify API",
     dist         =>  {
@@ -63,6 +62,19 @@ WriteMakefile (
                     'Compress::Zlib'    => 1.0,
                 },
 );
+
+my $version=undef;
+
+GetOptions ("version=s" => \$version);
+
+if($version) {
+    $makehash{VERSION}=$version;
+    print "overriding package version to: $version\n";
+} else {
+    $makehash{VERSION_FROM}=$versionfile,
+}
+
+WriteMakefile( %makehash );
 
 
 exit;
