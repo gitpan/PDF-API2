@@ -42,6 +42,8 @@ PDF::API2 - The Next Generation API for creating and modifing PDFs.
 
 =cut
 
+require 5.6.1;
+
 use Text::PDF::FileAPI;
 use Text::PDF::Page;
 use Text::PDF::Utils;
@@ -61,6 +63,7 @@ use PDF::API2::ColorSpace;
 use PDF::API2::Barcode;
 use PDF::API2::ExtGState;
 use PDF::API2::Outlines;
+use Compress::Zlib;
 
 use Math::Trig;
 
@@ -391,9 +394,23 @@ sub walk_obj {
 	} elsif(ref($obj)=~/Dict$/) {
 		@key=keys(%{$tobj}) if(scalar @key <1);
 		foreach my $k (@key) {
-			$tobj->{$k}=$obj->{$k} if(($k eq ' stream') || ($k eq ' nofilt'));
 			next if($k=~/^ /);
 			$tobj->{$k}=walk_obj($objs,$spdf,$tpdf,$obj->{$k});
+		}
+		if($obj->{' stream'}) {
+			if($tobj->{Filter}) {
+#				my $f=join('', (map { $_->val } $tobj->{Filter}->elementsof));
+#				if($f eq 'FlateDecode') {
+#					delete $tobj->{' nofilt'};
+#					delete $tobj->{Filter};
+#					$tobj->{' stream'}=uncompress($obj->{' stream'});
+#				} else {
+#					$tobj->{' stream'}=$obj->{' stream'};
+				$tobj->{' nofilt'}=1;
+				}
+#			} else {
+				$tobj->{' stream'}=$obj->{' stream'};
+#			}
 		}
 	}
 	delete $tobj->{' streamloc'};
@@ -412,6 +429,29 @@ B<Note:> on $index
 
 =cut
 
+sub unfilter {
+	my ($filter,$stream)=@_;
+
+	if((defined $filter) ) {
+		# we need to fix filter because it MAY be
+		# an array BUT IT COULD BE only a name
+		if(ref($filter)!~/Array$/) {
+		       $filter = PDFArray($filter);
+		}
+		use Text::PDF::Filter;
+		my @filts;
+		my ($hasflate) = -1;
+		my ($temp, $i, $temp1);
+
+		@filts=(map { ("Text::PDF::".($_->val))->new } $filter->elementsof);
+
+		foreach my $f (@filts) {
+			$stream = $f->infilt($stream, 1);
+		}
+	}
+	return($stream);
+}
+
 sub importpage {
 	my $self=shift @_;
 	my $s_pdf=shift @_;
@@ -423,7 +463,7 @@ sub importpage {
 	$s_page=$s_pdf->openpage($s_idx);
 	$t_page=$self->page($t_idx);
 
-	$t_page->gfx()->save();
+#	$t_page->gfx()->save();
 
 	$self->{apiimportcache}=$self->{apiimportcache}||{};
 	$self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
@@ -466,20 +506,15 @@ sub importpage {
 			$t_page->{Contents}->add_elements($content);
 
 			$k->realise;
-		#	$k->read_stream(1);
-			
-			if($k->{Filter}){
-				$content->{'Filter'}=PDFArray($k->{Filter}->elementsof);
-				$content->{' nofilt'}=1;
-				$content->{' stream'}=$k->{' stream'};
-			} else {
-				$content->{' stream'}=substr($k->{' stream'},0,$k->{Length}->val-1);
-			}
-			
+
+			delete $content->{' nofilt'};
+			$content->{' stream'}=" q ".unfilter($k->{Filter}, $k->{' stream'})." Q ";
+			delete $content->{Filter};
+			$content->{Filter}=PDFArray(PDFName('FlateDecode'));
 		}
 	}
 
-	$t_page->gfx()->restore();
+#	$t_page->gfx()->restore();
 
 	$self->{pdf}->out_obj($t_page);
 	$self->{pdf}->out_obj($self->{pages});
@@ -706,7 +741,7 @@ B<Examples:>
 
 sub psfont {
 	my ($self,$pfb,$afm,$encoding,@glyphs)=@_;
-	my $key='PSx'.pdfkey(($pfb||'x').($afm||'y'),$self->{time});
+	my $key='PSx'.pdfkey(($pfb||'x').($afm||'y'),$encoding);
 
 	my $obj=PDF::API2::PSFont->new($self->{pdf},$pfb,$afm,$key,$encoding,@glyphs);
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
@@ -856,33 +891,7 @@ sub pdfimageobj {
 		foreach my $k ($s_page->{Contents}->elementsof) {
 			$k->realise if(ref($k)=~/Objind$/);
 
-			my $str=$k->{' stream'};
-
-			if((defined $k->{Filter}) ) {
-
-				# we need to fix filter because it MAY be
-				# an array BUT IT COULD BE only a name
-				if(ref($k->{Filter})!~/Array$/) {
-				       $k->{Filter} = PDFArray($k->{Filter});
-				}
-
-				use Text::PDF::Filter;
-				my @filts;
-			        my ($hasflate) = -1;
-			        my ($temp, $i, $temp1);
-
-			        for ($i = 0; $i <= $#{$k->{'Filter'}{' val'}}; $i++)
-			        {
-			            $temp = $k->{'Filter'}{' val'}[$i]->val;
-			            $temp1 = "Text::PDF::$temp";
-			            push (@filts, $temp1->new);
-			        }
-
-				foreach my $f (@filts) {
-					$str = $f->infilt($str, 1);
-				}
-			}
-			$t_page->{' pdfimage'}.="\n$str\n";
+			$t_page->{' pdfimage'}.=" q ".unfilter($k->{'Filter'},$k->{' stream'})." Q ";
 		}
 	}
         $self->{pdf}->new_obj($t_page) unless($t_page->is_obj($self->{pdf}));

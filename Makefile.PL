@@ -74,25 +74,19 @@ WriteMakefile (
 					'Text::PDF::File'	=> 0.19,
 					'Font::TTF::Font'	=> 0.28,
 				},
+	BINARY_LOCATION	=>  "PDF-API2-$version$tag-ppd.tar.gz",
 );
 
 sub MY::postamble
 {
     my $self = shift;
-    return <<'EOT';
+    return <<"EOT";
 
-docs: install docs/pdf-api2.pm.html pod-pdf
+ppdist: all ppd pm_to_blib
+	tar zcvf PDF-API2-$version$tag-ppd.tar.gz blib
+	\$(MV) PDF-API2.ppd PDF-API2-$version$tag.ppd
 
-docs/pdf-api2.pm.html: lib/PDF/API2.pm 
-	perl pod3html -i $< -o $@
-
-docs/pdf-api2.pm.pdf: lib/PDF/API2.pm 
-	perl pod3pdf -i $< -o $@
-
-pod-pdf: docs/*.pod
-	for x in $?; do \
-		perl pod3pdf -i $$x -o $$x.pdf ;\
-	done
+distme: all dist ppd ppdist
 
 EOT
 }
@@ -101,4 +95,43 @@ print "anything else ? NO.\n";
 exit;
 
 __END__
+
+Date:  Mon, 15 Jul 2002 23:55:08 +0200
+To: alfredreibenschuh@yahoo.com
+From: "HERMIER Christophe" <proxima-cd@pelnet.com> | This is Spam | Add to Address Book
+Subject: [PDF::API2] bug in PDF::API2::Text::paragraph
+
+Hello,
+
+I found out a bug in PDF::API2::Text::paragraph concerning the repartition 
+of space in a line :
+There is one space less than the number of words in a line.
+
+Here is the fix :
+
+4177c4177
+< $self->wordspace(($wd-$idt-$l)/(scalar @line)) if(defined 
+$txt[0] && scalar @line>0);
+---
+ > $self->wordspace(($wd-$idt-$l)/((scalar @line)-1)) 
+if(defined $txt[0] && scalar @line>0);
+
+
+By the way, I am working on a better version using a hyphenator object (ie 
+:  TeX::Hyphen).
+I plan to use the object without creating a dependency in the PDF::API2 
+module : the object just has to "->can ( )" the right function.
+That way other hyphenation objects could be used if they exist (there could 
+be a "crude_hyphenator" that cut a word anywhere to act as a minimalist 
+example).
+
+If you're interested, I'll send it to put it in the PDF:API2 module.
+
+bye : christophe.
+
+
+--
+Proxima CD SARL
+40 rue damrémont
+75018 PARIS
 

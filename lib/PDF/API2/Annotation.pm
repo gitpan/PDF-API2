@@ -104,6 +104,43 @@ sub file {
 	return($self);
 }
 
+=item $ant->pdfile $pdfile, $pagenum, %opts
+
+Defines the annotation as pdf-file with filepath $pdfile, $pagenum 
+and options %opts (same as dest).
+
+=cut
+
+sub pdfile {
+	my ($self,$file,$pnum,%opts)=@_;
+	$self->{Subtype}=PDFName('Link');
+	$self->{A}=PDFDict();
+	$self->{A}->{S}=PDFName('GoToR');
+	$self->{A}->{F}=PDFStr($file);
+	if(defined $opts{-fit}) {
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('Fit'));
+	} elsif(defined $opts{-fith}) {
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitH'),PDFNum($opts{-fith}));
+	} elsif(defined $opts{-fitb}) {
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitB'));
+	} elsif(defined $opts{-fitbh}) {
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitBH'),PDFNum($opts{-fitbh}));
+	} elsif(defined $opts{-fitv}) {
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitV'),PDFNum($opts{-fitv}));
+	} elsif(defined $opts{-fitbv}) {
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitBV'),PDFNum($opts{-fitbv}));
+	} elsif(defined $opts{-fitr}) {
+		die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
+	} elsif(defined $opts{-xyz}) {
+		die "insufficient parameters to dest( page, -xyz => [] ) " unless(scalar @{$opts{-fitr}} == 3);
+		$self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
+	}
+	$self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
+	$self->border(@{$opts{-border}}) if(defined $opts{-border});
+	return($self);
+}
+
 =item $ant->text $text, %opts
 
 Defines the annotation as textnote with content $text and

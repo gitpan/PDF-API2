@@ -161,6 +161,22 @@ sub ttfont {
 	return $self->{api}->ttfont($file);
 }
 
+=item $font = $pdf->psfont $pfb, $afm, $encoding
+
+Returns a new type1 font object.
+
+B<Examples:>
+
+	$font = $pdf->psfont('TimesRoman.pfb','TimesRoman.afm','latin1');
+	$font = $pdf->psfont('/fonts/Univers.pfb','/fonts/Univers.afm','latin2');
+
+=cut
+
+sub psfont {
+	my ($self,@args)=@_;
+	return $self->{api}->psfont(@args);
+}
+
 =item @color = $pdf->color $colornumber [, $lightdark ]
 
 =item @color = $pdf->color $basecolor [, $lightdark ]

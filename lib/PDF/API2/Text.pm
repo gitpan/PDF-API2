@@ -391,8 +391,9 @@ Returns the width of the string based on all currently set text-attributes.
 =cut
 
 sub advancewidth {
-	my ($self,$text,%opts)=@_;
+	my ($self,$text,%opt)=@_;
 	my @txt;
+	my $spacer;
 	if($opt{-ucs2}) {
 		@txt=split(/\x00\x20/,$text);
 		$spacer="\x00\x20";
@@ -404,7 +405,7 @@ sub advancewidth {
 	$text=join($spacer,@txt);
 	my $num_char=length($text);
 	my $glyph_width=0;
-	$glyph_width=$self->{' font'}->width($text,%opts)*$self->{' fontsize'};
+	$glyph_width=$self->{' font'}->width($text,%opt)*$self->{' fontsize'};
 	my $word_spaces=$self->wordspace*$num_space;
 	my $char_spaces=$self->charspace*$num_char;
 	my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->{' hspace'}/100;
@@ -540,7 +541,7 @@ sub text_justify {
 	my @texts;
 	my $spacer;
 
-	if($opt{-ucs2}) {
+	if($opts{-ucs2}) {
 		@texts=split(/\x00\x20/,$text);
 		$spacer="\x00\x20";
 	} else {
