@@ -6,6 +6,7 @@ use vars qw(@ISA %widths @encodings);
 
 use Text::PDF::Utils;
 use Compress::Zlib;
+no warnings qw(uninitialized);
 
 =head1 NAME
 

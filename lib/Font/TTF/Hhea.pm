@@ -101,7 +101,9 @@ sub update
     my ($num);
     my ($i, $maw, $mlsb, $mrsb, $mext, $aw, $lsb, $ext);
 
+    return undef unless ($self->SUPER::update);
     return undef unless (defined $hmtx && defined $self->{' PARENT'}{'loca'});
+    
     $hmtx->read->update;
     $self->{' PARENT'}{'loca'}->read->update;
     $glyphs = $self->{' PARENT'}{'loca'}{'glyphs'};
@@ -127,8 +129,6 @@ sub update
     $self->{'minRightSideBearing'} = $mrsb;
     $self->{'xMaxExtent'} = $mext;
     $self->{'numberOfHMetrics'} = $hmtx->numMetrics;
-
-    $self->{' isdirty'} = 1;
     $self;
 }
 

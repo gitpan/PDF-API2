@@ -76,19 +76,19 @@ use Font::TTF::Utils;
 
 sub init
 {
-    my ($k, $v, $c, $n, $i);
+    my ($k, $v, $c, $n, $i, $t);
 
     $n = 0;
     @lens = (76, 84, 94);
-    while (<Font::TTF::OS_2::DATA>)
+    while ($t = <Font::TTF::OS_2::DATA>)
     {
-        s/\r?\n$//;
-        if (m/^\s*$/)
+        $t =~ s/\r?\n$//;
+        if ($t =~ m/^\s*$/)
         {
             $n++;
             next;
         }
-        ($k, $v, $c) = TTF_Init_Fields($_, $c);
+        ($k, $v, $c) = TTF_Init_Fields($t, $c);
         next unless defined $k && $k ne "";
         for ($i = $n; $i < 3; $i++)
         { $fields[$i]{$k} = $v; }
@@ -144,7 +144,7 @@ sub out
 
 =head2 $t->XML_element($context, $depth, $key, $value)
 
-Tidies up the hex valuues to output them in hex
+Tidies up the hex values to output them in hex
 
 =cut
 
@@ -202,27 +202,22 @@ sub update
     my ($self) = @_;
     my ($map, @keys, $table);
 
-    if ($self->{' PARENT'}{'cmap'}{' isDirty'})
-    {
-        $self->{' PARENT'}{'cmap'}->update;
-        $map = $self->{' PARENT'}{'cmap'}->find_ms || return undef;
+    return undef unless ($self->SUPER::update);
 
-        @keys = sort {$a <=> $b} keys %{$map->{'val'}};
+    $self->{' PARENT'}{'cmap'}->update;
+    $map = $self->{' PARENT'}{'cmap'}->find_ms || return undef;
 
-        $self->{'usFirstCharIndex'} = $keys[0];
-        $self->{'usLastCharIndex'} = $keys[-1];
-    }
+    @keys = sort {$a <=> $b} keys %{$map->{'val'}};
+
+    $self->{'usFirstCharIndex'} = $keys[0];
+    $self->{'usLastCharIndex'} = $keys[-1];
 
     $table = $self->{' PARENT'}{'hhea'};
-    if ($table->{' isDirty'})
-    {
-        $self->{'sTypoAscender'} = $table->{'Ascender'};
-        $self->{'sTypoDescender'} = $table->{'Descender'};
-        $self->{'sTypoLineGap'} = $table->{'Linegap'};
-        $self->{'usWinAscent'} = $self->{'sTypoAscender'} + $self->{'sTypoLineGap'};
-        $self->{'usWinDescent'} = -$self->{'sTypoDescender'};
-    }
-        
+    $self->{'sTypoAscender'} = $table->{'Ascender'};
+    $self->{'sTypoDescender'} = $table->{'Descender'};
+    $self->{'sTypoLineGap'} = $table->{'Linegap'};
+    $self->{'usWinAscent'} = $self->{'sTypoAscender'} + $self->{'sTypoLineGap'};
+    $self->{'usWinDescent'} = -$self->{'sTypoDescender'};
     $self;
 }
 

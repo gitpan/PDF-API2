@@ -56,8 +56,18 @@ sub MY::postamble
     my $self = shift;
     return <<'EOT';
 
-htmldoc:
-	perl pod3html -i lib/PDF/API2.pm -o docs/pdf-api2.pm.html
+docs: install docs/pdf-api2.pm.html pod-pdf
+
+docs/pdf-api2.pm.html: lib/PDF/API2.pm 
+	perl pod3html -i $< -o $@
+
+docs/pdf-api2.pm.pdf: lib/PDF/API2.pm 
+	perl pod3pdf -i $< -o $@
+
+pod-pdf: docs/*.pod
+	for x in $?; do \
+		perl pod3pdf -i $$x -o $$x.pdf ;\
+	done
 
 new-version: version.p
 	perl -e 'require "version.p"; @v=split(/\./,$$version); $$v[0]++;$$v[1]=0;$$v[2]=0;$$v[3]=0; print "\$$version=\"".join(".",@v)."\";1;\n";' >version.pp

@@ -2,6 +2,7 @@ package Text::PDF::Array;
 
 use strict;
 use vars qw(@ISA);
+no warnings qw(uninitialized);
 
 use Text::PDF::Objind;
 @ISA = qw(Text::PDF::Objind);
@@ -48,12 +49,8 @@ Outputs an array as a PDF array to the given filehandle.
 
 sub outobjdeep
 {
-    my ($self, $fh, $pdf) = @_;
+    my ($self, $fh, $pdf, %opts) = @_;
     my ($obj);
-
-    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
-        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
-    }
 
     $fh->print("[ ");
     foreach $obj (@{$self->{' val'}})
@@ -61,7 +58,7 @@ sub outobjdeep
         $obj->outobj($fh, $pdf);
         $fh->print(" ");
     }
-    $fh->print("] ");
+    $fh->print("]");
 }
 
 
@@ -87,7 +84,7 @@ not the array itself but the elements in the array.
 =cut
 
 sub elementsof
-{ wantarray ? @{$_[0]->{' val'}} : $#{$_[0]->{' val'}} + 1; }
+{ wantarray ? @{$_[0]->{' val'}} : scalar @{$_[0]->{' val'}}; }
 
 
 =head2 $a->add_elements

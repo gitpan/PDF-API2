@@ -45,6 +45,7 @@ Holds a direct reference to the next free object in the free list.
 
 use strict;
 use vars qw(@inst %inst $uidc);
+no warnings qw(uninitialized);
 
 # protected keys during emptying and copying, etc.
 
@@ -67,7 +68,7 @@ sub new
     my ($class) = @_;
     my ($self) = {};
 
-    bless $self, $class;
+    bless $self, ref $class || $class;
 }
 
 =head2 uid
@@ -79,7 +80,7 @@ Returns a Unique id for this object, creating one if it didn't have one before
 sub uid
 { $_[0]->{' uid'} || ($_[0]->{' uid'} = $uidc++); }
 
-=head $r->release
+=head2 $r->release
 
 Releases ALL of the memory used by this indirect object, and all of its
 component/child objects.  This method is called automatically by
@@ -119,6 +120,13 @@ sub release
     #   few, and rather than name them all explicitly, we'll just clean them up
     #   here by type.
     ###########################################################################
+    # NOTE: The checks below have been ordered such that the most commonly
+    #       occurring items get checked for and cleaned out first.
+    ###########################################################################
+    # FURTHER NOTE: Reducing the checks below to the least amount of checks
+    #               possible did not create any noticable performance
+    #               improvement.
+    ###########################################################################
     foreach my $key (keys %{$self})
     {
         my $ref = ref($self->{$key});
@@ -139,9 +147,7 @@ sub release
                 # Sub-element, explicitly destruct.
                 my $val = $self->{$key};
                 delete $self->{$key};
-		eval {
-                    $val->release();
-		};
+                $val->release();
             }
         }
         elsif ($ref eq 'ARRAY')
@@ -167,14 +173,6 @@ sub release
             delete $self->{$key};
         }
     }
-    
-    ###########################################################################
-    # Explicitly destruct anything that we _know_ about, and that wasn't caught
-    # above.  We do this only so that when we do our checks below that we can
-    # be sure that we've already freed up all of the memory.
-    ###########################################################################
-    delete $self->{' val'};
-    delete $self->{' xref'};
 
     ###########################################################################
     # Now that we think that we've gone back and freed up all of the memory
@@ -182,18 +180,16 @@ sub release
     # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
     # message.
     ###########################################################################
-
-## SILENCED BY FREDO
-##
-#    foreach my $key (keys %{$self})
-#    {
-#        warn ref($self) . " still has '$key' key left after release.\n";
-#    }
+    foreach my $key (keys %{$self})
+    {
+        warn ref($self) . " still has '$key' key left after release.\n";
+    }
 
     ###########################################################################
     # All done cleaning up.
     ###########################################################################
 }
+
 
 =head2 $r->val
 
@@ -229,7 +225,7 @@ This also means that all direct subclasses must subclass this method or loop for
 
 sub outobjdeep
 {
-    my ($self, $fh, $pdf) = @_;
+    my ($self, $fh, $pdf, %opts) = @_;
 
     $self->{' parent'}->read_obj($self)->outobjdeep($fh, $pdf) unless ($self->{' realised'});
 }
@@ -244,12 +240,12 @@ outobjdeep to output the contents of the object at this point.
 
 sub outobj
 {
-    my ($self, $fh, $pdf) = @_;
+    my ($self, $fh, $pdf, %opts) = @_;
 
     if (defined $pdf->{' objects'}{$self->uid})
     { $fh->printf("%d %d R", @{$pdf->{' objects'}{$self->uid}}[0..1]); }
     else
-    { $self->outobjdeep($fh, $pdf); }
+    { $self->outobjdeep($fh, $pdf, %opts); }
 }
 
 

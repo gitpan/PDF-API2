@@ -121,8 +121,10 @@ sub update
     my (@name) = qw(maxPoints maxContours maxCompositePoints maxCompositeContours
                     maxSizeOfInstructions maxComponentElements maxComponentDepth);
 
+    return undef unless ($self->SUPER::update);
     return undef if ($self->{'version'} == 0.5);        # only got numGlyphs
-    return undef unless (defined $self->{' PARENT'}{'loca'} && $self->{' PARENT'}{'loca'}{' isDirty'});
+    return undef unless (defined $self->{' PARENT'}{'loca'});
+    $self->{' PARENT'}{'loca'}->update;
     $num = $self->{'numGlyphs'};
 
     for ($i = 0; $i < $num; $i++)
@@ -142,8 +144,6 @@ sub update
 
     for ($j = 0; $j <= $#name; $j++)
     { $self->{$name[$j]} = $m[$j]; }
-
-    $self->{' isDirty'} = 1;
     $self;
 }
 1;

@@ -9,9 +9,9 @@
 package PDF::API2;
 
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 20011118.224228 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 20011128.230201 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
-=title PDF::API2
+=head1 PDF::API2
 
 =head1 NAME
 
@@ -196,13 +196,15 @@ sub openpage {
 	my $self=shift @_;
 	my $index=shift @_||0;
 	my $page;
+	
 	if($index==0) {
-		$page=PDF::API2::Page->coerce($self->{pdf},@{$self->{pagestack}}[-1]);
+		$page=@{$self->{pagestack}}[-1];
 	} elsif($index<0) {
-		$page=PDF::API2::Page->coerce($self->{pdf},@{$self->{pagestack}}[$index]);
+		$page=@{$self->{pagestack}}[$index];
 	} else {
-		$page=PDF::API2::Page->coerce($self->{pdf},@{$self->{pagestack}}[$index-1]);
+		$page=@{$self->{pagestack}}[$index-1];
 	}
+	$page=PDF::API2::Page->coerce($self->{pdf},$page) if(ref($page) ne 'PDF::API2::Page');
 	
 #        $self->{pdf}->out_obj($page);
 #        $self->{pdf}->out_obj($self->{pages});
@@ -344,6 +346,7 @@ sub importpage {
 		$t_page->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
 	}
 	foreach my $k (qw( Resources )) {
+		$s_page->{$k}=$s_page->find_prop($k);
 		next unless(defined $s_page->{$k});
 		$t_page->{$k}=PDFDict();
 		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
@@ -419,7 +422,7 @@ Saves the document.
 
 sub saveas {
 	my ($self,$file)=@_;
-	if($self->{reopened}==1) {
+	if($self->{reopened}) {
 		$self->{pdf}->append_file;
 		CORE::open(OUTF,">$file");
 		binmode(OUTF);
@@ -526,33 +529,38 @@ sub corefont {
 	my ($self,$name,$light)=@_;
 	my $key='FFx'.pdfkey($name);
 
+	my $obj;
+
         $self->{pages}->{'Resources'}
         	= $self->{pages}->{'Resources'} 
         	|| PDFDict();
  	$self->{pages}->{'Resources'}->{'Font'}
  		= $self->{pages}->{'Resources'}->{'Font'} 
  		|| PDFDict();
-	if((defined $self->{pages}->{'Resources'}->{'Font'}->{$key}) && ($self->{reopened}==1)) {
+	if((defined $self->{pages}->{'Resources'}->{'Font'}->{$key}) && $self->{reopened}) {
 		# we are here because we somehow created
 		# the reopened pdf so we simulate a valid 
 		# object without writing a new one
-		$self->{pages}->{'Resources'}->{'Font'}->{$key}
-			= PDF::API2::CoreFont->coerce(
+		$obj= PDF::API2::CoreFont->coerce(
 				$self->{pages}->{'Resources'}->{'Font'}->{$key},$self->{pdf},$name,$key,$light
 			);
 	} else {
-		$self->{pages}->{'Resources'}->{'Font'}->{$key}
-			= $self->{pages}->{'Resources'}->{'Font'}->{$key} 
+		$obj= $self->{pages}->{'Resources'}->{'Font'}->{$key} 
 			|| PDF::API2::CoreFont->new(
 				$self->{pdf},$name,$key,$light
 			);
 	}
 
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$obj->{' apiname'}=$key;
+	$obj->{' apipdf'}=$self->{pdf};
+        $obj->{' api'}=$self;
+
+	$self->resource('Font',$key,$obj);
+
 	$self->{pdf}->out_obj($self->{pages});
-
-	$self->{pages}->{'Resources'}->{'Font'}->{$key}->{' api'} = $self;
-
-	return($self->{pages}->{'Resources'}->{'Font'}->{$key});
+	return($obj);
 }
 
 sub xfont {
@@ -561,23 +569,16 @@ sub xfont {
 	my $obj=PDF::API2::xFont->new($self->{pdf},@opts);
 	my $key=$obj->{' apiname'};
 
-        $self->{pages}->{'Resources'}
-        	= $self->{pages}->{'Resources'} 
-        	|| PDFDict();
- 	$self->{pages}->{'Resources'}->{'Font'}
- 		= $self->{pages}->{'Resources'}->{'Font'} 
- 		|| PDFDict();
-	$self->{pages}->{'Resources'}->{'Font'}->{$key}
-		= $self->{pages}->{'Resources'}->{'Font'}->{$key} 
-		|| $obj;
-
-	$self->{pdf}->out_obj($self->{pages});
-
-	$self->{pages}->{'Resources'}->{'Font'}->{$key}->{' api'} = $self;
-
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	return($self->{pages}->{'Resources'}->{'Font'}->{$key});
+	$obj->{' apiname'}=$key;
+	$obj->{' apipdf'}=$self->{pdf};
+        $obj->{' api'}=$self;
+
+	$self->resource('Font',$key,$obj,$self->{reopened});
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
 }
 
 
@@ -595,7 +596,7 @@ B<Examples:>
 
 sub psfont {
 	my ($self,$pfb,$afm,$encoding,@glyphs)=@_;
-	my $key='PSx'.pdfkey($pfb.$afm).$self->{time};
+	my $key='PSx'.pdfkey(($pfb||'x').($afm||'y')).$self->{time};
 
 	if($^O eq 'MSWin32') {
 		my %opts=opts_from_pfm($pfb);
@@ -603,27 +604,17 @@ sub psfont {
 		$afm = defined $opts{-pfbfile} ? undef : $afm; 
 	}
 
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'Font'}=$self->{pages}->{'Resources'}->{'Font'} || PDFDict();
+	my $obj=PDF::API2::PSFont->new($self->{pdf},$pfb,$afm,$key,$encoding,@glyphs);
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	if((defined $self->{pages}->{'Resources'}->{'Font'}->{$key}) && ($self->{reopened}==1)) {
-		$self->{pages}->{'Resources'}->{'Font'}->{$key}
-			= PDF::API2::PSFont->new(
-				$self->{pdf},$pfb,$afm,$key,$encoding,@glyphs
-			);
-	} else {
-		$self->{pages}->{'Resources'}->{'Font'}->{$key}=
-			$self->{pages}->{'Resources'}->{'Font'}->{$key} || PDF::API2::PSFont->new(
-				$self->{pdf},$pfb,$afm,$key,$encoding,@glyphs
-			);
-	}
-        $self->{pdf}->out_obj($self->{pages});
+	$obj->{' apiname'}=$key;
+	$obj->{' apipdf'}=$self->{pdf};
+        $obj->{' api'}=$self;
 
-	$self->{pdf}->new_obj($self->{pages}->{'Resources'}->{'Font'}->{$key}) 
-		unless($self->{pages}->{'Resources'}->{'Font'}->{$key}->is_obj($self->{pdf}));
-	$self->{pages}->{'Resources'}->{'Font'}->{$key}->{' api'}=$self;
+	$self->resource('Font',$key,$obj,$self->{reopened});
 
-	return($self->{pages}->{'Resources'}->{'Font'}->{$key});
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
 }
 
 =item $font = $pdf->ttfont $ttfile
@@ -708,29 +699,21 @@ sub ttfont {
 		$file = defined $opts{-ttfile} ? $opts{-ttfile} : $file; 
 	}
 
-	return $self->xfont(-ttfile=>$file,-ttopts=>$lazy) if($lazy>0);
+	return $self->xfont(-ttfile=>$file,-ttopts=>$lazy) if($lazy);
 	
 	my $key='TTx'.pdfkey($file).$self->{time};
 
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'Font'}=$self->{pages}->{'Resources'}->{'Font'} || PDFDict();
+	my $obj=PDF::API2::TTFont->new($self->{pdf},$file,$key);
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	if((defined $self->{pages}->{'Resources'}->{'Font'}->{$key}) && ($self->{reopened}==1)) {
-		$self->{pages}->{'Resources'}->{'Font'}->{$key}=PDF::API2::TTFont->new(
-				$self->{pdf},$file,$key,$encoding
-			);
-	} else {
-		$self->{pages}->{'Resources'}->{'Font'}->{$key}=
-			$self->{pages}->{'Resources'}->{'Font'}->{$key} || PDF::API2::TTFont->new(
-				$self->{pdf},$file,$key
-			);
-	}
+	$obj->{' apiname'}=$key;
+	$obj->{' apipdf'}=$self->{pdf};
+        $obj->{' api'}=$self;
 
-        $self->{pdf}->out_obj($self->{pages});
+	$self->resource('Font',$key,$obj,$self->{reopened});
 
-        $self->{pages}->{'Resources'}->{'Font'}->{$key}->{' api'}=$self;
-
-	return($self->{pages}->{'Resources'}->{'Font'}->{$key});
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
 }
 
 =item $img = $pdf->image $file
@@ -747,18 +730,15 @@ B<Examples:>
 
 sub image {
 	my ($self,$file)=@_;
-
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'XObject'}=$self->{pages}->{'Resources'}->{'XObject'} || PDFDict();
-
         my $obj=PDF::API2::Image->new($self->{pdf},$file,$self->{time});
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-        $self->{pages}->{'Resources'}->{'XObject'}->{$obj->{' apiname'}}=$obj;
+	$obj->{' apipdf'}=$self->{pdf};
+        $obj->{' api'}=$self;
 
-        $self->{pdf}->out_obj($self->{pages});
+	$self->resource('XObject',$obj->{' apiname'},$obj,1);
 
-	$obj->{' api'}=$self;
-
+	$self->{pdf}->out_obj($self->{pages});
 	return($obj);
 }
 
@@ -807,6 +787,7 @@ sub pdfimageobj {
 		$t_page->{' ry'}=$ry->val;
 	}
 	$k='Resources';
+	$s_page->{$k}=$s_page->find_prop($k);
 	if(defined $s_page->{$k}) {
 		$t_page->{$k}=PDFDict();
 		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
@@ -845,11 +826,9 @@ sub pdfimageobj {
 			            push (@filts, $temp1->new);
 			        }
 
-				
 				foreach my $f (@filts) { 
 					$str = $f->infilt($str, 1); 
 				}
-
 			}
 			$t_page->{' pdfimage'}.="\n$str\n";
 		}
@@ -882,15 +861,37 @@ sub shade {
 	my ($self,%opts)=@_;
 	my $key='SHx'.pdfkey(%opts || 'shade'.localtime() );
 	my $obj=PDFDict();
+#	my $pat=$self->pattern(-type=>2);
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
-	$obj->{' api'}=$self;
-	$self->{pdf}->new_obj($obj);
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'Shading'}=$self->{pages}->{'Resources'}->{'Shading'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'Shading'}->{$key}=$obj;
-        $self->{pdf}->out_obj($self->{pages});
+        $obj->{' api'}=$self;
 
+	$self->resource('Shading',$key,$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($obj);
+}
+
+=item $pat = $pdf->pattern
+
+Returns a new pattern object.
+
+=cut
+
+sub pattern {
+	my ($self,%opts)=@_;
+	my $obj=PDF::API2::Pattern->new();
+	my $key=$obj->{' apiname'};
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$obj->{' apipdf'}=$self->{pdf};
+	$obj->{' api'}=$self;
+
+	$self->resource('Pattern',$key,$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
 	return($obj);
 }
 
@@ -955,11 +956,14 @@ sub colorspace {
 	my ($self,@opt)=@_;
 	my $key='CSx'.pdfkey('colorspace',@opt);
 	my $obj=PDF::API2::ColorSpace->new($self->{pdf},$key,@opt);
-	$self->{pdf}->new_obj($obj);
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'ColorSpace'}=$self->{pages}->{'Resources'}->{'ColorSpace'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'ColorSpace'}->{$key}=$obj;
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$obj->{' apiname'}=$key;
+	$obj->{' apipdf'}=$self->{pdf};
         $obj->{' api'}=$self;
+
+	$self->resource('ColorSpace',$key,$obj,1);
+
         $self->{pdf}->out_obj($self->{pages});
 	return($obj);
 }
@@ -977,14 +981,13 @@ sub barcode {
 	my ($self,%opts)=@_;
 	my $key='BCx'.pdfkey('barcode'.time().rand(0x7fffff));
 	my $obj=PDF::API2::Barcode->new($key,%opts);
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
 	$obj->{' api'}=$self;
 
-	$self->{pdf}->new_obj($obj);
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'XObject'}=$self->{pages}->{'Resources'}->{'XObject'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'XObject'}->{$key}=$obj;
+	$self->resource('XObject',$key,$obj,1);
 
         $self->{pdf}->out_obj($self->{pages});
 
@@ -995,12 +998,9 @@ sub extgstate {
 	my ($self)=@_;
 	my $key='XTGSx'.pdfkey('extgstate'.time().rand(0x7fffff));
 	my $obj=PDF::API2::ExtGState->new($self->{pdf},$key);
-	$self->{pdf}->new_obj($obj);
-        $self->{pages}->{'Resources'}=$self->{pages}->{'Resources'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'ExtGState'}=$self->{pages}->{'Resources'}->{'ExtGState'} || PDFDict();
-        $self->{pages}->{'Resources'}->{'ExtGState'}->{$key}=$obj;
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+	$self->resource('ExtGState',$key,$obj,1);
         $obj->{' api'}=$self;
-        $self->{pdf}->out_obj($self->{pages});
 	return($obj);
 }
 
@@ -1024,7 +1024,7 @@ sub outlines {
 
 }
 
-=item $page->resource $type, $key, $obj
+=item $page->resource $type, $key, $obj, $force
 
 Adds a resource to the global page-inheritance tree.
 
@@ -1042,19 +1042,69 @@ methods.
 =cut
 
 sub resource {
-	my ($self, $type, $key, $obj) = @_;
+	my ($self, $type, $key, $obj, $force) = @_;
 
 	$self->{pages}->{Resources}= $self->{pages}->{Resources} || PDFDict();
+
 	my $dict=$self->{pages}->{Resources};
+	$dict->realise if(ref($dict)=~/Objind$/);
 
 	$dict->{$type}=$dict->{$type} || PDFDict();
-	$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
-
-	if($dict->is_obj($self->{' apipdf'})) {
-		$self->{' apipdf'}->out_obj($dict);
-	}
+	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
 	
+	if($force) {
+		$dict->{$type}->{$key}=$obj;
+	} else {
+		$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
+	}
+
+	$self->{pdf}->out_obj($dict)
+		if($dict->is_obj($self->{pdf}));
+	
+	$self->{pdf}->out_obj($dict->{$type})
+		if($dict->{$type}->is_obj($self->{pdf}));
+	
+	$self->{pdf}->out_obj($obj)
+		if($obj->is_obj($self->{pdf}));
+
+        $self->{pdf}->out_obj($self->{pages});
+		
 	return($dict);
+}
+
+
+#==================================================================
+#	PDF::API2::Pattern
+#==================================================================
+package PDF::API2::Pattern;
+
+use strict;
+use vars qw(@ISA);
+@ISA = qw(Text::PDF::Dict);
+
+use Text::PDF::Utils;
+use Text::PDF::Dict;
+use PDF::API2::Util;
+
+=head2 PDF::API2::Pattern
+
+Subclassed from Text::PDF::Dict.
+
+=item $otls = PDF::API2::Pattern->new
+
+Returns a new pattern object (called from $pdf->pattern).
+
+=cut
+
+sub new {
+	my ($class,%opts)=@_;
+	my $self = $class->SUPER::new;
+	my $key='PTx'.pdfkey(%opts || 'pattern'.localtime() );
+
+	$self->{' apiname'}=$key;
+	$self->{Type}=PDFName('Pattern');
+
+	return($self);
 }
 
 
@@ -1207,8 +1257,62 @@ sub outline {
 
 Sets the destination page of the outline.
 
-=cut
+=item $otl->dest( $page, -fit => 1 ) 
 
+Display the page designated by page, with its contents magnified just enough to 
+fit the entire page within the window both horizontally and vertically. If the 
+required horizontal and vertical magnification factors are different, use the 
+smaller of the two, centering the page within the window in the other dimension.
+
+=item $otl->dest( $page, -fith => $top )
+
+Display the page designated by page, with the vertical coordinate top positioned
+at the top edge of the window and the contents of the page magnified just enough 
+to fit the entire width of the page within the window.
+
+=item $otl->dest( $page, -fitv => $left ) 
+
+Display the page designated by page, with the horizontal coordinate left positioned
+at the left edge of the window and the contents of the page magnified just enough 
+to fit the entire height of the page within the window.
+
+=item $otl->dest( $page, -fitr => [ $left, $bottom, $right, $top ] ) 
+
+Display the page designated by page, with its contents magnified just enough to 
+fit the rectangle specified by the coordinates left, bottom, right, and top 
+entirely within the window both horizontally and vertically. If the required
+horizontal and vertical magnification factors are different, use the smaller of
+the two, centering the rectangle within the window in the other dimension.
+
+=item $otl->dest( $page, -fitb => 1 )
+
+Display the page designated by page, with its contents magnified just 
+enough to fit its bounding box entirely within the window both horizontally and 
+vertically. If the required horizontal and vertical magnification factors are 
+different, use the smaller of the two, centering the bounding box within the 
+window in the other dimension.
+
+=item $otl->dest( $page, -fitbh => $top )
+
+Display the page designated by page, with the vertical coordinate top 
+positioned at the top edge of the window and the contents of the page magnified 
+just enough to fit the entire width of its bounding box within the window.
+
+=item $otl->dest( $page, -fitbv => $left )
+
+Display the page designated by page, with the horizontal coordinate 
+left positioned at the left edge of the window and the contents of the page 
+magnified just enough to fit the entire height of its bounding box within the 
+window.
+
+=item $otl->dest( $page, -xyz => [ $left, $top, $zoom ] )
+
+Display the page designated by page, with the coordinates (left, top) positioned 
+at the top-left corner of the window and the contents of the page magnified by 
+the factor zoom. A zero (0) value for any of the parameters left, top, or zoom 
+specifies that the current value of that parameter is to be retained unchanged.
+
+=cut
 
 sub dest {
 	my ($self,$page,%opts)=@_;
@@ -1221,11 +1325,19 @@ sub dest {
 		$self->{Dest}=PDFArray($page,PDFName('Fit'));
 	} elsif(defined $opts{-fith}) {
 		$self->{Dest}=PDFArray($page,PDFName('FitH'),PDFNum($opts{-fith}));
+	} elsif(defined $opts{-fitb}) {
+		$self->{Dest}=PDFArray($page,PDFName('FitB'));
+	} elsif(defined $opts{-fitbh}) {
+		$self->{Dest}=PDFArray($page,PDFName('FitBH'),PDFNum($opts{-fitbh}));
 	} elsif(defined $opts{-fitv}) {
 		$self->{Dest}=PDFArray($page,PDFName('FitV'),PDFNum($opts{-fitv}));
+	} elsif(defined $opts{-fitbv}) {
+		$self->{Dest}=PDFArray($page,PDFName('FitBV'),PDFNum($opts{-fitbv}));
 	} elsif(defined $opts{-fitr}) {
+		die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
 		$self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
 	} elsif(defined $opts{-xyz}) {
+		die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-fitr}} == 3);
 		$self->{Dest}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
 	}
 	return($self);
@@ -1661,7 +1773,7 @@ sub encode {
 		$encoding='custom';
 	}
 	
-	if($self->{' apifontlight'}==1) {
+	if($self->{' apifontlight'}) {
 		$self->encodeProperLight($encoding,32,255,@glyphs);
 	} else {
 		$self->encodeProper($encoding,32,255,@glyphs);
@@ -1791,7 +1903,7 @@ sub new {
 		$pdf->new_obj($self);
 	}
 
-	if($opts{-embed}==1 && defined $opts{-ttfile}) {
+	if($opts{-embed} && defined $opts{-ttfile}) {
 		my $s = PDFDict();
 		$self->{'FontDescriptor'}->{'FontFile2'} = $s;
 		$s->{'Length1'} = PDFNum(-s $opts{-ttfile});
@@ -2027,6 +2139,7 @@ sub text {
 	my ($self,$text,$enc)=@_;
 	$enc=$enc||$self->{' encoding'};
 	my ($newtext);
+	$self->{' subvec'}='' unless($self->{' subvec'});
 	foreach (unpack("C*", $text)) {
 		my $g=$self->{' chrcid'}{$enc}{$_};
 		$newtext.= sprintf('%04x',$g);
@@ -2113,9 +2226,9 @@ sub encode {
 	if(scalar keys(%{$self->{' chrcid'}->{$enc}}) < 1) {
 		foreach my $x (0..255) {
 			$self->{' chrcid'}->{$enc}{$x}=
-				$self->{' unicid'}{$map->{'c2u'}->{$x}}||$self->{' unicid'}{32};
+				$self->{' unicid'}{$map->{'c2u'}->{$x}||32}||$self->{' unicid'}{32};
 			$self->{' chrwidth'}->{$enc}{$x}=
-				$ttf->{'hmtx'}{'advance'}[$self->{' unicid'}{$map->{'c2u'}->{$x}}||$self->{' unicid'}{32}]*1000/$upem;
+				$ttf->{'hmtx'}{'advance'}[$self->{' unicid'}{$map->{'c2u'}->{$x}||32}||$self->{' unicid'}{32}]*1000/$upem;
 		}
 	}
 	return($self);
@@ -2396,23 +2509,34 @@ methods.
 =cut
 
 sub resource {
-	my ($self, $type, $key, $obj) = @_;
+	my ($self, $type, $key, $obj, $force) = @_;
 	my ($dict) = $self->find_prop('Resources');
 
-	$dict= $dict || $self->{Resources} || $self->{' api'}->{pages}->{'Resources'} || PDFDict();	
-#	$self->{' api'}->{pages}->{'Resources'}=$self->{' api'}->{pages}->{'Resources'} || $dict;	
+	$dict= $dict || $self->{Resources} || PDFDict();	
+
+	$dict->realise if(ref($dict)=~/Objind$/);
 
 	$dict->{$type}=$dict->{$type} || PDFDict();
-
-	$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
-
-	$self->{Resources} = $dict;	
+	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
 	
-	if($dict->is_obj($self->{' apipdf'})) {
-		$self->{' apipdf'}->out_obj($dict);
+	if($force) {
+		$dict->{$type}->{$key}=$obj;
+	} else {
+		$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
 	}
+
+	$self->{' apipdf'}->out_obj($dict)
+		if($dict->is_obj($self->{' apipdf'}));
 	
-	return($self);
+	$self->{' apipdf'}->out_obj($dict->{$type})
+		if($dict->{$type}->is_obj($self->{' apipdf'}));
+	
+	$self->{' apipdf'}->out_obj($obj)
+		if($obj->is_obj($self->{' apipdf'}));
+
+        $self->{' apipdf'}->out_obj($self);
+		
+	return($dict);
 }
 
 sub content {
@@ -2487,13 +2611,15 @@ sub text {
 
 sub rect {
 	my ($self,@r)=@_;
-	$self->{Rect}=PDFArray( map { PDFNum($_) } @r );
+	die "insufficient parameters to annotation->rect( ) " unless(scalar @r == 4);
+	$self->{Rect}=PDFArray( map { PDFNum($_) } $r[0..3] );
 	return($self);
 }
 
 sub border {
 	my ($self,@r)=@_;
-	$self->{Border}=PDFArray( map { PDFNum($_) } @r );
+	die "insufficient parameters to annotation->border( ) " unless(scalar @r == 3);
+	$self->{Border}=PDFArray( map { PDFNum($_) } $r[0..2] );
 	return($self);
 }
 
@@ -2515,6 +2641,63 @@ sub open {
 	return($self);
 }
 
+=item $ant->dest( $page, -fit => 1 ) 
+
+Display the page designated by page, with its contents magnified just enough to 
+fit the entire page within the window both horizontally and vertically. If the 
+required horizontal and vertical magnification factors are different, use the 
+smaller of the two, centering the page within the window in the other dimension.
+
+=item $ant->dest( $page, -fith => $top )
+
+Display the page designated by page, with the vertical coordinate top positioned
+at the top edge of the window and the contents of the page magnified just enough 
+to fit the entire width of the page within the window.
+
+=item $ant->dest( $page, -fitv => $left ) 
+
+Display the page designated by page, with the horizontal coordinate left positioned
+at the left edge of the window and the contents of the page magnified just enough 
+to fit the entire height of the page within the window.
+
+=item $ant->dest( $page, -fitr => [ $left, $bottom, $right, $top ] ) 
+
+Display the page designated by page, with its contents magnified just enough to 
+fit the rectangle specified by the coordinates left, bottom, right, and top 
+entirely within the window both horizontally and vertically. If the required
+horizontal and vertical magnification factors are different, use the smaller of
+the two, centering the rectangle within the window in the other dimension.
+
+=item $ant->dest( $page, -fitb => 1 )
+
+(PDF 1.1) Display the page designated by page, with its contents magnified just 
+enough to fit its bounding box entirely within the window both horizontally and 
+vertically. If the required horizontal and vertical magnification factors are 
+different, use the smaller of the two, centering the bounding box within the 
+window in the other dimension.
+
+=item $ant->dest( $page, -fitbh => $top )
+
+(PDF 1.1) Display the page designated by page, with the vertical coordinate top 
+positioned at the top edge of the window and the contents of the page magnified 
+just enough to fit the entire width of its bounding box within the window.
+
+=item $ant->dest( $page, -fitbv => $left )
+
+(PDF 1.1) Display the page designated by page, with the horizontal coordinate 
+left positioned at the left edge of the window and the contents of the page 
+magnified just enough to fit the entire height of its bounding box within the 
+window.
+
+=item $ant->dest( $page, -xyz => [ $left, $top, $zoom ] )
+
+Display the page designated by page, with the coordinates (left, top) positioned 
+at the top-left corner of the window and the contents of the page magnified by 
+the factor zoom. A zero (0) value for any of the parameters left, top, or zoom 
+specifies that the current value of that parameter is to be retained unchanged.
+
+=cut
+
 sub dest {
 	my ($self,$page,%opts)=@_;
 	
@@ -2526,11 +2709,19 @@ sub dest {
 		$self->{Dest}=PDFArray($page,PDFName('Fit'));
 	} elsif(defined $opts{-fith}) {
 		$self->{Dest}=PDFArray($page,PDFName('FitH'),PDFNum($opts{-fith}));
+	} elsif(defined $opts{-fitb}) {
+		$self->{Dest}=PDFArray($page,PDFName('FitB'));
+	} elsif(defined $opts{-fitbh}) {
+		$self->{Dest}=PDFArray($page,PDFName('FitBH'),PDFNum($opts{-fitbh}));
 	} elsif(defined $opts{-fitv}) {
 		$self->{Dest}=PDFArray($page,PDFName('FitV'),PDFNum($opts{-fitv}));
+	} elsif(defined $opts{-fitbv}) {
+		$self->{Dest}=PDFArray($page,PDFName('FitBV'),PDFNum($opts{-fitbv}));
 	} elsif(defined $opts{-fitr}) {
+		die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
 		$self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
 	} elsif(defined $opts{-xyz}) {
+		die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-fitr}} == 3);
 		$self->{Dest}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
 	}
 	return($self);
@@ -2697,6 +2888,9 @@ sub fillcolor {
 			$self->add("/$obj->{' apiname'}",'cs',floats(@_),'sc');
 		}
 		$self->resource('ColorSpace',$obj->{' apiname'},$obj);
+	} elsif(ref($obj) eq 'PDF::API2::Pattern') {
+		$self->add("/Pattern",'cs',"/$obj->{' apiname'}",'scn');
+		$self->resource('Pattern',$obj->{' apiname'},$obj);
 	} else {
 		($m,$y,$k)=@_;
 		$c=$obj;
@@ -2797,6 +2991,9 @@ sub strokecolor {
 			$self->add("/$obj->{' apiname'}",'CS',floats(@_),'SC');
 		}
 		$self->resource('ColorSpace',$obj->{' apiname'},$obj);
+	} elsif(ref($obj) eq 'PDF::API2::Pattern') {
+		$self->add("/Pattern",'CS',"/$obj->{' apiname'}",'SCN');
+		$self->resource('Pattern',$obj->{' apiname'},$obj);
 	} else {
 		($m,$y,$k)=@_;
 		$c=$obj;
@@ -5518,8 +5715,11 @@ sub string_ref
 # 
 # (C) Copyright 1995, Universität Dortmund, all rights reserved.
 # 
-# $Locker: pfeifer $
-# $Log: Matrix.pm,v $
+# $Locker:  $
+# $Log: API2.pm,v $
+# Revision 1.1  2001/11/22 20:51:56  Administrator
+# genesis
+#
 # Revision 0.2  1996/07/10 17:48:14  pfeifer
 # Fixes from Mike Beachy <beachy@chem.columbia.edu>
 #

@@ -68,6 +68,8 @@ use vars qw(@ISA @base_set %base_set %fields $VERSION $no25);
 require Font::TTF::Table;
 use Font::TTF::Utils;
 
+$no25 = 1;                  # officially deprecated format 2.5 tables in MS spec 1.3
+
 @ISA = qw(Font::TTF::Table);
 
 $VERSION = 0.01;        # MJPH   5-AUG-1998     Re-organise data structures
@@ -264,16 +266,6 @@ sub XML_element
     $fh->print("$depth</names>\n");
     $self;
 }
-
-=head2 $t->update
-
-Updates the table by reading it and thus forcing a rewrite of strings for each glyph
-rather than just the data block
-
-=cut
-
-sub update
-{ $_[0]->read if ($_[0]->{' dirty'}); }
 
 1;
 

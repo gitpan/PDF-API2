@@ -76,102 +76,6 @@ sub new
     bless $self, $class;
 }
 
-=head2 $t->release
-
-Releases ALL of the memory used by this table, and all of its component/child
-objects.  This method is called automatically by
-'C<Font::TTF::Font-E<GT>release>' (so you don't have to call it yourself).
-
-B<NOTE>, that it is important that this method get called at some point prior
-to the actual destruction of the object.  Internally, we track things in a
-structure that can result in circular references, and without calling
-'C<release()>' these will not properly get cleaned up by Perl.  Once this
-method has been called, though, don't expect to be able to do anything with the
-C<Font::TTF::Table> object; it'll have B<no> internal state whatsoever.
-
-B<Developer note:>  As part of the brute-force cleanup done here, this method
-will throw a warning message whenever unexpected key values are found within
-the C<Font::TTF::Table> object.  This is done to help ensure that any
-unexpected and unfreed values are brought to your attention so that you can bug
-us to keep the module updated properly; otherwise the potential for memory
-leaks due to dangling circular references will exist.
-
-=cut
-
-sub release
-{
-    my ($self) = @_;
-
-    ###########################################################################
-    # First, close any open ' INFILE' handle, BUT ONLY IF WE HAVE NO 'PARENT'
-    # object (otherwise we'll leave it up to the 'PARENT' to close the file).
-    ###########################################################################
-    if (exists $self->{' INFILE'} && !exists $self->{'PARENT'})
-    {
-        close( $self->{' INFILE'} );
-        delete $self->{' INFILE'};
-    }
-
-    ###########################################################################
-    # Go through our list of keys, and clean things up as needed:
-    # - All 'parent' (and derivitive) keys get deleted without explicit
-    #   destruction, to break circular references.
-    # - All scalar values get deleted explicitly, to free up their memory.
-    #   This is generally handled well by Perl, but our checks later on require
-    #   that we free them up explicitly.
-    # - All 'Font::TTF::*' elements get explicitly destructed, to free up all
-    #   of their memory and break potential circular references.
-    ###########################################################################
-    foreach my $key (keys %{$self})
-    {
-        my $ref = ref($self->{$key});
-        if ($key =~ /parent/io)
-        {
-            # Remove potential circular reference.
-            delete $self->{$key};
-        }
-        elsif ($ref eq '')
-        {
-            # Remove scalar value.
-            delete $self->{$key};
-        }
-        elsif ($ref =~ /^Font::TTF::/o)
-        {
-            # Sub-element, explicitly destruct.
-            my $val = $self->{$key};
-            delete $self->{$key};
-            $val->release();
-        }
-    }
-
-    ###########################################################################
-    # Explicitly destruct anything that we _know_ about, and that wasn't caught
-    # above.  We do this only so that when we do our checks below that we can
-    # be sure that we've already freed up all of the memory.
-    ###########################################################################
-    delete $self->{'created'};
-    delete $self->{'modified'};
-    delete $self->{'strings'};
-    delete $self->{'glyphs'};
-
-    ###########################################################################
-    # Now that we think that we've gone back and freed up all of the memory
-    # that we were using, check to make sure that we don't have any keys left
-    # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
-    # message.
-    ###########################################################################
-
-## SILENCED BY FREDO
-##
-#    foreach my $key (keys %{$self})
-#    {
-#        warn ref($self) . " still has '$key' key left after release.\n";
-#    }
-
-    ###########################################################################
-    # All done cleaning up.
-    ###########################################################################
-}
 
 =head2 $t->read
 
@@ -376,7 +280,18 @@ themselves by setting isDirty above 1. This method resets that accordingly.
 =cut
 
 sub update
-{ $_[0]{' isDirty'} = 1 if $_[0]{' isDirty'} > 1; $_[0]; }
+{
+    my ($self) = @_;
+
+    if ($self->{' isDirty'})
+    {
+        $self->read;
+        $self->{' isDirty'} = 0;
+        return $self;
+    }
+    else
+    { return undef; }
+}
 
 
 =head2 $t->empty
@@ -395,6 +310,108 @@ sub empty
 
     map {delete $self->{$_} unless $keep{$_}} keys %$self;
     $self;
+}
+
+
+=head2 $t->release
+
+Releases ALL of the memory used by this table, and all of its component/child
+objects.  This method is called automatically by
+'C<Font::TTF::Font-E<GT>release>' (so you don't have to call it yourself).
+
+B<NOTE>, that it is important that this method get called at some point prior
+to the actual destruction of the object.  Internally, we track things in a
+structure that can result in circular references, and without calling
+'C<release()>' these will not properly get cleaned up by Perl.  Once this
+method has been called, though, don't expect to be able to do anything with the
+C<Font::TTF::Table> object; it'll have B<no> internal state whatsoever.
+
+B<Developer note:>  As part of the brute-force cleanup done here, this method
+will throw a warning message whenever unexpected key values are found within
+the C<Font::TTF::Table> object.  This is done to help ensure that any
+unexpected and unfreed values are brought to your attention so that you can bug
+us to keep the module updated properly; otherwise the potential for memory
+leaks due to dangling circular references will exist.
+
+=cut
+
+sub release
+{
+    my ($self) = @_;
+
+    ###########################################################################
+    # First, close any open ' INFILE' handle, BUT ONLY IF WE HAVE NO 'PARENT'
+    # object (otherwise we'll leave it up to the 'PARENT' to close the file).
+    ###########################################################################
+    if (exists $self->{' INFILE'} && !exists $self->{'PARENT'})
+    {
+        close( $self->{' INFILE'} );
+        delete $self->{' INFILE'};
+    }
+
+    ###########################################################################
+    # Go through our list of keys, and clean things up as needed:
+    # - All 'parent' (and derivitive) keys get deleted without explicit
+    #   destruction, to break circular references.
+    # - All scalar values get deleted explicitly, to free up their memory.
+    #   This is generally handled well by Perl, but our checks later on require
+    #   that we free them up explicitly.
+    # - All 'Font::TTF::*' elements get explicitly destructed, to free up all
+    #   of their memory and break potential circular references.
+    ###########################################################################
+    # NOTE: The checks below have been ordered such that the most commonly
+    #       occurring items get checked for and cleaned out first.
+    ###########################################################################
+    # FURTHER NOTE: Reducing the checks below to the least amount of checks
+    #               possible did not create any noticable performance
+    #               improvement.
+    ###########################################################################
+    foreach my $key (keys %{$self})
+    {
+        my $ref = ref($self->{$key});
+        if (($ref eq '') || ($ref eq 'ARRAY') || ($ref eq 'HASH'))
+        {
+            # Remove scalar/hash/list value.
+            delete $self->{$key};
+        }
+        elsif ($ref =~ /^Font::TTF::/o)
+        {
+            if ($key =~ /parent/io)
+            {
+                # Remove potential circular reference.
+                delete $self->{$key};
+            }
+            else
+            {
+                # Sub-element, explicitly destruct.
+                my $val = $self->{$key};
+                delete $self->{$key};
+                $val->release();
+            }
+        }
+    }
+
+    ###########################################################################
+    # Now that we think that we've gone back and freed up all of the memory
+    # that we were using, check to make sure that we don't have any keys left
+    # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
+    # message.
+    ###########################################################################
+    foreach my $key (keys %{$self})
+    {
+        warn ref($self) . " still has '$key' key left after release.\n";
+    }
+
+    ###########################################################################
+    # All done cleaning up.
+    ###########################################################################
+}
+
+sub __dumpvar__
+{
+    my ($self, $key) = @_;
+
+    return ($key eq ' PARENT' ? '...parent...' : $self->{$key});
 }
 
 1;

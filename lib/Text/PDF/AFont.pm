@@ -151,6 +151,8 @@ sub readAFM {
 		$self->{' AFM'}->{wx}->{'.notdef'} = 0;
 		$self->{' AFM'}->{bbox}{'.notdef'} = "0 0 0 0";
 	}
+	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//cg;
+
 }
 
 sub readPSF {
@@ -307,6 +309,7 @@ sub readPSF {
 	$h{'descender'}=0;
 
 	$self->{' AFM'}={%h};
+	$self->{' AFM'}->{fontname}=~s/[\x00-\x1f]+//cg;
 	return(%h);
 }
 
@@ -438,7 +441,7 @@ sub encodeProper {
 		$self->{' AFM'}->{'char'}[$_]	
 	} ($first..$last);
 	$self->{'Widths'}=PDFArray(@w);
-
+	return($self);
 }
 
 sub newNonEmbed {
@@ -448,6 +451,7 @@ sub newNonEmbed {
 	
 	$self = $file2 ? $class->SUPER::new : $class;
 	$self->readAFM($file2) if($file2);
+	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//cgm;
 	$self->{'Type'} = PDFName("Font");
 	$self->{'Subtype'} = PDFName("Type1");
 	$self->{'BaseFont'} = PDFName($self->{' AFM'}->{'fontname'});
@@ -528,6 +532,7 @@ sub newNonEmbedLight {
 	
 	$self = $class->SUPER::new;
 	$self->readAFM($file2) if($file2);
+	$self->{' AFM'}->{'fontname'}=~s/[\x00-\x1f]+//cgm;
 	$self->{'Type'} = PDFName("Font");
 	$self->{'Subtype'} = PDFName("Type1");
 	$self->{'BaseFont'} = PDFName($self->{' AFM'}->{'fontname'} || $name);
@@ -690,7 +695,7 @@ sub width
     my ($self, $text) = @_;
     my ($width);
     foreach (unpack("C*", $text))
-    { $width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]}; }
+    { $width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]||0}||0; }
     $width / 1000;
 }
 

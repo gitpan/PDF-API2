@@ -22,12 +22,13 @@ to entries in the appropriate PDF dictionaries.
 
 use strict;
 use vars qw(@ISA @cp1252 $subcount);
+no warnings qw(uninitialized);
 
 use Text::PDF::Dict;
 use Text::PDF::Utils;
 @ISA = qw(Text::PDF::Dict);
 
-use Font::TTF::Font;
+use Font::TTF::Font 0.26;
 
 @cp1252 = (0 .. 127,
        0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
@@ -79,7 +80,7 @@ sub new
     }
     $name = $font->{'name'}->read->find_name(4) || return undef;
     $subf = $font->{'name'}->find_name(2);
-    $name =~ s/\s//oig;
+    $name =~ s/\s//og;
     $name .= $subf if ($subf =~ m/^Regular$/oi);
     $self->{'BaseFont'} = PDFName(($self->{' subname'}||'') . $name);
     $subcount++;
@@ -98,19 +99,25 @@ sub new
 	$self->{' ascent'}=int($font->{'hhea'}->read->{'Ascender'} * 1000 / $upem);
 	$self->{' descent'}=int($font->{'hhea'}{'Descender'} * 1000 / $upem);
 
-	$self->{' capheight'}=int(
-		$font->{'loca'}->read->{'glyphs'}[
-			$font->{'post'}{'STRINGS'}{"H"}
-		]->read->{'yMax'}
-		* 1000 / $upem
-	)||0;
+	eval {
+		$self->{' capheight'}=int(
+			$font->{'loca'}->read->{'glyphs'}[
+				$font->{'post'}{'STRINGS'}{"H"}||0
+			]->read->{'yMax'}
+			* 1000 / $upem
+		);
+	};
+	$self->{' capheight'}||=0;
 	
-	$self->{' xheight'}=int(
-		$font->{'loca'}->read->{'glyphs'}[
-			$font->{'post'}{'STRINGS'}{"x"}
-		]->read->{'yMax'}
-		* 1000 / $upem
-	)||0;
+	eval {
+		$self->{' xheight'}=int(
+			$font->{'loca'}->read->{'glyphs'}[
+				$font->{'post'}{'STRINGS'}{"x"}||0
+			]->read->{'yMax'}
+			* 1000 / $upem
+		);
+	};
+	$self->{' xheight'}||=0;
 
 # find the top of an H or the null box! Or maybe we should just duck and say 0?
     $f->{'CapHeight'} = PDFNum(0);
@@ -268,13 +275,9 @@ sub copy
 
 sub outobjdeep
 {
-    my ($self, $fh, $pdf, $passthru) = @_;
+    my ($self, $fh, $pdf, %opts) = @_;
     
-    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
-            $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
-    }
-
-    return $self->SUPER::outobjdeep($fh, $pdf) if $passthru;
+    return $self->SUPER::outobjdeep($fh, $pdf) if($opts{passthru});
 
     my ($f) = $self->{' font'};
     my ($d) = $self->{'FontDescriptor'};
@@ -301,7 +304,7 @@ sub outobjdeep
             { $self->{'Widths'}{' val'}[$i - $self->{' minCode'}] = $d->{'MissingWidth'}; }
         }
         $f->{'glyf'}->read;
-        for ($i = 0; $i <= $#{$f->{'loca'}{'glyphs'}}; $i++)
+        for ($i = 0; $i < scalar @{$f->{'loca'}{'glyphs'}}; $i++)
         {
             next if vec($vec, $i, 1);
             $f->{'loca'}{'glyphs'}[$i] = undef;
@@ -312,7 +315,7 @@ sub outobjdeep
         $s->{'Length1'} = PDFNum(length($s->{' stream'}));
     }
 
-    $self->SUPER::outobjdeep($fh, $pdf);
+    $self->SUPER::outobjdeep($fh, $pdf, %opts);
 }
 
 1;

@@ -3,6 +3,7 @@ package Text::PDF::Pages;
 use strict;
 use vars qw(@ISA);
 @ISA = qw(Text::PDF::Dict);
+no warnings qw(uninitialized);
 
 use Text::PDF::Dict;
 use Text::PDF::Utils;
@@ -90,7 +91,7 @@ sub add_page
 {
     my ($self, $page, $index) = @_;
     my ($p, $nt, $s, @path, $c, $m);
-    $index=$index || 0;
+
     for ($p = $self; defined $p->{'Parent'}; $p = $p->{'Parent'})
     { }
 
@@ -125,7 +126,7 @@ sub add_page
         while (--$c < 0)
         {
             shift(@path);
-            return undef if ($#path < 0);
+            return undef if (scalar @path == 0);
             ($p, $c, $m) = @{$path[0]};
         }
         $path[0] = [$p, $c, $m];
@@ -141,7 +142,7 @@ sub add_page
         while (++$c > $m)
         {
             shift(@path);
-            return undef if ($#path < 0);
+            return undef if (scalar @path == 0);
             ($p, $c, $m) = @{$path[0]};
         }
         $path[0] = [$p, $c, $m];
@@ -150,7 +151,7 @@ sub add_page
         $index--;
     }
 
-    while ($#path > 0 && $m >= 7 && ($c == 0 || $c > $m))
+    while (scalar @path > 1 && $m >= 7 && ($c == 0 || $c > $m))
     {
         shift(@path);
         if ($c > $m)
@@ -241,17 +242,23 @@ sub add_font
     my ($self, $font, $pdf) = @_;
     my ($name) = $font->{'Name'}->val;
     my ($dict) = $self->find_prop('Resources');
+    my ($rdict);
 
     return $self if ($dict ne "" && defined $dict->{'Font'} && defined $dict->{'Font'}{$name});
     unless (defined $self->{'Resources'})
     {
-        $dict = $dict ne ""? $dict->copy($pdf) : PDFDict();
+        $dict = $dict ne "" ? $dict->copy($pdf) : PDFDict();
         $self->{'Resources'} = $dict;
     }
+    else
+    { $dict = $self->{'Resources'}; }
     $dict->{'Font'} = PDFDict() unless defined $self->{'Resources'}{'Font'};
-    $dict->{'Font'}{$name} = $font;
+    $rdict = $dict->{'Font'}->val;
+    $rdict->{$name} = $font unless ($rdict->{$name});
     if (ref $dict ne 'HASH' && $dict->is_obj($pdf))
     { $pdf->out_obj($dict); }
+    if (ref $rdict ne 'HASH' && $rdict->is_obj($pdf))
+    { $pdf->out_obj($rdict); }
     $self;
 }
 
@@ -305,7 +312,7 @@ sub proc_set
     {
         foreach $e ($dict->{'ProcSet'}->elementsof)
         { @temp = grep($_ ne $e, @temp); }
-        return $self if $#temp < 0;
+        return $self if (scalar @temp == 0);
         @entries = @temp if defined $self->{'Resources'};
     }
 

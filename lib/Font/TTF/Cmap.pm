@@ -6,17 +6,12 @@ Font::TTF::Cmap - Character map table
 
 =head1 DESCRIPTION
 
-Looks after the character map. The primary structure used for handling a cmap
-is the L<Font::TTF::Segarr> which handles the segmented arrays of format 4 tables,
-and in a simpler form for format 0 tables.
+Looks after the character map. For ease of use, the actual cmap is held in
+a hash against codepoint. Thus for a given table:
 
-Due to the complexity of working with segmented arrays, most of the handling of
-such arrays is via methods rather than via instance variables.
+    $gid = $font->{'cmap'}{'Tables'}[0]{'val'}{$code};
 
-One important feature of a format 4 table is that it always contains a segment
-with a final address of 0xFFFF. If you are creating a table from scratch this is
-important (although L<Font::TTF::Segarr> can work quite happily without it).
-
+Note that C<$code> should be a true value (0x1234) rather than a string representation.
 
 =head1 INSTANCE VARIABLES
 
@@ -142,7 +137,7 @@ sub read
                 $range = unpack("n", substr($dat, ($j << 1) + $num * 6 + 2, 2));
                 for ($k = $start; $k <= $end; $k++)
                 {
-                    if ($range == 0)
+                    if ($range == 0 || $range == 65535)         # support the buggy FOG with its range=65535 for final segment
                     { $id = $k + $delta; }
                     else
                     { $id = unpack("n", substr($dat, ($j << 1) + $num * 6 +
@@ -184,8 +179,8 @@ sub read
 
 =head2 $t->ms_lookup($uni)
 
-Given a Unicode value in the MS table (Platform 3, Encoding 1) locates that
-table and looks up the appropriate glyph number from it.
+Finds a Unicode table, giving preference to the MS one, and looks up the given
+Unicode codepoint in it to find the glyph id.
 
 =cut
 
@@ -200,7 +195,7 @@ sub ms_lookup
 
 =head2 $t->find_ms
 
-Finds the Microsoft Unicode table and sets the C<mstable> instance variable
+Finds the a Unicode table, giving preference to the Microsoft one, and sets the C<mstable> instance variable
 to it if found. Returns the table it finds.
 
 =cut
@@ -392,7 +387,7 @@ sub XML_element
 
 =head2 @map = $t->reverse([$num])
 
-Returns a reverse map of the table of given number or the Microsoft
+Returns a reverse map of the table of given number or the Unicode
 cmap. I.e. given a glyph gives the Unicode value for it.
 
 =cut
@@ -404,7 +399,7 @@ sub reverse
     my (@res, $code, $gid);
 
     while (($code, $gid) = each(%{$table->{'val'}}))
-    { $res[$gid] = $code unless (($res[$gid] || 0) > 0 && ($res[$gid] || 0) < $code); }
+    { $res[$gid] = $code unless ($res[$gid] > 0 && $res[$gid] < $code); }
     @res;
 }
 

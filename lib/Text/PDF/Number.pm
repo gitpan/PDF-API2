@@ -10,6 +10,7 @@ Text::PDF::Number - Numbers in PDF. Inherits from L<Text::PDF::String>
 
 use strict;
 use vars qw(@ISA);
+no warnings qw(uninitialized);
 
 use Text::PDF::String;
 @ISA = qw(Text::PDF::String);

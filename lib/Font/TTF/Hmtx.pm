@@ -138,6 +138,36 @@ sub _out
 }
 
 
+=head2 $t->update
+
+Updates the lsb values from the xMin from the each glyph
+
+=cut
+
+sub update
+{
+    my ($self) = @_;
+    my ($numg) = $self->{' PARENT'}{'maxp'}{'numGlyphs'};
+    my ($i);
+
+    return undef unless ($self->SUPER::update);
+# lsb & xMin must always be the same, regardless of any flags!
+#    return $self unless ($self->{' PARENT'}{'head'}{'flags'} & 2);        # lsb & xMin the same
+
+    $self->{' PARENT'}{'loca'}->update;
+    for ($i = 0; $i < $numg; $i++)
+    {
+        my ($g) = $self->{' PARENT'}{'loca'}{'glyphs'}[$i];
+        if ($g)
+        { $self->{'lsb'}[$i] = $g->read->update_bbox->{'xMin'}; }
+        else
+        { $self->{'lsb'}[$i] = 0; }
+    }
+    $self->{' PARENT'}{'head'}{'flags'} |= 2;
+    $self;
+}
+    
+
 =head2 $t->out_xml($context, $depth)
 
 Outputs the table in XML

@@ -101,14 +101,13 @@ sub update
     my ($num);
     my ($i, $maw, $mlsb, $mrsb, $mext, $aw, $lsb, $ext);
 
+    return undef unless ($self->SUPER::update);
     return undef unless (defined $vmtx && defined $self->{' PARENT'}{'loca'});
     $vmtx->read->update;
     $self->{' PARENT'}{'loca'}->read->update;
     $glyphs = $self->{' PARENT'}{'loca'}{'glyphs'};
     $num = $self->{' PARENT'}{'maxp'}{'numGlyphs'};
 
-    return undef unless ($vmtx->{' isDirty'} || $self->{' PARENT'}{'loca'}{' isDirty'});
-    
     for ($i = 0; $i < $num; $i++)
     {
         $aw = $vmtx->{'advance'}[$i];
@@ -127,8 +126,6 @@ sub update
     $self->{'minBottomSideBearing'} = $mrsb;
     $self->{'yMaxExtent'} = $mext;
     $self->{'numberOfVMetrics'} = $vmtx->numMetrics;
-
-    $self->{' isdirty'} = 1;
     $self;
 }
 

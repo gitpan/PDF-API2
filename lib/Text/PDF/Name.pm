@@ -2,6 +2,7 @@ package Text::PDF::Name;
 
 use strict;
 use vars qw(@ISA);
+no warnings qw(uninitialized);
 
 use Text::PDF::String;
 @ISA = qw(Text::PDF::String);
@@ -23,7 +24,7 @@ sub convert
 {
     my ($self, $str) = @_;
 
-    $str =~ s/^\\//oi;
+    $str =~ s/^\\//o;
     $str =~ s/\#([0-9a-f]{2})/hex($1)/oige;
     return $str;
 }
@@ -40,7 +41,7 @@ sub as_pdf
     my ($self) = @_;
     my ($str) = $self->{'val'};
     
-    $str =~ s|([\000-\020%()\[\]{}<>#/])|"#".sprintf("%02X", ord($1))|oige;
+    $str =~ s|([\000-\020%()\[\]{}<>#/])|"#".sprintf("%02X", ord($1))|oge;
     return ("/" . $str);
 }
 

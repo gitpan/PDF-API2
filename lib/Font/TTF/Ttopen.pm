@@ -311,6 +311,13 @@ sub read
     for ($i = 0; $i < $nFeat; $i++)
     {
     	($tag, $off) = unpack("a4n", substr($dat, $i * 6, 6));
+    	while (defined $l->{$tag})
+    	{
+    	    if ($tag =~ m/(.*?)\s_(\d+)$/o)
+    	    { $tag = $1 . " _" . ($2 + 1); }
+    	    elsef
+    	    { $tag .= " _0"; }
+    	}
 	    $l->{$tag}{' OFFSET'} = $off + $oFeat;
 	    $l->{$tag}{'INDEX'} = $i;
 	    push (@{$l->{'FEAT_TAGS'}}, $tag);
@@ -449,7 +456,7 @@ sub out
 
 # First sort the features
     $i = 0;
-    foreach $t (sort grep {length($_) == 4} %{$self->{'FEATURES'}})
+    foreach $t (sort grep {length($_) == 4 || m/\s_\d+$/o} %{$self->{'FEATURES'}})
     {
         $self->{'FEATURES'}{'INDEX'} = $i++;
         push (@tags, $t);

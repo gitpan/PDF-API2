@@ -2,6 +2,7 @@ package Text::PDF::Bool;
 
 use strict;
 use vars qw(@ISA);
+no warnings qw(uninitialized);
 
 use Text::PDF::String;
 @ISA = qw(Text::PDF::String);

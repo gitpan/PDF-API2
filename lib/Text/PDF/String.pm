@@ -11,6 +11,7 @@ that are basically stringlike (Number, Name, etc.)
 
 use strict;
 use vars qw(@ISA %trans %out_trans);
+no warnings qw(uninitialized);
 
 use Text::PDF::Objind;
 @ISA = qw(Text::PDF::Objind);
@@ -57,7 +58,7 @@ sub from_pdf
 }
 
 
-=head2 Text::PDF::String->new($string)
+=head2 Text::PDF::String->new($string, %opts)
 
 Creates a new string object (not a full object yet) from a given string.
 The string is parsed according to input criteria with escaping working.
@@ -66,7 +67,7 @@ The string is parsed according to input criteria with escaping working.
 
 sub new
 {
-    my ($class, $str) = @_;
+    my ($class, $str, %opts) = @_;
     my ($self) = {};
 
     bless $self, $class;
@@ -76,7 +77,7 @@ sub new
 }
 
 
-=head2 $s->convert($str)
+=head2 $s->convert($str, %opts)
 
 Returns $str converted as per criteria for input from PDF file
 
@@ -84,13 +85,13 @@ Returns $str converted as per criteria for input from PDF file
 
 sub convert
 {
-    my ($self, $str) = @_;
+    my ($self, $str, %opts) = @_;
 
     $str =~ s/\\([nrtbf\\()])/$trans{$1}/ogi;
     $str =~ s/\\([0-7]+)/oct($1)/oegi;
     1 while $str =~ s/\<([0-9a-f]{2})/hex($1)."\<"/oige;
     $str =~ s/\<([0-9a-f])\>/hex($1 . "0")/oige;
-    $str =~ s/\<\>//oig;
+    $str =~ s/\<\>//og;
     return $str;
 }
 
@@ -113,17 +114,17 @@ Returns the string formatted for output as PDF
 
 sub as_pdf
 {
-    my ($self,$str,$hexit) = @_;
+    my ($self,$str, %opts) = @_;
     $str = $str || $self->{'val'};
     
-    if($hexit==1) {
-        $str =~ s/(.)/sprintf("%02x", ord($1))/oige;
+    if($opts{-hexit}) {
+        $str =~ s/(.)/sprintf("%02x", ord($1))/oge;
         return "<$str>";
-    } elsif($self->{' nohex'}>0) {
+    } elsif($self->{' nohex'}) {
         $str =~ s/([\n\r\t\b\f\\()])/\\$out_trans{$1}/ogi;
         return "($str)";
     } elsif($str =~ m/[^\n\r\t\b\f\040-\176\200-\377]/oi) {
-        $str =~ s/(.)/sprintf("%02x", ord($1))/oige;
+        $str =~ s/(.)/sprintf("%02x", ord($1))/oge;
         return "<$str>";
     } else {
         $str =~ s/([\n\r\t\b\f\\()])/\\$out_trans{$1}/ogi;
@@ -139,22 +140,12 @@ Outputs the string in PDF format, complete with necessary conversions
 
 sub outobjdeep
 {
-    my ($self, $fh, $pdf) = @_;
+    my ($self, $fh, $pdf, %opts) = @_;
 
-    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
-        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
-    }
-
-    if(defined($pdf->{Encrypt}) && ($self->{' nocrypt'}<1)) {
- 	$fh->print(
- 		$self->as_pdf(
- 			$pdf->{Encrypt}->encrypt($self->val)
- 		)
- 	);
-    } elsif($self->{' nohex'}==1) {
-	$fh->print($self->as_pdf($self->val,0));
-    } elsif($self->{' ashex'}==1) {
- 	$fh->print($self->as_pdf($self->val,1));
+    if($self->{' nohex'}) {
+	$fh->print($self->as_pdf($self->val));
+    } elsif($self->{' ashex'}) {
+ 	$fh->print($self->as_pdf($self->val, -hexit => 1));
     } else {
 	$fh->print($self->as_pdf);
     }

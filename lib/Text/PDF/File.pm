@@ -125,6 +125,7 @@ is in PDF which contains the location of the previous cross-reference table.
 use strict;
 no strict "refs";
 use vars qw($cr %types $VERSION);
+no warnings qw(uninitialized);
 
 use IO::File;
 
@@ -139,7 +140,12 @@ use Text::PDF::Number;
 use Text::PDF::Objind;
 use Text::PDF::String;
 
-$VERSION = "0.13";      # MJPH  23-MAR-2001     General bug fix release
+$VERSION = "0.18";      # MJPH   1-DEC-2001     add encryption hooks
+#$VERSION = "0.17";      # GST   18-JUL-2001     Handle \) in strings and tidy up endobj handling, no uninitialized warnings
+#$VERSION = "0.16";      # GST   18-JUL-2001     Major performance tweaks
+#$VERSION = "0.15";      # GST   30-MAY-2001     Memory leaks fixed
+#$VERSION = "0.14";      # MJPH   2-MAY-2001     More little bug fixes, added read_objnum
+#$VERSION = "0.13";      # MJPH  23-MAR-2001     General bug fix release
 #$VERSION = "0.12";      # MJPH  29-JUL-2000     Add font subsetting, random page insertion
 #$VERSION = "0.11";      # MJPH  18-JUL-2000     Add pdfstamp.plx and more debugging
 #$VERSION = "0.10";	     # MJPH	 27-JUN-2000     Tidy up some bugs - names
@@ -165,7 +171,7 @@ BEGIN
     foreach $type (keys %types)
     {
         $t = $types{$type};
-        $t =~ s|::|/|oig;
+        $t =~ s|::|/|og;
         require "$t.pm";
     }
 }
@@ -242,8 +248,8 @@ sub open
     $fh->seek(0, 2);            # go to end of file
     $end = $fh->tell();
     $self->{' epos'} = $end;
-    $fh->seek($end - 32, 0);
-    $fh->read($buf, 32);
+    $fh->seek($end - 40, 0);
+    $fh->read($buf, 40);
     if ($buf !~ m/startxref$cr([0-9]+)$cr\%\%eof/oi)
     { die "Malformed PDF file $fname"; }
     $xpos = $1;
@@ -254,12 +260,12 @@ sub open
     return $self;
 }
 
-=head2 $p->release
+=head2 $p->release()
 
 Releases ALL of the memory used by the PDF document and all of its component
 objects.  After calling this method, do B<NOT> expect to have anything left in
 the C<Text::PDF::File> object (so if you need to save, be sure to do it before
-calling this method).
+calling this method).  
 
 B<NOTE>, that it is important that you call this method on any
 C<Text::PDF::File> object when you wish to destruct it and free up its memory.
@@ -275,7 +281,7 @@ will throw a warning message whenever unexpected key values are found within
 the C<Text::PDF::File> object.  This is done to help ensure that any unexpected
 and unfreed values are brought to your attention so that you can bug us to keep
 the module updated properly; otherwise the potential for memory leaks due to
-dangling circular references will exist.
+dangling circular references will exist.  
 
 =cut
 
@@ -284,85 +290,45 @@ sub release
     my ($self) = @_;
 
     ###########################################################################
-    # Go through our list of keys and clean things up as needed:
-    # - All scalar values get deleted explicitly, to free up their memory.
-    #   This is generally handled well by Perl, but our checks later on require
-    #   that we free them up explicitly.
-    # - All 'Text::PDF::*' elements get explicitly destructed, to free up all
-    #   of their memory and break potential circular references.
-    # - All 'IO::File' objects get silently destructed; we know there are a
-    #   few, and rather than name them all explicitly, we'll just clean them up
-    #   here by type.
-    # - All 'HASH' sub-structures get marched and have all of their values
-    #   explicitly removed; some of these contain other 'Text::PDF::*'
-    #   references.
+    # Go through our list of keys/values and clean things up as needed.  We'll
+    # forcefully free up all of the memory for all of the values in our
+    # anonymous hash, and then recursively process all sub-data-structures to
+    # make sure that all of those get cleaned up properly as well:
+    # - Scalar values get explicitly deleted (as part of the mass cleanup).
+    # - Hash/List refs get their values added in to the list of things to
+    #   cleanup so we can process the structures recursively.
+    # - 'Text::PDF::*' elements get explicitly destructed to free up their
+    #   memory and break any potential circular references.
+    # - 'IO::File' elements get cleaned up as part of the mass cleanup, and
+    #   aren't explicitly listed below (although there are some in our
+    #   structure).
     ###########################################################################
-    foreach my $key (keys %{$self})
+    # NOTE: The checks below have been ordered such that the most commonly
+    #       occurring items get checked for and cleaned out first.
+    ###########################################################################
+    # FURTHER NOTE: Reducing the checks below to the least amount of checks
+    #               possible did not create any noticable performance
+    #               improvement.
+    ###########################################################################
+    my @tofree = values %{$self};
+    map { delete $self->{$_} } keys %{$self};
+    while (my $item = shift @tofree)
     {
-        my $ref = ref($self->{$key});
-        if ($ref eq '')
+        my $ref = ref($item);
+        if ($ref =~ /^Text::PDF::/o)
         {
-            # Remove scalar value.
-            delete $self->{$key};
+            $item->release();
         }
-        elsif ($ref =~ /^Text::PDF::/o)
+        elsif ($ref eq 'ARRAY')
         {
-            # Sub-element, explicitly destruct.
-            my $val = $self->{$key};
-            delete $self->{$key};
-	    eval {
-        	$val->release();
-	    };
-        }
-        elsif ($ref eq 'IO::File')
-        {
-            # IO object, destruct silently.
-            delete $self->{$key};
+            push( @tofree, @{$item} );
         }
         elsif ($ref eq 'HASH')
         {
-            # Sub-hash; march the hash keys and clean up all 'Text::PDF::*'
-            # objects.
-            my $hash = $self->{$key};
-            delete $self->{$key};
-            foreach my $hashkey (keys %{$hash})
-            {
-                my $hashval = $hash->{$hashkey};
-                delete $self->{$key};
-                if (ref($hashval) =~ /^Text::PDF::/o)
-                {
-                    $hashval->release();
-                }
-            }
+            push( @tofree, values %{$item} );
+            map { delete $item->{$_} } keys %{$item};
         }
     }
-
-    ###########################################################################
-    # Explicitly destruct anything that we _know_ about, and that wasn't caught
-    # above.  We do this only so that when we do our checks below that we can
-    # be sure that we've already freed up all of the memory.
-    ###########################################################################
-    delete $self->{' outlist'};
-    delete $self->{' printed'};
-    delete $self->{' free'};
-
-    ###########################################################################
-    # Now that we think that we've gone back and freed up all of the memory
-    # that we were using, check to make sure that we don't have any keys left
-    # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
-    # message.
-    ###########################################################################
-    
-## SILENCED BY FREDO
-##
-#    foreach my $key (keys %{$self})
-#    {
-#        warn ref($self) . " still has '$key' key left after release.\n";
-#    }
-
-    ###########################################################################
-    # All done cleaning up.
-    ###########################################################################
 }
 
 =head2 $p->append_file()
@@ -401,18 +367,15 @@ sub append_file
     else
     { $tdict->{'Root'} = $self->{'Root'}; }
     $tdict->{'Size'} = $self->{'Size'};
-    $tdict->{' nocrypt'} = 1;
-    $tdict->{'Encrypt'} = $self->{'Encrypt'} if(defined $self->{'Encrypt'});
 
 # added v0.09
-    foreach $t (grep ($_ !~ m/^\s/oi, keys %$self))
+    foreach $t (grep ($_ !~ m/^\s/o, keys %$self))
     { $tdict->{$t} = $self->{$t} unless defined $tdict->{$t}; }
 
     $fh->seek($self->{' epos'}, 0);
     $self->out_trailer($tdict);
     close($self->{' OUTFILE'});
 }
-
 
 =head2 $p->out_file($fname)
 
@@ -457,7 +420,7 @@ sub create_file
     }
 
     $self->{' OUTFILE'} = $fh;
-    $fh->print("%PDF-1." . ($self->{' version'} || "2") . "\n");
+    $fh->print('%PDF-1.' . ($self->{' version'} || '2') . "\n");
     $fh->print("%Çì¢\n");              # and some binary stuff in a comment
     $self;
 }
@@ -475,19 +438,35 @@ sub close_file
     my ($fh, $tdict, $t);
     
     $tdict = PDFDict();
-    $tdict->{' nocrypt'} = 1;
     $tdict->{'Info'} = $self->{'Info'} if defined $self->{'Info'};
-    $tdict->{'ID'} = $self->{'ID'} if defined $self->{'ID'};
-    $tdict->{'Root'} = defined($self->{' newroot'}) ? $self->{' newroot'} : $self->{'Root'};
-    $tdict->{'Encrypt'} = $self->{'Encrypt'} if(defined $self->{'Encrypt'});
+#   $tdict->{'ID'} = $self->{'ID'} if defined $self->{'ID'};
+    $tdict->{'Root'} = $self->{' newroot'} ne "" ? $self->{' newroot'} : $self->{'Root'};
 
-# remove all freed objects from the outlist
-    @{$self->{' outlist'}} = grep(!$_->{' isfree'}, @{$self->{' outlist'}}) unless ($self->{' update'});
+# remove all freed objects from the outlist, AND the outlist_cache
+    unless ($self->{' update'})
+    {
+        my @newoutlist;
+        foreach my $item (@{$self->{' outlist'}})
+        {
+            if ($item->{' isfree'})
+            {
+                delete $self->{' outlist_cache'}{$item};
+            }
+            else
+            {
+                push( @newoutlist, $item );
+            }
+        }
+        $self->{' outlist'} = \@newoutlist;
+    }
+
+
+
     $tdict->{'Size'} = $self->{'Size'} || PDFNum(1);
     $tdict->{'Prev'} = PDFNum($self->{' loc'}) if ($self->{' loc'});
     if ($self->{' update'})
     {
-        foreach $t (grep ($_ !~ m/^\s/oi, keys %$self))
+        foreach $t (grep ($_ !~ m/^[\s\-]/o, keys %$self))
         { $tdict->{$t} = $self->{$t} unless defined $tdict->{$t}; }
 
         $fh = $self->{' INFILE'};
@@ -501,7 +480,7 @@ sub close_file
     $self;
 }
 
-=head2 ($value, $str) = $p->readval($str)
+=head2 ($value, $str) = $p->readval($str, %opts)
 
 Reads a PDF value from the current position in the file. If $str is too short
 then read some more from the current location in the file until the whole object
@@ -519,31 +498,31 @@ sub readval
     my ($res, $key, $value, $k);
 
     $str = update($fh, $str);
-    if ($str =~ m/^\<\<\s*$cr?/oi)                                      # dictionary
+    if ($str =~ m/^\<\<\s*$cr?(.*?)$/so)
     {
-        $str = $';
+        $str = $1;
         $str = update($fh, $str);
         $res = PDFDict();
-        while ($str !~ m/^\>\>$cr?/oi)
+        while ($str !~ m/^\>\>$cr?/o)
         {
-            $str = update($fh, $str);
-            if ($str =~ m|^/(\w+)$cr?|oi)
+            if ($str =~ m|^/([a-zA-Z0-9+\-!\"\$\&\'\*\,\.\:\;\=\?\@\\\^\_\`\|\~]+)$cr?(.*?)$|so)
             {
-                $k = $1; $str = $';
+                $k = $1;
+                $str = $2;
 #                $key = PDFName($k);
-                ($value, $str) = $self->readval($str);
+                ($value, $str) = $self->readval($str, %opts);
                 $res->{$k} = $value;
-            } else
+            } elsif ($str =~ m/^$cr(.*?)$/so)
             {
-                $str =~ m/$cr/oi;
-                $str = $';
+                $str = $1;
             }
+        $str = update($fh, $str);                           # thanks gareth.jones@stud.man.ac.uk
         }
-        $str =~ s/^\>\>$cr?//oi;
+        $str =~ s/^\>\>$cr?//o;
         $str = update($fh, $str);
-        if ($str =~ m/^stream$cr/oi && $res->{'Length'}->val != 0)           # stream
+        if (($str =~ m/^stream$cr(.*?)$/soi) && ($res->{'Length'}->val != 0))           # stream
         {
-            $str = $';
+            $str = $1;
             $k = $res->{'Length'}->val;
             $res->{' streamsrc'} = $fh;
             $res->{' streamloc'} = $fh->tell - length($str);
@@ -555,23 +534,22 @@ sub readval
                     $k -= length($str);
                     read ($fh, $str, $k + 11);          # slurp the whole stream!
                 } else
-                { $value = ""; }
+                { $value = ''; }
                 $value .= substr($str, 0, $k);
                 $res->{' stream'} = $value;
                 $res->{' nofilt'} = 1;
                 $str = update($fh, $str);
-                $str =~ m/^endstream$cr/oi;
-                $str = $';
+                $str =~ s/^endstream$cr//oi;
             }
         }
 
         bless $res, $types{$res->{'Type'}->val}
                 if (defined $res->{'Type'} && defined $types{$res->{'Type'}->val});
-    } elsif ($str =~ m/^([0-9]+)\s+([0-9]+)\s+R$cr?/o)                  # objind
+    } elsif ($str =~ m/^([0-9]+)\s+([0-9]+)\s+R$cr?(.*?)$/so)                  # objind
     {
         $k = $1;
         $value = $2;
-        $str = $';
+        $str = $3;
         unless ($res = $self->test_obj($k, $value))
         {
             $res = Text::PDF::Objind->new();
@@ -581,14 +559,14 @@ sub readval
         }
         $res->{' parent'} = $self;
         $res->{' realised'} = 0;
-    } elsif ($str =~ m/^([0-9]+)\s+([0-9]+)\s+obj$cr?/oi)               # object data
+    } elsif ($str =~ m/^([0-9]+)\s+([0-9]+)\s+obj$cr?(.*?)$/soi)               # object data
     {
         my ($obj);
         
         $k = $1;
         $value = $2;
-        $str = $';
-        ($obj, $str) = $self->readval($str, %opts);
+        $str = $3;
+        ($obj, $str) = $self->readval($str, %opts, 'objnum' => $k, 'objgen' => $value);
         if ($res = $self->test_obj($k, $value))
         { $res->merge($obj); }
         else
@@ -597,51 +575,49 @@ sub readval
             $self->add_obj($res, $k, $value);
             $res->{' realised'} = 1;
         }
-    } elsif ($str =~ m{^/([a-z0-9+\-!\"\$\&\'\*\,\.\:\;\=\?\@\\\^\_\`\|\~]+)$cr?}oi)        # name
-#    } elsif ($str =~ m{^/([a-z]+)$cr?}oi)        # name
+        $str = update($fh, $str);       # thanks to kundrat@kundrat.sk
+        $str =~ s/^endobj$cr//o;
+    } elsif ($str =~ m{^/([a-zA-Z0-9+\-!\"\$\&\'\*\,\.\:\;\=\?\@\\\^\_\`\|\~]+)$cr?(.*?)$}so)        # name
     {
+        # " <- Fix colourization
         $value = $1;
-        $str = $';
+        $str = $2;
         $res = Text::PDF::Name->from_pdf($value);
-    } elsif ($str =~ m/^\(/oi)                                          # string
+    } elsif (0 == index( $str, '(' ))
     {
-        $str = $';
-        $fh->read($str, 255, length($str)) while ($str !~ m/\)/oi);
-        $str =~ m/\)\s*$cr?/oi;
-        $value = $`;
-        $str = $';
+        $str =~ s/^\(//o;
+        $fh->read($str, 255, length($str)) while ($str !~ m/(?:[^\\]\)|^\))/o);     # thanks to kundrat@kundrat.sk
+        ($value, $str) = ($str =~ /^((?:\\.|[^)])*)\)\s*$cr?(.*?)$/so);
         $res = Text::PDF::String->from_pdf($value);
-    } elsif ($str =~ m/^\</oi)                                          # hex-string
+    } elsif (0 == index( $str, '<' ))                                          # hex-string
     {
-        $str = $';
-        $fh->read($str, 255, length($str)) while ($str !~ m/\>/oi);
-        $str =~ m/\>\s*$cr?/oi;
-        $value = $`;
-        $str = $';
+        $str =~ s/^<//o;
+        $fh->read($str, 255, length($str)) while (0 > index( $str, '>' ));
+        ($value, $str) = ($str =~ /^(.*?)\>\s*$cr?(.*?)$/so);
         $res = Text::PDF::String->from_pdf("<" . $value . ">");
-    } elsif ($str =~ m/^\[$cr?/oi)                                      # array
+    } elsif ($str =~ m/^\[$cr?/o)                                      # array
     {
-        $str = $';
+        $str =~ s/^\[$cr?//o;
         $res = PDFArray();
-        while ($str !~ m/^\]$cr?/oi)
+        while ($str !~ m/^\]$cr?/o)
         {
             ($value, $str) = $self->readval($str, %opts);
             $res->add_elements($value);
         }
         $str =~ s/^\]$cr?//oi;
-    } elsif ($str =~ m/^((true)|(false))$cr?/oi)                        # boolean
+    } elsif ($str =~ m/^(true|false)$cr?/oi)                        # boolean
     {
         $value = $1;
-        $str = $';
+        $str =~ s/^(?:true|false)$cr?//o;
         $res = Text::PDF::Bool->from_pdf($value);
-    } elsif ($str =~ m/^([+-.0-9]+)\s*$cr?/oi)                             # number
+    } elsif ($str =~ m/^([+-.0-9]+)\s*$cr?/o)                             # number
     {
         $value = $1;
-        $str = $';
+        $str =~ s/^([+-.0-9]+)\s*$cr?//o;
         $res = Text::PDF::Number->from_pdf($value);
-    } elsif ($str =~ m/^(null)$cr?/oi)
+    } elsif ($str =~ m/^null$cr?/oi)
     {
-        $str = $';
+        $str =~ s/^null$cr?//oi;
         $res = undef;
     }
     return ($res, $str);
@@ -661,13 +637,29 @@ sub read_obj
     my ($loc, $res, $str, $oldloc);
 
 #    return ($objind) if $self->{' objects'}{$objind->uid};
-    $loc = $self->locate_obj($objind->{' objnum'}, $objind->{' objgen'});
+    $res = $self->read_objnum($objind->{' objnum'}, $objind->{' objgen'}, %opts) || return undef;
+    $objind->merge($res) unless ($objind eq $res);
+    return $objind;
+}
+
+
+=head2 $ref = $p->read_objnum($num, $gen, %opts)
+
+Returns a fully read object of given number and generation in this file
+
+=cut
+
+sub read_objnum
+{
+    my ($self, $num, $gen, %opts) = @_;
+    my ($res, $loc, $str, $oldloc);
+
+    $loc = $self->locate_obj($num, $gen) || return undef;
     $oldloc = $self->{' INFILE'}->tell;
     $self->{' INFILE'}->seek($loc, 0);
-    ($res, $str) = $self->readval("", %opts);
+    ($res, $str) = $self->readval('', %opts, 'objnum' => $num, 'objgen' => $gen);
     $self->{' INFILE'}->seek($oldloc, 0);
-    $objind->merge($res);
-    return $objind;
+    $res;
 }
 
 
@@ -683,9 +675,9 @@ sub new_obj
 {
     my ($self, $base) = @_;
     my ($res);
-    my ($tdict, $i, $ni, $ng)=(undef,'','','');
+    my ($tdict, $i, $ni, $ng);
 
-    if ($#{$self->{' free'}} >= 0)
+    if (scalar @{$self->{' free'}} > 0)
     {
         $res = shift(@{$self->{' free'}});
         if (defined $base)
@@ -705,7 +697,7 @@ sub new_obj
     $tdict = $self;
     while (defined $tdict)
     {
-        $i = $tdict->{' xref'}{$i}[0] || 0;
+        $i = $tdict->{' xref'}{$i}[0];
         while ($i != 0)
         {
             ($ni, $ng) = @{$tdict->{' xref'}{$i}};
@@ -757,7 +749,15 @@ sub out_obj
 {
     my ($self, $obj) = @_;
 
-    push (@{$self->{' outlist'}}, $obj) unless (grep($_ eq $obj, @{$self->{' outlist'}}));
+    # This is why we've been keeping the outlist CACHE around; to speed
+    # up this method by orders of magnitude (it saves up from having to
+    # grep the full outlist each time through as we'll just do a lookup
+    # in the hash) (which is super-fast).
+    if (!exists $self->{' outlist_cache'}{$obj})
+    {
+        push( @{$self->{' outlist'}}, $obj );
+        $self->{' outlist_cache'}{$obj}++;
+    }
     $obj;
 }
 
@@ -790,6 +790,8 @@ sub remove_obj
 
 # who says it has to be fast
     delete $self->{' objects'}{$objind->uid};
+    delete $self->{' outlist_cache'}{$objind};
+    delete $self->{' printed_cache'}{$objind};
     @{$self->{' outlist'}} = grep($_ ne $objind, @{$self->{' outlist'}});
     @{$self->{' printed'}} = grep($_ ne $objind, @{$self->{' printed'}});
     $self->{' objcache'}{$objind->{' objnum'}, $objind->{' objgen'}} = undef
@@ -812,17 +814,18 @@ that it will not cause the data already output to be changed.
 sub ship_out
 {
     my ($self, @objs) = @_;
-    my ($n, @outlist, $fh, $objind, $i, $j);
+    my ($n, $fh, $objind, $i, $j);
+    my ($objnum, $objgen);
 
     return unless defined($fh = $self->{' OUTFILE'});
     seek($fh, 0, 2);            # go to the end of the file
 
-    @objs = @{$self->{' outlist'}} unless ($#objs >= 0);
+    @objs = @{$self->{' outlist'}} unless (scalar @objs > 0);
     foreach $objind (@objs)
     {
         next unless $objind->is_obj($self);
         $j = -1;
-        for ($i = 0; $i <= $#{$self->{' outlist'}}; $i++)
+        for ($i = 0; $i < scalar @{$self->{' outlist'}}; $i++)
         {
             if ($self->{' outlist'}[$i] eq $objind)
             {
@@ -832,14 +835,22 @@ sub ship_out
         }
         next if ($j < 0);
         splice(@{$self->{' outlist'}}, $j, 1);
+        delete $self->{' outlist_cache'}{$objind};
         next if grep {$_ eq $objind} @{$self->{' free'}};
 
         $self->{' locs'}{$objind->uid} = $fh->tell;
-        $fh->printf("%d %d obj\n", @{$self->{' objects'}{$objind->uid}}[0..1]);
-        $objind->outobjdeep($fh, $self);
+        ($objnum, $objgen) = @{$self->{' objects'}{$objind->uid}}[0..1];
+        $fh->printf("%d %d obj\n", $objnum, $objgen);
+        $objind->outobjdeep($fh, $self, 'objnum' => $objnum, 'objgen' => $objgen);
         $fh->print("\nendobj\n");
-        push (@{$self->{' printed'}}, $objind)
-                unless (grep {$_ eq $objind} @{$self->{' printed'}});
+
+        # Note that we've output this obj, not forgetting to update the cache
+        # of whats printed.
+        unless (exists $self->{' printed_cache'}{$objind})
+        {
+            push( @{$self->{' printed'}}, $objind );
+            $self->{' printed_cache'}{$objind}++;
+        }
     }
     $self;
 }
@@ -893,9 +904,12 @@ sub update
 {
     my ($fh, $str) = @_;
 
-    $fh->read($str, 255, length($str)) while $str !~ m/$cr/oi;
-    while ($str =~ /^\s*\%(.*?)$cr/oi)
-    { $str = $'; $fh->read($str, 255, length($str)) while $str !~ m/$cr/oi; }
+    $fh->read($str, 255, length($str)) while ($str !~ m/$cr/o);
+    while ($str =~ /^\s*\%(.*?)$cr(.*?)$/so)
+    {
+        $str = $2;              # thanks to kundrat@kundrat.sk 
+        $fh->read($str, 255, length($str)) while ($str !~ m/$cr/o);
+    }
     $str;
 }
 
@@ -953,25 +967,25 @@ sub readxrtr
     $fh->read($buf, 22);
     if ($buf !~ m/^xref$cr/oi)
     { die "Malformed xref in PDF file $self->{' fname'}"; }
-    $buf = $';
+    $buf =~ s/^xref$cr//oi;
 
     $xlist = {};
-    while ($buf =~ m/^([0-9]+)\s+([0-9]+)$cr/oi)
+    while ($buf =~ m/^([0-9]+)\s+([0-9]+)$cr(.*?)$/so)
     {
         $xmin = $1;
         $xnum = $2;
-        $buf = $';
+        $buf = $3;
         $xdiff = length($buf);
         
         $fh->read($buf, 20 * $xnum - $xdiff + 15, $xdiff);
-        while ($xnum-- > 0 && $buf =~ s/^0*([0-9]*)\s+0*([0-9]+)\s+(\S)$cr//oi)
+        while ($xnum-- > 0 && $buf =~ s/^0*([0-9]*)\s+0*([0-9]+)\s+(\S)$cr//o)
         { $xlist->{$xmin++} = [$1, $2, $3]; }
     }
 
     if ($buf !~ /^trailer$cr/oi)
     { die "Malformed trailer in PDF file $self->{' fname'} at " . ($fh->tell - length($buf)); }
 
-    $buf = $';
+    $buf =~ s/^trailer$cr//oi;
 
     ($tdict, $buf) = $self->readval($buf);
     $tdict->{' loc'} = $xpos;
@@ -1056,12 +1070,12 @@ sub out_trailer
                 }
             }
             $first = $i;
-            $j = $self->{' objects'}{$xreflist[$i]->uid}[0] if ($i <= $#xreflist);
+            $j = $self->{' objects'}{$xreflist[$i]->uid}[0] if ($i < scalar @xreflist);
         } else
         { $j++; }
     }
     $fh->print("trailer\n");
-    $tdict->outobjdeep($fh, $self, $self);
+    $tdict->outobjdeep($fh, $self);
     $fh->print("\nstartxref\n$tloc\n" . '%%EOF' . "\n");
 }
 
@@ -1079,6 +1093,7 @@ sub _new
 
     bless $self, $class;
     $self->{' outlist'} = [];
+    $self->{' outlist_cache'} = {};     # A cache of whats in the 'outlist'
     $self->{' maxobj'} = 1;
     $self->{' objcache'} = {};
     $self->{' objects'} = {};

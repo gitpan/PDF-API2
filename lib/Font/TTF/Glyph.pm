@@ -175,10 +175,10 @@ information.
     instLen
     hints
 
-For components, the x, y & flags are not required but the following information
-is required for each component.
+For components, the numPoints, x, y, endPoints & flags are not required but
+the following information is required for each component.
 
-    flag                (bits 2, 4, 10, 11, 12)
+    flag                (bits 2, 10, 11, 12)
     glyph
     args
     scale
@@ -547,7 +547,7 @@ sub update
         for ($i = 0; $i <= $#{$self->{'comps'}}; $i++)
         {
             $comp = $self->{'comps'}[$i];
-            $flag = $comp->{'flag'} & 7174;        # bits 2,4,10,11,12
+            $flag = $comp->{'flag'} & 7158;        # bits 2,10,11,12
             $flag |= 1 unless ($comp->{'args'}[0] > -129 && $comp->{'args'}[0] < 128
                     && $comp->{'args'}[1] > -129 && $comp->{'args'}[1] < 128);
             if (defined $comp->{'scale'})
@@ -593,7 +593,7 @@ sub update
     }
     $self->{' DAT'} .= "\000" if (length($self->{' DAT'}) & 1);
     $self->{' OUTLEN'} = length($self->{' DAT'});
-    $self->{' read'} = 1;
+    $self->{' read'} = 2;           # changed from 1 to 2 so we don't read_dat() again
 # we leave numPoints and instLen since maxp stats use this
     $self;
 }

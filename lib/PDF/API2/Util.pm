@@ -2,9 +2,9 @@ package PDF::API2::Util;
 
 use vars qw($VERSION @ISA @EXPORT %colors %winfonts);
 use Math::Trig;
-use POSIX;
+use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 20011118.155246 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 20011128.230503 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Exporter;
 @ISA = qw(Exporter);
@@ -773,7 +773,7 @@ sub opts_from_ttf {
 				if(-f $f) {
 					my %ff=opts_from_ttf($f);
 			#	#	print STDERR " $k :: $kk\n";
-					$winfonts{$kk}={%ff} if(defined %ff);
+					$winfonts{$kk}={%ff} if(%ff);
 				}
 			}	
 		} else {
@@ -789,11 +789,11 @@ sub opts_from_ttf {
 	if(defined $winfonts{$alias}){
 		my %wf=%{$winfonts{$alias}};
 		my $subf;
-		if(($opt{-ttopts}&0x07) == 2) {
+		if((($opt{-ttopts}||0)&0x07) == 2) {
 			$subf=',Bold';
-		} elsif(($opt{-ttopts}&0x07) == 3) {
+		} elsif((($opt{-ttopts}||0)&0x07) == 3) {
 			$subf=',Italic';
-		} elsif(($opt{-ttopts}&0x07) == 4) {
+		} elsif((($opt{-ttopts}||0)&0x07) == 4) {
 			$subf=',BoldItalic';
 		} else {
 			$subf='';
@@ -923,11 +923,11 @@ sub opts_from_pfm {
 	if(defined $winfonts{$alias}){
 		my %wf=%{$winfonts{$alias}};
 		my $subf;
-		if(($opt{-ttopts}&0x07) == 2) {
+		if((($opt{-ttopts}||0)&0x07) == 2) {
 			$subf=',Bold';
-		} elsif(($opt{-ttopts}&0x07) == 3) {
+		} elsif((($opt{-ttopts}||0)&0x07) == 3) {
 			$subf=',Italic';
-		} elsif(($opt{-ttopts}&0x07) == 4) {
+		} elsif((($opt{-ttopts}||0)&0x07) == 4) {
 			$subf=',BoldItalic';
 		} else {
 			$subf='';

@@ -22,6 +22,7 @@ to entries in the appropriate PDF dictionaries.
 
 use strict;
 use vars qw(@ISA);
+no warnings qw(uninitialized);
 
 use Text::PDF::TTFont;
 use Text::PDF::Dict;
@@ -177,7 +178,7 @@ sub width
 }
     
 
-=head2 outobjdeep($fh, $pdf)
+=head2 outobjdeep($fh, $pdf, %opts)
 
 Handles the creation of the font stream including subsetting at this point. So
 if you get this far, that's it for subsetting.
@@ -186,15 +187,11 @@ if you get this far, that's it for subsetting.
 
 sub outobjdeep
 {
-    my ($self, $fh, $pdf) = @_;
+    my ($self, $fh, $pdf, %opts) = @_;
     my ($d) = $self->{'DescendantFonts'}->val->[0];
     my ($f) = $self->{' font'};
     my ($s) = $d->{'FontDescriptor'}{'FontFile2'};
     my ($ffh);
-
-    if($self->is_obj($pdf) && defined $pdf->{Encrypt}) {
-        $pdf->{Encrypt}->init(@{$pdf->{' objects'}{$self->uid}}, $self->{' nocrypt'}>0 ? 0 : 1 );
-    }
 
     if ($self->{' subset'})
     {
@@ -222,7 +219,7 @@ sub outobjdeep
                 @minilist = ();
             } elsif ($mode && !vec($self->{' subvec'}, $i, 1))
             {
-                for ($j = 0; $j <= $#minilist; $j++)
+                for ($j = 0; $j < scalar @minilist; $j++)
                 {
                     if ($j % 20 == 0)
                     {
@@ -248,7 +245,7 @@ sub outobjdeep
     $s->{'Filter'} = PDFArray(PDFName("FlateDecode"));
     $s->{'Length1'} = PDFNum(length($s->{' stream'}));
 
-    $self->SUPER::outobjdeep($fh, $pdf, 1);
+    $self->SUPER::outobjdeep($fh, $pdf, %opts, 'passthru' => 1);
     $self;
 }
 

@@ -3,6 +3,7 @@ package Text::PDF::Page;
 use strict;
 use vars qw(@ISA);
 @ISA = qw(Text::PDF::Pages);
+no warnings qw(uninitialized);
 use Text::PDF::Pages;
 
 use Text::PDF::Utils;

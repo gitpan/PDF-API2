@@ -26,6 +26,7 @@ use vars qw(@EXPORT @ISA);
 @ISA = qw(Exporter);
 @EXPORT = qw(PDFBool PDFArray PDFDict PDFName PDFNum PDFStr
              asPDFBool asPDFName asPDFNum asPDFStr);
+no warnings qw(uninitialized);
 
 
 =head2 PDFBool
@@ -139,7 +140,8 @@ sub unpacku
     my ($str) = @_;
     my (@res);
 
-    return (unpack("U*", $str)) if ($^V && $^V ge 'v5.6.0');
+#    return (unpack("U*", $str)) if ($^V && $^V ge v5.6.0);
+    return (unpack("U*", $str)) if ($] >= 5.006);       # so much for $^V!
     
     $str = "$str";              # copy $str
     while (length($str))        # Thanks to Gisle Aas for some of his old code
