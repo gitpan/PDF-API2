@@ -16,14 +16,14 @@
 #   Original Copyright 1995-96 Ulrich Pfeifer.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: Matrix.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#   $Id: Matrix.pm,v 1.5 2004/06/07 19:44:12 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Matrix;
 
     use vars qw( $VERSION );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
 
 sub new {
     my $type = shift;

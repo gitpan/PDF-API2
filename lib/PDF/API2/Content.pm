@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.9 2004/04/07 10:49:26 fredo Exp $
+#   $Id: Content.pm,v 1.11 2004/06/07 19:44:12 fredo Exp $
 #
 #=======================================================================
 
@@ -42,9 +42,10 @@ BEGIN {
     use PDF::API2::Util;
     use PDF::API2::Matrix;
     use Math::Trig;
+    use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/07 10:49:26 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
 
 }
 
@@ -105,7 +106,7 @@ sub add_post {
 sub add {
     my $self=shift @_;
     if(scalar @_>0) {
-        $self->{' stream'}.=($self->{' stream'}=~m|\s$|o?'':' ').join(' ',@_).' ';
+        $self->{' stream'}.=encode("iso-8859-1",($self->{' stream'}=~m|\s$|o?'':' ').join(' ',@_).' ');
     }
     $self;
 }
@@ -1664,6 +1665,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.11  2004/06/07 19:44:12  fredo
+    cleaned out cr+lf for lf
+
+    Revision 1.10  2004/05/31 23:20:48  fredo
+    added basic platform encoding independency
+
     Revision 1.9  2004/04/07 10:49:26  fredo
     fixed handling of colorSpaces for fill/strokecolor
 

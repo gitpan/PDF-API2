@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Ttc.pm,v 1.3 2003/12/08 13:05:26 Administrator Exp $
+#   $Id: Ttc.pm,v 1.4 2004/06/07 19:44:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Ttc;

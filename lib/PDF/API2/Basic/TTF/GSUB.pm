@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: GSUB.pm,v 1.3 2003/12/08 13:05:23 Administrator Exp $
+#   $Id: GSUB.pm,v 1.4 2004/06/07 19:44:35 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::GSUB;

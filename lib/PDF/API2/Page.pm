@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Page.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#   $Id: Page.pm,v 1.6 2004/06/09 16:29:12 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Page;
@@ -51,7 +51,7 @@ BEGIN {
 
     use Math::Trig;
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/09 16:29:12 $
 
 }
 
@@ -127,7 +127,7 @@ sub mediabox {
         );
     } else {
         $self->{'MediaBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,page_size($x1))
+            (map { PDFNum(float($_)) } page_size($x1))
         );
     }
     return($self);
@@ -177,7 +177,7 @@ sub cropbox {
         );
     } else {
         $self->{'CropBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,page_size($x1))
+            (map { PDFNum(float($_)) } page_size($x1))
         );
     }
     $self;
@@ -205,7 +205,7 @@ sub bleedbox {
         );
     } else {
         $self->{'BleedBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,page_size($x1))
+            (map { PDFNum(float($_)) } page_size($x1))
         );
     }
     $self;
@@ -231,7 +231,7 @@ sub trimbox {
         );
     } else {
         $self->{'TrimBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,page_size($x1))
+            (map { PDFNum(float($_)) } page_size($x1))
         );
     }
     $self;
@@ -259,7 +259,7 @@ sub artbox {
         );
     } else {
         $self->{'ArtBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,page_size($x1))
+            (map { PDFNum(float($_)) } page_size($x1))
         );
     }
     $self;
@@ -429,6 +429,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Page.pm,v $
+    Revision 1.6  2004/06/09 16:29:12  fredo
+    fixed named page size handling for *box methods
+
+    Revision 1.5  2004/06/07 19:44:12  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2003/12/08 13:05:19  Administrator
     corrected to proper licencing statement
 

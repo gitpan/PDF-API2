@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: japanese.pm,v 1.5 2004/02/23 23:19:44 fredo Exp $
+#   $Id: japanese.pm,v 1.6 2004/06/07 19:44:38 fredo Exp $
 #
 #=======================================================================
 
@@ -25209,6 +25209,9 @@ __END__
 =head1 HISTORY
 
     $Log: japanese.pm,v $
+    Revision 1.6  2004/06/07 19:44:38  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.5  2004/02/23 23:19:44  fredo
     fixed unicode mapping based on
     adobe's ucs2 specification with

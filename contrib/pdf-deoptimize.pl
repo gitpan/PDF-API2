@@ -31,7 +31,7 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: pdf-deoptimize.pl,v 1.2 2004/01/28 14:12:00 fredo Exp $
+#   $Id: pdf-deoptimize.pl,v 1.3 2004/06/07 19:45:04 fredo Exp $
 #
 #=======================================================================
 
@@ -121,6 +121,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: pdf-deoptimize.pl,v $
+    Revision 1.3  2004/06/07 19:45:04  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.2  2004/01/28 14:12:00  fredo
     updated licence statement
 

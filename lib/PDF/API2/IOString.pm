@@ -33,14 +33,14 @@
 #   Original Copyright 1998-2000 Gisle Aas.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: IOString.pm,v 1.5 2004/02/12 14:38:16 fredo Exp $
+#   $Id: IOString.pm,v 1.6 2004/06/07 19:44:12 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::IOString;
 
 require 5.006;
     use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 14:38:16 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
 use Symbol ();
 use FileHandle;
 

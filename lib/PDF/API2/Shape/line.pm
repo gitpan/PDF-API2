@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: line.pm,v 1.2 2004/02/12 20:20:52 fredo Exp $
+#   $Id: line.pm,v 1.3 2004/06/07 19:44:44 fredo Exp $
 #
 #=======================================================================
 
@@ -35,7 +35,7 @@ package PDF::API2::Shape::line;
 
 BEGIN {
     use vars qw($VERSION @ISA);
-    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 20:20:52 $
+    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:44 $
     
     use PDF::API2::Shape;
     @ISA = qw(PDF::API2::Shape);
@@ -96,6 +96,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: line.pm,v $
+    Revision 1.3  2004/06/07 19:44:44  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.2  2004/02/12 20:20:52  fredo
     updated new method for options
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: GD.pm,v 1.4 2004/05/28 11:29:01 fredo Exp $
+#   $Id: GD.pm,v 1.5 2004/06/07 19:44:44 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::GD;
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/28 11:29:01 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:44 $
 
 }
 
@@ -140,6 +140,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: GD.pm,v $
+    Revision 1.5  2004/06/07 19:44:44  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2004/05/28 11:29:01  fredo
     added -lossless param to gd images
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Util.pm,v 1.9 2004/02/12 14:39:22 fredo Exp $
+#   $Id: Util.pm,v 1.10 2004/06/07 19:44:12 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Util;
@@ -71,7 +71,7 @@ BEGIN {
     );
 
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/12 14:39:22 $
+    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
 
     $key_var='A';
 
@@ -5382,6 +5382,9 @@ specification sets have been included to enable interoperability towards PDF.
 =head1 HISTORY
 
     $Log: Util.pm,v $
+    Revision 1.10  2004/06/07 19:44:12  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.9  2004/02/12 14:39:22  fredo
     start work on better HSV code
 

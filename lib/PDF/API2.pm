@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.28 2004/05/28 11:29:01 fredo Exp $
+#   $Id: API2.pm,v 1.29 2004/06/01 00:09:57 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $RELEASEVERSION $seq @FontDirs );
 
-    ( $VERSION ) = '$Revision: 1.28 $' =~ /Revision: (\S+)\s/; # $Date: 2004/05/28 11:29:01 $
+    ( $VERSION ) = '$Revision: 1.29 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/01 00:09:57 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -98,8 +98,14 @@ BEGIN {
     use utf8;
     use Encode qw(:all);
 
+    use Memoize;
 }
 
+    memoize('PDF::API2::corefont');
+    memoize('PDF::API2::psfont');
+    memoize('PDF::API2::ttfont');
+    memoize('PDF::API2::synfont');
+    memoize('PDF::API2::cjkfont');
 
 =head1 NAME
 
@@ -1825,6 +1831,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.29  2004/06/01 00:09:57  fredo
+    memoized *font methods for braindead invokers
+
     Revision 1.28  2004/05/28 11:29:01  fredo
     added -lossless param to gd images
 

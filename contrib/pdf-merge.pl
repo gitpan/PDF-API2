@@ -31,7 +31,7 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: 020coreuse.t,v 1.3 2004/04/18 14:11:34 fredo Exp $
+#   $Id: pdf-merge.pl,v 1.1 2004/06/01 00:17:26 fredo Exp $
 #
 #=======================================================================
 use PDF::API2;
@@ -52,12 +52,15 @@ my $outfile=shift @ARGV;
 my $pdf=PDF::API2->new;
 
 foreach my $in (@ARGV) {
+    print STDERR 'loading file $in .';
     my $inpdf=PDF::API2->open($in);
     my $pages=scalar @{$inpdf->{pagestack}};
     foreach my $page (1..$pages) {
+        print STDERR "$page.";
         $pdf->importpage($inpdf,$page);
     }
     $inpdf->end();
+    print STDERR " done.\n";
 }
 
 $pdf->saveas($outfile);

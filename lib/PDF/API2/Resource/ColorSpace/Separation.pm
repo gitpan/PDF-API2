@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Separation.pm,v 1.2 2004/04/07 10:50:43 fredo Exp $
+#   $Id: Separation.pm,v 1.3 2004/06/07 19:44:43 fredo Exp $
 #
 #=======================================================================
 
@@ -43,7 +43,7 @@ BEGIN {
     use Math::Trig;
 
     @ISA = qw( PDF::API2::Resource::ColorSpace );
-    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/07 10:50:43 $
+    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:43 $
 
 }
 
@@ -163,6 +163,9 @@ __END__
 =head1 HISTORY
 
     $Log: Separation.pm,v $
+    Revision 1.3  2004/06/07 19:44:43  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.2  2004/04/07 10:50:43  fredo
     fixed RGB semantics to match CMYK `tint´ behaviour
 

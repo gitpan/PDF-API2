@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Markup.pm,v 1.2 2004/02/01 21:32:29 fredo Exp $
+#   $Id: Markup.pm,v 1.3 2004/06/07 19:44:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Content::Text::Markup::XML;
@@ -117,7 +117,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Content);
 
-    ( $VERSION ) = '$Revision: 1.2 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/01 21:32:29 $
+    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:36 $
     
 }
 
@@ -172,6 +172,9 @@ some
 =head1 HISTORY
 
     $Log: Markup.pm,v $
+    Revision 1.3  2004/06/07 19:44:36  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.2  2004/02/01 21:32:29  fredo
     added basic (yet unfinished) parsing code
 

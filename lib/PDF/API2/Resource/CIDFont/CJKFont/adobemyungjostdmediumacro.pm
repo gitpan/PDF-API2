@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: adobemyungjostdmediumacro.pm,v 1.4 2004/02/19 02:07:12 fredo Exp $
+#   $Id: adobemyungjostdmediumacro.pm,v 1.5 2004/06/07 19:44:37 fredo Exp $
 #
 #=======================================================================
 
@@ -18413,6 +18413,9 @@ __END__
 =head1 HISTORY
 
     $Log: adobemyungjostdmediumacro.pm,v $
+    Revision 1.5  2004/06/07 19:44:37  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2004/02/19 02:07:12  fredo
     updated to acrobat 6 standard
 

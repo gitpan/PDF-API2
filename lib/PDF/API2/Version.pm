@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Version.pm,v 1.6 2004/05/28 11:30:40 fredo Exp $
+#   $Id: Version.pm,v 1.8 2004/06/09 16:30:38 fredo Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION );
 
-    ( $VERSION ) = '0.40_21';
+    ( $VERSION ) = '0.40_22';
 
 }
 
@@ -57,27 +57,5 @@ __END__
 =head1 AUTHOR
 
 alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: Version.pm,v $
-    Revision 1.6  2004/05/28 11:30:40  fredo
-    update to 0.40_21
-
-    Revision 1.5  2004/05/21 16:36:02  fredo
-    update to 0.40_20
-
-    Revision 1.4  2004/04/07 10:51:27  fredo
-    updated to 0.40_18b quick-fix release
-
-    Revision 1.3  2004/04/04 23:52:08  fredo
-    updated for release 0.40_18
-
-    Revision 1.2  2004/01/21 13:24:21  fredo
-    fixed errorneous use/require behaviour
-
-    Revision 1.1  2004/01/21 12:29:06  fredo
-    moved release versioning to PDF::API2::Version
-
 
 =cut

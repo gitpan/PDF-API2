@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.8 2004/01/22 14:17:29 fredo Exp $
+#   $Id: File.pm,v 1.9 2004/06/07 19:44:13 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;

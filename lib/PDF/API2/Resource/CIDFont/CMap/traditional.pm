@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: traditional.pm,v 1.4 2004/02/24 00:07:42 fredo Exp $
+#   $Id: traditional.pm,v 1.5 2004/06/07 19:44:42 fredo Exp $
 #
 #=======================================================================
 
@@ -37431,6 +37431,9 @@ __END__
 =head1 HISTORY
 
     $Log: traditional.pm,v $
+    Revision 1.5  2004/06/07 19:44:42  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2004/02/24 00:07:42  fredo
     fixed unicode mapping based on
     adobe's utf32/utf16 specification

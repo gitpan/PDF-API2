@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: StateTable.pm,v 1.3 2003/12/08 13:05:29 Administrator Exp $
+#   $Id: StateTable.pm,v 1.4 2004/06/07 19:44:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Kern::StateTable;

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: zapfdingbats.pm,v 1.3 2003/12/08 13:06:06 Administrator Exp $
+#   $Id: zapfdingbats.pm,v 1.4 2004/06/07 19:44:44 fredo Exp $
 #
 #=======================================================================
 
@@ -525,6 +525,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: zapfdingbats.pm,v $
+    Revision 1.4  2004/06/07 19:44:44  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.3  2003/12/08 13:06:06  Administrator
     corrected to proper licencing statement
 

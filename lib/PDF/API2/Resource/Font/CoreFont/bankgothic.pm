@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: bankgothic.pm,v 1.3 2003/12/08 13:06:01 Administrator Exp $
+#   $Id: bankgothic.pm,v 1.4 2004/06/07 19:44:43 fredo Exp $
 #
 #=======================================================================
 
@@ -547,6 +547,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: bankgothic.pm,v $
+    Revision 1.4  2004/06/07 19:44:43  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.3  2003/12/08 13:06:01  Administrator
     corrected to proper licencing statement
 

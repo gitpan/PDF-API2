@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: polyline.pm,v 1.3 2004/04/04 23:44:39 fredo Exp $
+#   $Id: polyline.pm,v 1.4 2004/06/07 19:44:44 fredo Exp $
 #
 #=======================================================================
 
@@ -35,7 +35,7 @@ package PDF::API2::Shape::polyline;
 
 BEGIN {
     use vars qw($VERSION @ISA);
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/04 23:44:39 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:44 $
     
     use PDF::API2::Shape;
     @ISA = qw(PDF::API2::Shape);
@@ -101,6 +101,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: polyline.pm,v $
+    Revision 1.4  2004/06/07 19:44:44  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.3  2004/04/04 23:44:39  fredo
     updated stroke/fill behaviour
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: WebColor.pm,v 1.3 2003/12/08 13:06:01 Administrator Exp $
+#   $Id: WebColor.pm,v 1.4 2004/06/07 19:44:43 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::ColorSpace::Indexed );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:01 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:43 $
 
 }
 
@@ -128,6 +128,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: WebColor.pm,v $
+    Revision 1.4  2004/06/07 19:44:43  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.3  2003/12/08 13:06:01  Administrator
     corrected to proper licencing statement
 

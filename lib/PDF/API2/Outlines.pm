@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Outlines.pm,v 1.4 2003/12/08 13:05:19 Administrator Exp $
+#   $Id: Outlines.pm,v 1.5 2004/06/07 19:44:12 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Outline);
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:19 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
 
 }
 
@@ -73,6 +73,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Outlines.pm,v $
+    Revision 1.5  2004/06/07 19:44:12  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2003/12/08 13:05:19  Administrator
     corrected to proper licencing statement
 

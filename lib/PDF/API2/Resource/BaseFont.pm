@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 1.5 2004/04/20 09:47:34 fredo Exp $
+#   $Id: BaseFont.pm,v 1.6 2004/06/07 19:44:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/04/20 09:47:34 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:36 $
 
 }
 
@@ -638,6 +638,9 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 1.6  2004/06/07 19:44:36  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.5  2004/04/20 09:47:34  fredo
     fixed unicode to font-encoding-vector conversion
 

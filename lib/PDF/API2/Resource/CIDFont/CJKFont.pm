@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CJKFont.pm,v 1.4 2004/02/24 00:08:54 fredo Exp $
+#   $Id: CJKFont.pm,v 1.5 2004/06/07 19:44:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::CJKFont;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/02/24 00:08:54 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:36 $
 
     $fonts = { };
     $cmap = { };
@@ -226,6 +226,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CJKFont.pm,v $
+    Revision 1.5  2004/06/07 19:44:36  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2004/02/24 00:08:54  fredo
     added utf8 fallback for encoding
 

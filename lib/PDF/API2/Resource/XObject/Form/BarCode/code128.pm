@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: code128.pm,v 1.3 2003/12/08 13:06:09 Administrator Exp $
+#   $Id: code128.pm,v 1.4 2004/06/07 19:44:44 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Form::BarCode::code128;
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Form::BarCode );
 
-    ( $VERSION ) = '$Revision: 1.3 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:09 $
+    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:44 $
 
 }
 
@@ -62,7 +62,7 @@ sub new {
 
     $self=$class->SUPER::new($pdf,%opts);
 
-    my @bar = $opts{-ean} ? $self->encode_ean128($opts{-code}) : $self->encode_128($opts{-code});
+    my @bar = $opts{-ean} ? $self->encode_ean128($opts{-code}) : $self->encode_128($opts{-type},$opts{-code});
 
     $self->drawbar([@bar]);
 
@@ -235,6 +235,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: code128.pm,v $
+    Revision 1.4  2004/06/07 19:44:44  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.3  2003/12/08 13:06:09  Administrator
     corrected to proper licencing statement
 

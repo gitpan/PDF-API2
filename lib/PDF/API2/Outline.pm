@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Outline.pm,v 1.5 2004/03/18 06:47:57 fredo Exp $
+#   $Id: Outline.pm,v 1.6 2004/06/07 19:44:12 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/03/18 06:47:57 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:12 $
 
 }
 
@@ -356,6 +356,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Outline.pm,v $
+    Revision 1.6  2004/06/07 19:44:12  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.5  2004/03/18 06:47:57  fredo
     fixed yank/paste error in dest method with -xyz parameter
 

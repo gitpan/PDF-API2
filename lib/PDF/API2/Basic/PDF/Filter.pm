@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Filter.pm,v 1.4 2004/02/18 14:05:15 fredo Exp $
+#   $Id: Filter.pm,v 1.5 2004/06/07 19:44:13 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Filter;

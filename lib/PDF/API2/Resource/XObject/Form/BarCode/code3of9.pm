@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: code3of9.pm,v 1.4 2003/12/08 13:06:09 Administrator Exp $
+#   $Id: code3of9.pm,v 1.5 2004/06/07 19:44:44 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Form::BarCode );
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:06:09 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:44 $
 
 }
 
@@ -323,6 +323,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: code3of9.pm,v $
+    Revision 1.5  2004/06/07 19:44:44  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2003/12/08 13:06:09  Administrator
     corrected to proper licencing statement
 

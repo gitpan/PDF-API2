@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Text.pm,v 1.4 2003/12/08 13:05:32 Administrator Exp $
+#   $Id: Text.pm,v 1.5 2004/06/07 19:44:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Content::Text;
@@ -43,7 +43,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Content);
 
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2003/12/08 13:05:32 $
+    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/07 19:44:36 $
 
 }
 
@@ -71,6 +71,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Text.pm,v $
+    Revision 1.5  2004/06/07 19:44:36  fredo
+    cleaned out cr+lf for lf
+
     Revision 1.4  2003/12/08 13:05:32  Administrator
     corrected to proper licencing statement
 

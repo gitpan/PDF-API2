@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Literal.pm,v 1.3 2004/03/02 19:22:34 fredo Exp $
+#   $Id: Literal.pm,v 1.4 2004/06/07 19:44:13 fredo Exp $
 #
 #=======================================================================
 # Literal PDF Object for Dirty Hacks ...
