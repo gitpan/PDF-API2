@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.12 2004/09/03 12:33:50 fredo Exp $
+#   $Id: File.pm,v 1.13 2004/09/20 12:01:59 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -572,15 +572,17 @@ sub readval
         $str = update($fh, $str);
         $res = PDFDict();
 
-        while ($str !~ m/^>>/o)
-        {
-        if ($str =~ s|^/($reg_char+)||o)
-            {
+        while ($str !~ m/^>>/o) {
+            if ($str =~ s|^/($reg_char+)||o) {
                 $k = PDF::API2::Basic::PDF::Name::name_to_string ($1, $self);
                 ($value, $str) = $self->readval($str, %opts);
                 $res->{$k} = $value;
+            } elsif($str =~ s|^/$ws_char+||o) { 
+                # fixes a broken key problem of acrobat. -- fredo
+                ($value, $str) = $self->readval($str, %opts);
+                $res->{null} = $value;
             }
-        $str = update($fh, $str);                           # thanks gareth.jones@stud.man.ac.uk
+            $str = update($fh, $str); # thanks gareth.jones@stud.man.ac.uk
         }
         $str =~ s/^>>//o;
         $str = update($fh, $str);
