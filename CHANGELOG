@@ -1,3 +1,7 @@
+2004-07-23 15:41  fredo
+
+	* lib/PDF/API2.pm: fixed in decoding info dictionary
+
 2004-07-21 10:07  fredo
 
 	* lib/PDF/API2.pm: added devicen colorspace
