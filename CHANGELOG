@@ -1,3 +1,16 @@
+2004-09-03 14:35  fredo
+
+	* lib/PDF/API2.pm: pop'd to new version
+
+2004-09-03 14:33  fredo
+
+	* lib/PDF/API2/Basic/PDF/File.pm: fixed binary stream reading by
+	  update method
+
+2004-08-31 15:50  fredo
+
+	* lib/PDF/API2/Content.pm: fixed space vs. whitespace split bug
+
 2004-08-25 05:03  fredo
 
 	* lib/PDF/API2/Resource/CIDFont/TrueType/FontFile.pm: removed fuss

@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.11 2004/06/15 16:44:09 fredo Exp $
+#   $Id: File.pm,v 1.12 2004/09/03 12:33:50 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -604,8 +604,11 @@ sub readval
                 $value .= substr($str, 0, $k);
                 $res->{' stream'} = $value;
                 $res->{' nofilt'} = 1;
-                $str = update($fh, $str);
-                $str =~ s/^endstream//o;
+                $str = update($fh, $str, 1);  # tell update we are in-stream and only need an endstream 
+                #$str =~ s/^endstream//o; # we cannot regexpr here since we need the first endstream only
+                # so we do the following:
+                my $wh = index($str,'endstream');
+                $str = substr($str,$wh+9);
             }
         }
 
@@ -1058,7 +1061,7 @@ sub locate_obj
 }
 
 
-=head2 update($fh, $str)
+=head2 update($fh, $str, $instream)
 
 Keeps reading $fh for more data to ensure that $str has at least a line full
 for C<readval> to work on. At this point we also take the opportunity to ignore
@@ -1068,18 +1071,28 @@ comments.
 
 sub update
 {
-    my ($fh, $str) = @_;
+    my ($fh, $str, $instream) = @_;
 
-    $str =~ s/^$ws_char*//o;
-    while ($str !~ m/$cr/o && !$fh->eof)
-    {
-        $fh->read($str, 314, length($str));
-        $str =~ s/^$ws_char*//so;
-    }
-    while ($str =~ m/^\%/o) # restructured by fredo/2003-03-23
-    {
-        $fh->read($str, 314, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
-        $str =~ s/^\%[^\015\012]+$ws_char*//so; # fixed for reportlab -- fredo
+    if($instream) {
+        # we are inside a (possible binary) stream
+        # so we fetch data till we see an 'endstream'
+        # -- fredo/2004-09-03
+        while ($str !~ m/endstream/o && !$fh->eof)
+        {
+            $fh->read($str, 314, length($str));
+        }
+    } else {
+        $str =~ s/^$ws_char*//o;
+        while ($str !~ m/$cr/o && !$fh->eof)
+        {
+            $fh->read($str, 314, length($str));
+            $str =~ s/^$ws_char*//so;
+        }
+        while ($str =~ m/^\%/o) # restructured by fredo/2003-03-23
+        {
+            $fh->read($str, 314, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
+            $str =~ s/^\%[^\015\012]+$ws_char*//so; # fixed for reportlab -- fredo
+        }
     }
 
     return $str;

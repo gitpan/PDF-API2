@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.14 2004/07/29 10:46:37 fredo Exp $
+#   $Id: Content.pm,v 1.15 2004/08/31 13:50:09 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.14 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/29 10:46:37 $
+    ( $VERSION ) = '$Revision: 1.15 $' =~ /Revision: (\S+)\s/; # $Date: 2004/08/31 13:50:09 $
 
 }
 
@@ -1370,7 +1370,7 @@ sub text_justified {
 
 sub text_fill_left {
     my ($self,$text,$width)=@_;
-    my @txt=split(/\s/,$text);
+    my @txt=split(/\x20/,$text);
     my @line=();
     my $save=$";
     $"=' ';
@@ -1394,7 +1394,7 @@ sub text_fill_left {
 
 sub text_fill_right {
     my ($self,$text,$width)=@_;
-    my @txt=split(/\s/,$text);
+    my @txt=split(/\x20/,$text);
     my @line=();
     my $save=$";
     $"=' ';
@@ -1418,7 +1418,7 @@ sub text_fill_right {
 
 sub text_fill_justified {
     my ($self,$text,$width)=@_;
-    my @txt=split(/\s/,$text);
+    my @txt=split(/\x20/,$text);
     my @line=();
     my $hs=$self->hspace;
     my $save=$";
@@ -1573,6 +1573,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.15  2004/08/31 13:50:09  fredo
+    fixed space vs. whitespace split bug
+
     Revision 1.14  2004/07/29 10:46:37  fredo
     added new text_fill_* methods and a simple paragraph
 

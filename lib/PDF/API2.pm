@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.58 2004/08/25 02:59:25 fredo Exp $
+#   $Id: API2.pm,v 1.59 2004/09/03 12:35:09 fredo Exp $
 #
 #=======================================================================
 
@@ -37,8 +37,8 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.58 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
-    # $Date: 2004/08/25 02:59:25 $
+    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.59 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
+    # $Date: 2004/09/03 12:35:09 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -2024,6 +2024,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.59  2004/09/03 12:35:09  fredo
+    pop'd to new version
+
     Revision 1.58  2004/08/25 02:59:25  fredo
     disabled memoize since long-running scripts bug from reused adresses
 
@@ -2137,3 +2140,4 @@ alfred reibenschuh
 
 
 =cut
+
