@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 1.5 2004/06/15 09:14:42 fredo Exp $
+#   $Id: TrueType.pm,v 1.6 2004/11/22 21:07:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -51,7 +51,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:42 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 21:07:55 $
 
 }
 
@@ -69,7 +69,7 @@ sub new {
     my ($class,$pdf,$file,@opts) = @_;
     my %opts=();
     %opts=@opts if((scalar @opts)%2 == 0);
-
+    $opts{-encode}||='latin1';
     my ($ff,$data)=PDF::API2::Resource::CIDFont::TrueType::FontFile->new($pdf,$file);
 
     $class = ref $class if ref $class;
@@ -92,7 +92,10 @@ sub new {
 
     unless($self->issymbol) {
         $self->encodeByName($opts{-encode});
+        $self->data->{encode}=$opts{-encode};
+        $self->data->{decode}='ident';
     }
+
 
     $self->{' ff'} = $ff;
     $pdf->new_obj($ff);
@@ -133,31 +136,6 @@ sub wxByCId {
     }
 
     return($w);
-}
-
-sub textByStr {
-    my ($self,$text)=@_;
-    my $newtext='';
-    if(is_utf8($text)) {
-        $text=$self->cidsByUtf($text);
-    } else {
-        $text=$self->cidsByStr($text);
-    }
-    foreach my $g (unpack('n*',$text)) {
-        $newtext.=sprintf('%04X',$g);
-        $self->fontfile->subsetByCId($g);
-    }
-    return("<$newtext>");
-}
-
-sub text_cid {
-    my ($self,$text)=@_;
-    my $newtext='';
-    foreach my $g (unpack('n*',$text)) {
-        $newtext.=sprintf('%04X',$g);
-        $self->fontfile->subsetByCId($g);
-    }
-    return("<$newtext>");
 }
 
 sub subsetByCId {
@@ -215,6 +193,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 1.6  2004/11/22 21:07:55  fredo
+    fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
+
     Revision 1.5  2004/06/15 09:14:42  fredo
     removed cr+lf
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CIDFont.pm,v 1.8 2004/11/21 02:57:53 fredo Exp $
+#   $Id: CIDFont.pm,v 1.9 2004/11/22 21:07:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/21 02:57:53 $
+    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 21:07:55 $
 
 }
 
@@ -133,18 +133,7 @@ sub wxByEnc { return( $_[0]->wxByCId($_[0]->data->{e2g}->[$_[1]]) ); }
 
 sub width {
     my ($self,$text)=@_;
-    my $width=0;
-    if(is_utf8($text)) {
-        foreach my $n (unpack('U*',$text)) {
-            $width+=$self->wxByUni($n);
-        }
-    } else {
-        foreach my $n (unpack('C*',$text)) {
-            $width+=$self->wxByEnc($n);
-        }
-    }
-    $width/=1000;
-    return($width);
+    return($self->width_cid($self->cidsByStr($text)));
 }
 sub width_cid {
     my ($self,$text)=@_;
@@ -162,10 +151,37 @@ Returns the cid-string from string based on the fonts encoding map.
 
 =cut
 
-sub cidsByStr {
+sub _cidsByStr {
     my ($self,$s)=@_;
     $s=pack('n*',map { $self->cidByEnc($_) } unpack('C*',$s));
     return($s);
+}
+
+sub cidsByStr
+{
+    my ($self,$text)=@_;
+    if(is_utf8($text) && defined $self->data->{decode} && $self->data->{decode} ne 'ident') 
+    {
+        $text=encode($self->data->{decode},$text);
+    }
+    elsif(is_utf8($text) && $self->data->{decode} eq 'ident') 
+    {
+        $text=$self->cidsByUtf($text);
+    } 
+    elsif(!is_utf8($text) && defined $self->data->{encode} && $self->data->{decode} eq 'ident') 
+    {
+        $text=$self->cidsByUtf(decode($self->data->{encode},$text));
+    } 
+    elsif(!is_utf8($text) && UNIVERSAL::can($self,'issymbol') && $self->issymbol && $self->data->{decode} eq 'ident') 
+    {
+        $text=pack('U*',(map { $_+0xf000 } unpack('C*',$text)));
+        $text=$self->cidsByUtf($text);
+    }
+    else 
+    {
+        $text=$self->_cidsByStr($text);
+    }
+    return($text);
 }
 
 =item $cidstring = $font->cidsByUtf $utf8string
@@ -176,33 +192,28 @@ Returns the cid-encoded string from utf8-string.
 
 sub cidsByUtf {
     my ($self,$s)=@_;
-    $s=pack('n*',map { $self->cidByUni($_) } unpack('U*',$s));
+    $s=pack('n*',map { $self->cidByUni($_) } (map { $_>0x7f && $_<0xA0 ? uniByName(nameByUni($_)): $_ } unpack('U*',$s)));
     utf8::downgrade($s);
     return($s);
 }
 
-sub textByStr {
+sub textByStr 
+{
     my ($self,$text)=@_;
-    my $newtext='';
-    if(is_utf8($text)) {
-        $text=$self->cidsByUtf($text);
-    } else {
-        $text=$self->cidsByStr($text);
-    }
-    foreach my $g (unpack('n*',$text)) {
-        $newtext.=sprintf('%04X',$g);
-    }
-    return("<$newtext>");
+    return($self->text_cid($self->cidsByStr($text)));
 }
 
 sub text { return($_[0]->textByStr($_[1])); }
 
 sub text_cid {
     my ($self,$text)=@_;
-    my $newtext='';
-    foreach my $g (unpack('n*',$text)) {
-        $newtext.=sprintf('%04X',$g);
+    if(UNIVERSAL::can($self,'fontfile'))
+    {
+        foreach my $g (unpack('n*',$text)) {
+            $self->fontfile->subsetByCId($g);
+        }
     }
+    my $newtext=unpack('H*',$text);
     return("<$newtext>");
 }
 
@@ -210,7 +221,7 @@ sub encodeByName {
     my ($self,$enc) = @_;
     return if($self->issymbol);
 
-    $self->data->{e2u}=[ unpack('U*',decode($enc, pack('C*',0..255))) ] if(defined $enc);
+    $self->data->{e2u}=[ map { $_>0x7f && $_<0xA0 ? uniByName(nameByUni($_)): $_ } unpack('U*',decode($enc, pack('C*',0..255))) ] if(defined $enc);
     $self->data->{e2n}=[ map { $self->data->{g2n}->[$self->data->{u2g}->{$_} || 0] || '.notdef' } @{$self->data->{e2u}} ];
     $self->data->{e2g}=[ map { $self->data->{u2g}->{$_} || 0 } @{$self->data->{e2u}} ];
 
@@ -257,6 +268,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CIDFont.pm,v $
+    Revision 1.9  2004/11/22 21:07:55  fredo
+    fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
+
     Revision 1.8  2004/11/21 02:57:53  fredo
     cosmetic change
 

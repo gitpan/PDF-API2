@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CJKFont.pm,v 1.10 2004/11/22 02:04:27 fredo Exp $
+#   $Id: CJKFont.pm,v 1.11 2004/11/22 21:07:55 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::CJKFont;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.10 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 02:04:27 $
+    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 21:07:55 $
 
     $fonts = { };
     $cmap = { };
@@ -189,63 +189,6 @@ sub tounicodemap {
     my $self=shift @_;
     # noop since pdf knows its char-collection
     return($self);
-}
-
-
-sub cidsByStr {
-    my ($self,$s)=@_;
-    my $out='';
-    if(defined $self->data->{encode}) {
-        foreach my $ch ( unpack('U*',decode($self->data->{encode},$s)) )
-        {   
-            my $cid=$self->cidByUni($ch);
-            $out.=pack('n*', $cid );
-        }
-    } else {
-        $out=pack('n*',map { $self->cidByUni($_) } unpack('U*',$s));
-    }
-    return($out);
-}
-
-
-sub width {
-    my ($self,$text)=@_;
-    my $width=0;
-    if(is_utf8($text)) {
-        foreach my $n (unpack('U*',$text)) {
-            $width+=$self->wxByUni($n);
-        }
-    } else {
-        return $self->width_cid($self->cidsByStr($text));
-    }
-    $width/=1000;
-    return($width);
-}
-
-
-sub text_cid {
-    my ($self,$text)=@_;
-    my $newtext='';
-    foreach my $g (unpack('n*',$text)) {
-        $newtext.=substr(sprintf('%04X',$g),0,4);
-    }
-    return("<$newtext>");
-}
-
-
-sub textByStr {
-    my ($self,$text)=@_;
-    my $newtext='';
-    if(is_utf8($text) && $self->data->{decode} ne 'ident') {
-        $newtext=unpack('H*',encode($self->data->{decode},$text));
-    } elsif(is_utf8($text) && $self->data->{decode} eq 'ident') {
-        $newtext=unpack('H*',$self->cidsByUtf($text));
-    } elsif(defined $self->data->{encode} && $self->data->{decode} eq 'ident') {
-        $newtext=unpack('H*',$self->cidsByUtf(encode($self->data->{encode},$text)));
-    } else {
-        $newtext=unpack('H*',$text);
-    }
-    return("<$newtext>");
 }
 
 sub glyphByCId
@@ -446,6 +389,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CJKFont.pm,v $
+    Revision 1.11  2004/11/22 21:07:55  fredo
+    fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
+
     Revision 1.10  2004/11/22 02:04:27  fredo
     added missing substitutes
 

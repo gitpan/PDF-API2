@@ -1,3 +1,18 @@
+2004-11-22 22:07  fredo
+
+	* lib/PDF/API2/Resource/: CIDFont.pm, CIDFont/CJKFont.pm,
+	  CIDFont/TrueType.pm, CIDFont/TrueType/FontFile.pm: fixed
+	  multibyte-encoding support to work consistently acress
+	  cjk/ttf/otf
+
+2004-11-22 17:07  fredo
+
+	* MANIFEST: added TODO + uniglyph.txt
+
+2004-11-22 17:07  fredo
+
+	* TODO: genesis
+
 2004-11-22 03:34  fredo
 
 	* lib/PDF/API2/Util.pm: moved unicode+glyphs to better maintainable

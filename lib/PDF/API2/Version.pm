@@ -9,15 +9,15 @@
 package PDF::API2::Version;
 BEGIN {
     use vars qw( $VERSION %CVersion );
-    $VERSION = '0.40_70';
+    $VERSION = '0.40_72';
     %CVersion = (
-        'vFredo' => 'PDF::API2 0.40_70 (gamma-1350 / 2004-11-22)',
-        'vHex' => '0x00028546',
-        'vPerl' => '0.40_70',
-        'vShort' => '0.40c70',
-        'vTeX' => 'This is PDF::API2, Version 0.40c70 (2004-11-22 16:40:48)',
-        'vWeb' => 'PDF::API2/0.40c70',
-        'vWin' => '0.40 build 1350',
+        'vFredo' => 'PDF::API2 0.40_72 (gamma-1352 / 2004-11-22)',
+        'vHex' => '0x00028548',
+        'vPerl' => '0.40_72',
+        'vShort' => '0.40c72',
+        'vTeX' => 'This is PDF::API2, Version 0.40c72 (2004-11-22 22:08:12)',
+        'vWeb' => 'PDF::API2/0.40c72',
+        'vWin' => '0.40 build 1352',
     );
 }
 1;
