@@ -20,6 +20,10 @@ use Font::TTF::Font 0.28;
 
 @ISA=qw( Text::PDF::File );
 
+BEGIN {
+	$cr = $Text::PDF::File::cr;
+}
+
 sub open
 {
     my ($class, $fname, $update) = @_;

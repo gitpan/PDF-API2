@@ -10,7 +10,7 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 20020224.204457 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 20020418.102155 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -147,26 +147,22 @@ sub ttfont {
 	return $self->{api}->ttfont($file);
 }
 
-=item $img = $pdf->image $file
+=item $img = $pdf->loadimage $file
 
 Returns a new image object.
 
 B<Examples:>
 
-	$img = $pdf->image('yetanotherfun.jpg');
-	$img = $pdf->image('truly24bitpic.png');
-	$img = $pdf->image('reallargefile.pnm');
+	$img = $pdf->loadimage('yetanotherfun.jpg');
+	$img = $pdf->loadimage('truly24bitpic.png');
+	$img = $pdf->loadimage('reallargefile.pnm');
 
 =cut
 
-sub image {
+sub loadimage {
 	my ($self,$file)=@_;
 	return $self->{api}->image($file);
 }
-
-
-
-
 
 =item $pdf->savestate
 

@@ -11,7 +11,6 @@ examples/01_document_n_pages-pl
 examples/02_corefonts-pl
 examples/02_postscript_fonts-pl
 examples/02_truetype_fonts-pl
-examples/02_xfonts-pl
 examples/03_colors_colorspaces-pl
 examples/04_barcode-pl
 examples/05_open_import_clone-pl
@@ -23,7 +22,6 @@ examples/09_paragraph_text-pl
 examples/10_gfx-pl
 examples/11_shade-pl
 examples/transp_index.png
-examples/transp_rgb.png
 examples/test_api2.pl
 examples/canterbury.afm
 examples/canterbury.pfb
@@ -55,6 +53,11 @@ lib/PDF/API2/UniMap/microsoft-dingbats.map
 lib/PDF/API2/UniMap/pt.map
 lib/PDF/API2/UniMap/pt2.map
 lib/Text/PDF/AFont.pm
+lib/Text/PDF/Image.pm
+lib/Text/PDF/ImageJPEG.pm
+lib/Text/PDF/ImageGD.pm
+lib/Text/PDF/ImagePPM.pm
+lib/Text/PDF/ImagePNG.pm
 lib/Text/PDF/fonts/t1/Helvetica.afm
 lib/Text/PDF/fonts/t1/Symbol.afm
 lib/Text/PDF/fonts/t1/Courier-BoldOblique.afm

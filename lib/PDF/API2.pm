@@ -10,7 +10,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 20020314.221451 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 20020423.125629 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -52,7 +52,17 @@ use POSIX qw( ceil floor );
 
 =head2 PDF::API2
 
-=item $pdf = PDF::API->new
+=item $pdf = PDF::API->new %opts
+
+Creates a new pdf-file object. If you know beforehand 
+to save the pdf to file you can give the '-file' option,
+to minimize possible memory requirements.
+
+B<Example:>
+
+	$pdf = PDF::API2->new();
+
+	$pdf = PDF::API2->new(-file => 'ournew.pdf');
 
 =cut
 
@@ -63,9 +73,9 @@ sub new {
 	bless($self,$class);
 	$self->{pdf}=Text::PDF::FileAPI->new();
 	$self->{time}='_'.pdfkey(time());
-	foreach my $para (keys(%opt)) {
-		$self->{$para}=$opt{$para};
-	}
+#	foreach my $para (keys(%opt)) {
+#		$self->{$para}=$opt{$para};
+#	}
 	$self->{pdf}->{' version'} = 3;
 	$self->{pages} = Text::PDF::Pages->new($self->{pdf});
 	weaken($self->{pages}) if($hasWeakRef);
@@ -75,9 +85,11 @@ sub new {
 	$self->{pagestack}=[];
 	my $dig=digest16(digest32($class,$self,%opt));
        	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
-       	$self->{pdf}->{'ID'}->val->[0]->{' ashex'}=1;
-       	$self->{pdf}->{'ID'}->val->[1]->{' ashex'}=1;
        	$self->{pdf}->{' id'}=$dig;
+	if($opt{-file}) {
+		$self->{' filed'}=$opt{-file};
+		$self->{pdf}->create_file($opt{-file});
+	}
 	return $self;
 }
 
@@ -119,7 +131,7 @@ sub open {
 	my $file=shift(@_);
 	my %opt=@_;
 	my $self={};
-	bless($self);
+	bless($self,$class);
 	$self->default('Compression',1);
 	$self->default('subset',1);
 	$self->default('update',1);
@@ -178,8 +190,8 @@ sub page {
 	weaken($page->{' apipdf'}) if($hasWeakRef);
 	$page->{' api'}=$self;
 	weaken($page->{' api'}) if($hasWeakRef);
-        $self->{pdf}->out_obj($page);
-        $self->{pdf}->out_obj($self->{pages});
+	$self->{pdf}->out_obj($page);
+	$self->{pdf}->out_obj($self->{pages});
 	if($index==0) {
 		push(@{$self->{pagestack}},$page);
 	} elsif($index<0) {
@@ -459,8 +471,21 @@ sub saveas {
 		binmode(OUTF);
 		print OUTF ${$self->{pdf}->{' OUTFILE'}->string_ref};
 		CORE::close(OUTF);
+	} elsif($self->{' filed'}) {
+		$self->{pdf}->close_file;
 	} else {
 		$self->{pdf}->out_file($file);
+	}
+}
+
+sub save {
+	my ($self,$file)=@_;
+	if($self->{reopened}) {
+		die "invalid method invokation: use 'saveas' instead.";
+	} elsif($self->{' filed'}) {
+		$self->{pdf}->close_file;
+	} else {
+		die "invalid method invokation: use 'saveas' instead.";
 	}
 }
 
@@ -583,6 +608,23 @@ sub info {
         $self->{pdf}->out_obj($self->{pdf}->{'Info'});
 }
 
+=item $pdf->finishobjects @objects
+
+Force objects to be written to file.
+
+=cut
+
+sub finishobjects {
+	my ($self,@objs)=@_;
+	if($self->{reopened}) {
+		die "invalid method invokation: no file, use 'saveas' instead.";
+	} elsif($self->{' filed'}) {
+		$self->{pdf}->ship_out(@objs);
+	} else {
+		die "invalid method invokation: no file, use 'saveas' instead.";
+	}
+}
+
 =item $val = $pdf->default $parameter
 
 =item $pdf->default $parameter, $val
@@ -617,7 +659,7 @@ B<Examples:>
 
 sub corefont {
 	my ($self,$name,$light)=@_;
-	my $key='FFx'.pdfkey($name);
+	my $key='FFx'.pdfkey($name,$light);
 
 	my $obj;
 
@@ -648,24 +690,6 @@ sub corefont {
         $obj->{' api'}=$self;
 
 	$self->resource('Font',$key,$obj);
-
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
-}
-
-sub xfont {
-	my ($self,@opts)=@_;
-
-	my $obj=PDF::API2::xFont->new($self->{pdf},@opts);
-	my $key=$obj->{' apiname'};
-
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
-
-	$obj->{' apiname'}=$key;
-	$obj->{' apipdf'}=$self->{pdf};
-        $obj->{' api'}=$self;
-
-	$self->resource('Font',$key,$obj,$self->{reopened});
 
 	$self->{pdf}->out_obj($self->{pages});
 	return($obj);
@@ -709,8 +733,6 @@ sub psfont {
 
 =item $font = $pdf->ttfont $ttfile
 
-=item $font = $pdf->ttfont $ttfile, $lazy
-
 Returns a new or existing truetype font object.
 
 B<Examples:>
@@ -720,76 +742,11 @@ B<Examples:>
 	$font = $pdf->ttfont('../Democratica-SmallCaps.ttf');
 
 
-B<Beware:>
-
-The $lazy option set to 1 will make several assumptions about truetype, used encoding
-and the reader-application (eg. Adobe Acrobat) to provide easy access to fonts without
-embedding.
-
-=over 2
-
-1. API2 assumes the used encoding to be compatible with pdf's 'WinAnsiEncoding' or 'latin1'.
-This is fixed and cannot be changed !
-
-2. API2 assumes that the fonts is not needed to be embedded and as such that the
-reader-application (eg. Acrobat 5) supports proper font search or substitution.
-
-3. Encodings of symbol-fonts do not have to be changed, since this should also be
-handled by the reader-application (eg. Acrobat).
-
-4. Utf8 methods will discard any characters outside of the 'latin1' and 'ms-symbol' ranges.
-
-=back
-
-B<Benefits:>
-
-The $lazy option set to 1 has the following benefits:
-
-=over 2
-
-1. No font-file will be embedded, saveing space, time and performance for other tasks.
-
-2. You do not have to know where your windows system fonts are located, since instead
-of specifying a valid fontfile you can use one of the aliases below to use the font.
-
-3. This method is even faster that using a pdf corefont, if your primary
-target-platform is the "adobe acrobat reader" on windows.
-
-=back
-
-B<Lazy Example:>
-
-	$font = $pdf->ttfont('TimesNewRoman',1);
-
-B<Windows Font Names:>
-
-	arial arialbold arialitalic arialbolditalic arialblack
-	comicsansms comicsansmsbold
-	couriernew couriernewbold couriernewitalic couriernewbolditalic
-	tahoma tahomabold
-	timesnewroman timesnewromanbold timesnewromanitalic timesnewromanbolditalic
-	verdana verdanabold verdanaitalic verdanabolditalic
-	wingdings
-
-B<Note:>
-
-=over 2
-
-Please see L<PDF::API2::xFont> for other informations.
-
-=back
 
 =cut
 
 sub ttfont {
-	my ($self,$file,$lazy)=@_;
-
-	if($^O eq 'MSWin32') {
-		my %opts=opts_from_ttf($file);
-		$file = defined $opts{-ttfile} ? $opts{-ttfile} : $file;
-	}
-
-	return $self->xfont(-ttfile=>$file,-ttopts=>$lazy) if($lazy);
+	my ($self,$file)=@_;
 
 	my $key='TTx'.pdfkey($file).$self->{time};
 
@@ -808,13 +765,21 @@ sub ttfont {
 
 =item $img = $pdf->image $file
 
-Returns a new image object.
+Returns a new image object from a file or a GD::Image object.
 
 B<Examples:>
 
 	$img = $pdf->image('yetanotherfun.jpg');
 	$img = $pdf->image('truly24bitpic.png');
 	$img = $pdf->image('reallargefile.pnm');
+
+	$gdimgobj=GD::Image->newFromPng('truly24bitpic.png');
+	$img = $pdf->image($gdimgobj);
+
+B<Important Note:>
+
+As of version 0.2.3.4 the development of the PNG import methods
+has been discontinued in favor of the GD::Image import facility.
 
 =cut
 
@@ -826,8 +791,8 @@ sub image {
 		$self->{pdf}->new_obj($obj->{SMask}) unless($obj->{SMask}->is_obj($self->{pdf}));
 	}
 
-	$obj->{' apipdf'}=$self->{pdf};
-        $obj->{' api'}=$self;
+#	$obj->{' apipdf'}=$self->{pdf};
+#	$obj->{' api'}=$self;
 
 	$self->resource('XObject',$obj->{' apiname'},$obj,1);
 
@@ -835,34 +800,34 @@ sub image {
 	return($obj);
 }
 
-=item $pdf->imagemask $img, $file
-
-Appends an image mask to image object.
-
-B<Examples:>
-
-	$img=$pdf->image('yetanotherfun.jpg');
-	$pdf->imagemask($img,'yetanotherfun_mask.jpg');
-
-	$img=$pdf->image('truly24bitpic.png');
-	$pdf->imagemask($img,'truly24bitpic.png');
-
-	$img=$pdf->image('reallargefile.pnm');
-	$pdf->imagemask($img,'reallargefile_mask.pnm');
-
-B<Note:> This appends a pdf1.4 (Acrobat 5.x) transparency mask
-(aka. Soft Mask) to the specified image. The mask may be a grayscale
-JPG or PNM which is used as the transparency/opacity information.
-
-B<PNG Note:> In case of a PNG the actual transparency or
-alpha-channel information is read, but works only for
-the following imagetypes:
-
-	Indexed plus tRNS-Chunk
-	Grayscale plus Alpha-Channel
-	RGBA
-
-=cut
+#=item $pdf->imagemask $img, $file
+#
+#Appends an image mask to image object.
+#
+#B<Examples:>
+#
+#	$img=$pdf->image('yetanotherfun.jpg');
+#	$pdf->imagemask($img,'yetanotherfun_mask.jpg');
+#
+#	$img=$pdf->image('truly24bitpic.png');
+#	$pdf->imagemask($img,'truly24bitpic.png');
+#
+#	$img=$pdf->image('reallargefile.pnm');
+#	$pdf->imagemask($img,'reallargefile_mask.pnm');
+#
+#B<Note:> This appends a pdf1.4 (Acrobat 5.x) transparency mask
+#(aka. Soft Mask) to the specified image. The mask may be a grayscale
+#JPG or PNM which is used as the transparency/opacity information.
+#
+#B<PNG Note:> In case of a PNG the actual transparency or
+#alpha-channel information is read, but works only for
+#the following imagetypes:
+#
+#	Indexed plus tRNS-Chunk
+#	Grayscale plus Alpha-Channel
+#	RGBA
+#
+#=cut
 
 sub imagemask {
 	my ($self,$img,$file)=@_;
@@ -1022,8 +987,8 @@ sub pattern {
 	my $key=$obj->{' apiname'};
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$obj->{' apipdf'}=$self->{pdf};
-	$obj->{' api'}=$self;
+#	$obj->{' apipdf'}=$self->{pdf};
+#	$obj->{' api'}=$self;
 
 	$self->resource('Pattern',$key,$obj,1);
 
@@ -1095,8 +1060,8 @@ sub colorspace {
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
 	$obj->{' apiname'}=$key;
-	$obj->{' apipdf'}=$self->{pdf};
-        $obj->{' api'}=$self;
+#	$obj->{' apipdf'}=$self->{pdf};
+#       $obj->{' api'}=$self;
 
 	$self->resource('ColorSpace',$key,$obj,1);
 
@@ -1521,7 +1486,7 @@ sub new {
 	my ($class,$pdf,$key,%opts)=@_;
 	my $self = $class->SUPER::new();
 	$self->{' apiname'}=$key;
-	$self->{' apipdf'}=$pdf;
+#	$self->{' apipdf'}=$pdf;
 
 	if($opts{-type} eq 'CalRGB') {
 
@@ -1960,157 +1925,6 @@ sub capheight   { return $_[0]->{' capheight'}; }
 sub xheight     { return $_[0]->{' xheight'}; }
 
 
-#==================================================================
-#	PDF::API2::xFont
-#==================================================================
-package PDF::API2::xFont;
-use strict;
-use PDF::API2::UniMap;
-use PDF::API2::Util;
-use Text::PDF::Utils;
-use Font::TTF::Font;
-
-use vars qw(@ISA);
-@ISA = qw( PDF::API2::Font Text::PDF::Dict );
-
-=head2 PDF::API2::xFont
-
-Provides special internal font-methods for PDF::API2.
-
-=item @font_names = PDF::API2::xFont::listwinfonts
-
-Returns an array with all the installed truetype font-names of your windows system,
-or a default fallback (compatible with Acrobat 5) if under unix.
-
-=cut
-
-sub listwinfonts {
-	opts_from_ttf('arial');
-	opts_from_pfm('arial');
-	return(sort keys %PDF::API2::Util::winfonts);
-}
-
-sub new {
-	my ($class,$pdf,%opts) = @_;
-	my ($self) = {};
-
-	$class = ref $class if ref $class;
-
-	$self = $class->SUPER::new();
-
-	%opts=opts_from_ttf($opts{-ttfile},%opts) if(defined $opts{-ttfile});
-
-	$self->{'Type'} = PDFName("Font");
-	$self->{'Subtype'} = PDFName($opts{-type});
-	$self->{'BaseFont'} = PDFName($opts{-fontname});
-	$self->{'AlternateFont'} = PDFName($opts{-altname}) if(defined $opts{-altname});
-	$self->{'Name'} = PDFName('FFXx'.pdfkey(%opts));
-	$self->{'Encoding'}=PDFName('WinAnsiEncoding');
-	$self->{'FirstChar'} = PDFNum($opts{-firstchar});
-	$self->{'LastChar'} = PDFNum($opts{-lastchar});
-
-	$self->{'Widths'}=PDFArray(map { PDFNum($_ || 0) } @{$opts{-widths}})  if(defined $opts{-widths});
-
-	$self->{' fc'}=$opts{-firstchar};
-	$self->{' wx'}=$opts{-widths};
-
-	$self->{'FontDescriptor'}=PDFDict();
-	$self->{'FontDescriptor'}->{'Type'}=PDFName('FontDescriptor');
-	$self->{'FontDescriptor'}->{'FontName'}=PDFName($opts{-fontname});
-	$self->{'FontDescriptor'}->{'Ascent'}=PDFNum($opts{-ascent}||0) if(defined $opts{-ascent});
-	$self->{'FontDescriptor'}->{'Descent'}=PDFNum($opts{-descent}||0) if(defined $opts{-descent});
-	$self->{'FontDescriptor'}->{'ItalicAngle'}=PDFNum($opts{-italicangle}||0) if(defined $opts{-italicangle});
-	$self->{'FontDescriptor'}->{'CapHeight'}=PDFNum($opts{-capheight}||0) if(defined $opts{-capheight});
-	$self->{'FontDescriptor'}->{'FontBBox'}=PDFArray(map { PDFNum($_ || 0) } @{$opts{-fontbbox}}) if(defined $opts{-fontbbox});
-	$self->{'FontDescriptor'}->{'StemV'}=PDFNum($opts{-stemv}||0) if(defined $opts{-stemv});
-	$self->{'FontDescriptor'}->{'StemH'}=PDFNum($opts{-stemh}||0) if(defined $opts{-stemh});
-	$self->{'FontDescriptor'}->{'XHeight'}=PDFNum($opts{-xheight}||0) if(defined $opts{-xheight});
-
-	$self->{'FontDescriptor'}->{'Flags'}=PDFNum($opts{-flags}) if(defined $opts{-flags});
-
-	$self->{' ascent'}=$opts{-ascent}||0;
-	$self->{' descent'}=$opts{-descent}||0;
-	$self->{' italicangle'}=$opts{-italicangle}||0;
-	$self->{' fontbbox'}=$opts{-fontbbox}||[0,0,600,600];
-	$self->{' capheight'}=$opts{-capheight}||0;
-	$self->{' xheight'}=$opts{-xheight}||0;
-
-	if(defined($pdf) && !$self->is_obj($pdf)) {
-		$pdf->new_obj($self);
-	}
-
-	if($opts{-embed} && defined $opts{-ttfile}) {
-		my $s = PDFDict();
-		$self->{'FontDescriptor'}->{'FontFile2'} = $s;
-		$s->{'Length1'} = PDFNum(-s $opts{-ttfile});
-		$s->{'Filter'} = PDFArray(PDFName("FlateDecode"));
-		$s->{' streamfile'} = $opts{-ttfile};
-
-		$pdf->new_obj($s);
-	}
-
-	$self->{' apifontlight'}=1;
-	$self->{' apiname'}='FFXx'.pdfkey(%opts);
-	$self->{' apipdf'}=$pdf;
-
-	return($self);
-}
-
-sub copy { die "COPY NOT IMPLEMENTED !!!";}
-
-sub clone {
-	my $self=shift @_;
-	return($self);
-}
-
-sub glyphs {
-	my ($self,$enc) = @_;
-	return $self;
-}
-
-sub encode {
-	my $self=shift @_;
-	$self;
-}
-
-sub width {
-	my ($self,$text)=@_;
-	my ($width);
-	foreach (unpack("C*", $text)) {
-		$width += $self->{' wx'}->[$_-$self->{' fc'}];
-	}
-	$width/=1000;
-	return($width);
-}
-
-sub text_utf8 {
-	my ($self,$text)=@_;
-	$text=utf8_to_ucs2($text);
-	foreach my $x (0..(length($text)>>1)-1) {
-		vec($text,$x,8)=vec($text,$x,16) & 0xff;
-	}
-	$text=$self->text(substr($text,0,length($text)>>1));
-	return($text);
-}
-
-sub width_utf8 {
-	my ($self,$text)=@_;
-	$text=utf8_to_ucs2($text);
-	foreach my $x (0..(length($text)>>1)-1) {
-		vec($text,$x,8)=vec($text,$x,16) & 0xff;
-	}
-	my $width=$self->width(substr($text,0,length($text)>>1));
-	return($width);
-}
-
-
-sub ascent      { return $_[0]->{' ascent'}; }
-sub descent     { return $_[0]->{' descent'}; }
-sub italicangle { return $_[0]->{' italicangle'}; }
-sub fontbbx     { return @{$_[0]->{' fontbbox'}}; }
-sub capheight   { return $_[0]->{' capheight'}; }
-sub xheight     { return $_[0]->{' xheight'}; }
-
 
 #==================================================================
 #	PDF::API2::CoreFont
@@ -2146,7 +1960,7 @@ sub new {
 	}
 	$self->{' apiname'}=$key;
 	$self->{' apipdf'}=$pdf;
-
+	$self->encodeProperLight('latin1',32,255);
 	return($self);
 }
 
@@ -2450,7 +2264,7 @@ Returns a page object converted from $pdfpage (called from $pdf->openpage).
 sub coerce {
 	my ($class, $pdf, $page) = @_;
 	my ($self) = {};
-	bless($self);
+	bless($self,$class);
 	foreach my $k (keys %{$page}) {
 		$self->{$k}=$page->{$k};
 	}
@@ -2597,11 +2411,16 @@ sub fixcontents {
 	}
 }
 
+sub addcontent {
+	my ($self,@objs) = @_;
+        $self->fixcontents;
+        $self->{'Contents'}->add_elements(@objs);
+}
+
 sub gfx {
 	my ($self) = @_;
-        $self->fixcontents;
 	my $gfx=PDF::API2::Gfx->new();
-        $self->{'Contents'}->add_elements($gfx);
+        $self->addcontent($gfx);
         $self->{' apipdf'}->new_obj($gfx);
         $gfx->{' apipdf'}=$self->{' apipdf'};
         $gfx->{' apipage'}=$self;
@@ -2616,9 +2435,8 @@ Returns a text content object.
 
 sub text {
 	my ($self) = @_;
-        $self->fixcontents;
 	my $text=PDF::API2::Text->new();
-        $self->{'Contents'}->add_elements($text);
+        $self->addcontent($text);
         $self->{' apipdf'}->new_obj($text);
         $text->{' apipdf'}=$self->{' apipdf'};
         $text->{' apipage'}=$self;
@@ -2633,9 +2451,8 @@ Returns a hybrid content object.
 
 sub hybrid {
 	my ($self) = @_;
-        $self->fixcontents;
 	my $hyb=PDF::API2::Hybrid->new();
-        $self->{'Contents'}->add_elements($hyb);
+        $self->addcontent($hyb);
         $self->{' apipdf'}->new_obj($hyb);
         $hyb->{' apipdf'}=$self->{' apipdf'};
         $hyb->{' apipage'}=$self;
@@ -2759,6 +2576,13 @@ sub new {
 	return($self);
 }
 
+=item $ant->link $page, %opts
+
+Defines the annotation as launch-page with page $page and
+options %opts (-rect, -border or 'dest-options').
+
+=cut
+
 sub link {
 	my ($self,$page,%opts)=@_;
 	$self->{Subtype}=PDFName('Link');
@@ -2767,6 +2591,49 @@ sub link {
 	$self->border(@{$opts{-border}}) if(defined $opts{-border});
 	return($self);
 }
+
+=item $ant->url $url, %opts
+
+Defines the annotation as launch-url with url $url and
+options %opts (-rect and/or -border).
+
+=cut
+
+sub url {
+	my ($self,$url,%opts)=@_;
+	$self->{Subtype}=PDFName('Link');
+	$self->{A}=PDFDict();
+	$self->{A}->{S}=PDFName('URI');
+	$self->{A}->{URI}=PDFStr($url);
+	$self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
+	$self->border(@{$opts{-border}}) if(defined $opts{-border});
+	return($self);
+}
+
+=item $ant->file $file, %opts
+
+Defines the annotation as launch-file with filepath $file and
+options %opts (-rect and/or -border).
+
+=cut
+
+sub file {
+	my ($self,$file,%opts)=@_;
+	$self->{Subtype}=PDFName('Link');
+	$self->{A}=PDFDict();
+	$self->{A}->{S}=PDFName('Launch');
+	$self->{A}->{F}=PDFStr($file);
+	$self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
+	$self->border(@{$opts{-border}}) if(defined $opts{-border});
+	return($self);
+}
+
+=item $ant->text $text, %opts
+
+Defines the annotation as textnote with content $text and
+options %opts (-rect and/or -open).
+
+=cut
 
 sub text {
 	my ($self,$text,%opts)=@_;
@@ -2777,6 +2644,12 @@ sub text {
 	return($self);
 }
 
+=item $ant->rect $llx, $lly, $urx, $ury
+
+Sets the rectangle of the annotation.
+
+=cut
+
 sub rect {
 	my ($self,@r)=@_;
 	die "insufficient parameters to annotation->rect( ) " unless(scalar @r == 4);
@@ -2784,12 +2657,24 @@ sub rect {
 	return($self);
 }
 
+=item $ant->border @b
+
+Sets the border-styles of the annotation, if applicable.
+
+=cut
+
 sub border {
 	my ($self,@r)=@_;
 	die "insufficient parameters to annotation->border( ) " unless(scalar @r == 3);
 	$self->{Border}=PDFArray( map { PDFNum($_) } $r[0..2] );
 	return($self);
 }
+
+=item $ant->content @lines
+
+Sets the text-content of the annotation, if applicable.
+
+=cut
 
 sub content {
 	my ($self,@t)=@_;
@@ -2802,6 +2687,12 @@ sub name {
 	$self->{Name}=PDFName($n);
 	return($self);
 }
+
+=item $ant->open $bool
+
+Display the annotation either open or closed, if applicable.
+
+=cut
 
 sub open {
 	my ($self,$n)=@_;
@@ -4095,8 +3986,12 @@ sub hspace {
 =cut
 
 sub lead {
-	my ($self,$para)=@_;
-	$self->add(float($para),'TL');
+        my ($self,$para)=@_;
+        if (defined ($para)) {
+                $self->add(float($para),'TL');
+                $self->{' lead'} = $para;
+        }
+        return $self->{' lead'};
 }
 
 =item $txt->rise $rise
@@ -4220,13 +4115,17 @@ sub textln {
 	}
 }
 
+=item $txt->paragraph $x, $y, $width, $heigth, $indent, @text
+
+=cut
+
 sub paragraph {
 	my ($self,$x,$y,$wd,$ht,$idt,@txt)=@_;
 	my $text=join(' ',@txt);
 	my $h=$ht;
 	my $sz=$self->{' fontsize'};
 	@txt=split(/\s+/,$text);
-	$self->lead($sz);
+	$self->lead($sz) if not defined $self->lead();
 
 	my @line=();
 	while((defined $txt[0]) && ($ht>0)) {
@@ -4236,30 +4135,32 @@ sub paragraph {
 			push(@line, shift @txt);
 		}
 		@line=(shift @txt) if(scalar @line ==0  && $self->{' font'}->width($txt[0])*($self->{' hspace'}/100)*$sz>($wd-$idt) );
-		my $l=$self->{' font'}->width(join(' ',@line))*$sz;
-		$self->wordspace(($wd-$idt-$l)/(scalar @line)) if(defined $txt[0] && scalar @line>0);
+		my $l=$self->{' font'}->width(join(' ',@line))*$sz*($self->{' hspace'}/100);
+		$self->wordspace(($wd-$idt-$l)/(scalar @line -1)) if(defined $txt[0] && scalar @line>0);
 		$idt=$l+$self->{' font'}->width(' ')*$sz;
 		$self->text(join(' ',@line));
-		if(defined $txt[0]) { $ht-=$sz; $idt=0; }
+		if(defined $txt[0]) { $ht-= $self->lead(); $idt=0; }
 		$self->wordspace(0);
 	}
 	return($idt,$y+$ht-$h,@txt);
 }
 
 sub paragraphformat {
-	my ($self,$x,$y,$wd,$ht,$idt,@txt)=@_;
+	my ($self,$x,$y,$wd,$ht,$idt,@txtobj)=@_;
 	my $yy=$y-$ht;
 	my @t;
-	while(scalar @txt>0 && $y>$yy) {
-		my $text=shift @txt;
-		$self->font($text,$self->{' fontsize'}) if(ref($text)=~/Font/i);
-		next if(ref($text)=~/Font/i);
+	while(scalar @txtobj>0 && $y>$yy) {
+		my $text=shift @txtobj;
+		if(ref($text)=~/Font/i) {
+			$self->font($text,$self->{' fontsize'});
+			next; 
+		}
 		while(ref($text) ? scalar @{$text}>0 : (defined $text) && ($text ne '')) {
 			($idt,$y,@t)=$self->paragraph($x,$y,$wd,$y-$yy,$idt,ref($text) ? @{$text} : $text);
 			$text=[@t];
 		}
 	}
-	return($idt,$y,@txt);
+	return($idt,$y,@txtobj);
 }
 
 #==================================================================
@@ -5047,7 +4948,7 @@ sub drawbar {
 	my $ext=shift @_;
 
 	my $x=$self->{' quzn'};
-	my ($code,$str,$bw,$f,$t,$l,$h,$xo);
+	my ($code,$str,$f,$t,$l,$h,$xo);
 	$self->fillcolorbyname('black');
 	$self->strokecolorbyname('black');
 
@@ -5162,6 +5063,10 @@ package PDF::API2::Image;
 use strict;
 use PDF::API2::Util;
 use Text::PDF::Utils;
+use Text::PDF::ImageJPEG;
+use Text::PDF::ImageGD;
+use Text::PDF::ImagePPM;
+use Text::PDF::ImagePNG;
 
 =head2 PDF::API2::Image
 
@@ -5174,28 +5079,43 @@ Returns a new image object (called from $pdf->image).
 sub new {
 	my ($class,$pdf,$file,$tt)=@_;
 	my ($obj,$buf);
-	open(INF,$file);
-	binmode(INF);
-	read(INF,$buf,10,0);
-	close(INF);
-	if ($buf=~/^\xFF\xD8/) {
-		$obj=PDF::API2::JPEG->new($file,$tt);
-	} elsif ($buf=~/^\x89PNG/) {
-		$obj=PDF::API2::PNG->new($file,$tt);
-	} elsif ($buf=~/^P[456][\s\n]/) {
-		$obj=PDF::API2::PPM->new($file,$tt);
+	if(ref $file) {
+		if(UNIVERSAL::isa($file,'GD::Image')) {
+			$obj=Text::PDF::ImageGD->new($pdf,'IMGxGDx'.pdfkey($file),$file);
+			$obj->{' apiname'}='IMGxGDx'.pdfkey($file);
+		} elsif(UNIVERSAL::isa($file,'Image::Base')) {
+			$obj=Text::PDF::ImageIMAGE->new($pdf,'IMGxIMAGEx'.pdfkey($file),$file);
+			$obj->{' apiname'}='IMGxIMAGEx'.pdfkey($file);
+		} else {
+			die "Unknown Object '$file'";
+		}
 	} else {
-		die sprintf("image '$file' has unknown format with signature '%02x%02x%02x%02x%02x%02x'",
-			ord(substr($buf,0,1)),
-			ord(substr($buf,1,1)),
-			ord(substr($buf,2,1)),
-			ord(substr($buf,3,1)),
-			ord(substr($buf,4,1)),
-			ord(substr($buf,5,1))
-		);
+		open(INF,$file);
+		binmode(INF);
+		read(INF,$buf,10,0);
+		close(INF);
+		if ($buf=~/^\xFF\xD8/) {
+			$obj=Text::PDF::ImageJPEG->new($pdf,'IMGxJPEGx'.pdfkey($file),$file);
+			$obj->{' apiname'}='IMGxJPEGx'.pdfkey($file);
+		} elsif ($buf=~/^\x89PNG/) {
+			$obj=Text::PDF::ImagePNG->new($pdf,'IMGxPNGx'.pdfkey($file),$file);
+			$obj->{' apiname'}='IMGxPNGx'.pdfkey($file);
+		} elsif ($buf=~/^P[456][\s\n]/) {
+			$obj=Text::PDF::ImagePPM->new($pdf,'IMGxPPMx'.pdfkey($file),$file);
+			$obj->{' apiname'}='IMGxPPMx'.pdfkey($file);
+		} else {
+			die sprintf("image '$file' has unknown format with signature '%02x%02x%02x%02x%02x%02x'",
+				ord(substr($buf,0,1)),
+				ord(substr($buf,1,1)),
+				ord(substr($buf,2,1)),
+				ord(substr($buf,3,1)),
+				ord(substr($buf,4,1)),
+				ord(substr($buf,5,1))
+			);
+		}
+	###	$pdf->new_obj($obj);
+	####	$obj->{' apipdf'}.=$pdf;
 	}
-	$pdf->new_obj($obj);
-	$obj->{' apipdf'}.=$pdf;
 	return($obj);
 }
 
@@ -5304,8 +5224,7 @@ sub newMask {
 
 sub parsePNM {
 	my $file=shift @_;
-	my $buf=shift @_;
-	my ($t,$s,$line);
+	my ($buf,$t,$s,$line);
 	my ($w,$h,$bpc,$cs,$img,@img)=(0,0,'','','');
 	open(INF,$file);
 	binmode(INF);
@@ -6455,3 +6374,4 @@ alfred reibenschuh
 1;
 
 __END__
+

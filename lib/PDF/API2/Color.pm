@@ -2,7 +2,7 @@ package PDF::API2::Color;
 
 use vars qw( $VERSION );
 
-( $VERSION ) = '$Revisioning: 20011128.220656 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 20020418.102155 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 

@@ -4,6 +4,11 @@ use PDF::API2;
 use PDF::API2::Util;
 use Text::PDF::Utils;
 
+BEGIN {
+	eval " use GD; ";
+	$hasGD = $@ ? 0 : 1;
+}
+
 $pdf=PDF::API2->new;
 
 $f1=$pdf->corefont('Helvetica',1);
@@ -14,7 +19,53 @@ $f2=$pdf->corefont('Times-Roman',1);
 $f2->encode('latin1');
 
 
-foreach my $i (glob('*.jpg'),glob('*.png'),glob('*.p?m')) {
+foreach my $i (glob('*.jpg')) {
+	$page = $pdf->page;
+	$page->mediabox(595,842);
+	$txt=$page->text;
+	$txt->compress;
+
+	$txt->translate(100,800);
+	$txt->font($f1,30);
+	$txt->text("image: $i");
+
+	$gfx=$page->gfx;
+
+	my $img=$pdf->image($i);
+	
+	$gfx->image($img,0,0);
+
+	$gfx->image($img,200,200,72/150);
+
+	$gfx->image($img,400,400,150,150);
+}
+
+if($hasGD) {
+	foreach my $i (glob('*.png')) {
+		$page = $pdf->page;
+		$page->mediabox(595,842);
+		$txt=$page->text;
+		$txt->compress;
+
+		$txt->translate(100,800);
+		$txt->font($f1,30);
+		$txt->text("image: $i");
+
+		$gfx=$page->gfx;
+		
+		$gd=GD::Image->newFromPng($i);
+
+		my $img=$pdf->image($gd);
+
+		$gfx->image($img,0,0);
+
+		$gfx->image($img,200,200,72/150);
+
+		$gfx->image($img,400,400,150,150);
+	}
+}
+
+foreach my $i (glob('*.p?m')) {
 	$page = $pdf->page;
 	$page->mediabox(595,842);
 	$txt=$page->text;

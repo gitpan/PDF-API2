@@ -10,6 +10,7 @@ use vars qw(@ISA);
 use POSIX;
 use Text::PDF::Utils;
 use Compress::Zlib;
+use File::Find;
 
 =head1 NAME
 
@@ -85,24 +86,10 @@ sub resolveFontFile {
         my $fontfile=undef;
         if ( -e $file ) {
                 $fontfile=$file;
-                return $fontfile;
         } else {
-                map {
-                        $fontfile="$_/$file";
-                        if(-e $fontfile) { return $fontfile; }
-                } (
-                        '.',
-                        map {
-                                glob("$_/Text/PDF/API/fonts"),
-                                glob("$_/Text/PDF/fonts"),
-                                glob("$_/Text/PDF/API/fonts/ttf"),
-                                glob("$_/Text/PDF/fonts/ttf"),
-                                glob("$_/Text/PDF/API/fonts/t1"),
-                                glob("$_/Text/PDF/fonts/t1"),
-                        } (@INC)
-                );
+		map { my $f="$_/$file"; $fontfile=$f if(-e $f); } (map { ("$_/PDF/API2/fonts/t1", "$_/Text/PDF/fonts/t1"); }  @INC) ;
         }
-        return undef;
+	return $fontfile;
 }
 
 sub readAFM {
@@ -1271,12 +1258,11 @@ BEGIN
 	less equal greater question at A B C D E F G H I J K L M N O P Q
 	R S T U V W X Y Z bracketleft backslash bracketright asciicircum
 	underscore grave a b c d e f g h i j k l m n o p q r s t u v w x
-	y z braceleft bar braceright asciitilde .notdef .notdef .notdef
-	.notdef .notdef .notdef .notdef .notdef .notdef .notdef .notdef
-	.notdef .notdef .notdef .notdef .notdef .notdef dotlessi grave
-	acute circumflex tilde macron breve dotaccent dieresis .notdef
-	ring cedilla .notdef hungarumlaut ogonek caron space exclamdown
-	cent sterling currency yen brokenbar section dieresis copyright
+	y z braceleft bar braceright asciitilde bullet
+	Euro bullet quotesinglbase florin quotedblbase ellipsis dagger daggerdbl circumflex perthousand Scaron guilsinglleft OE bullet Zcaron bullet
+  	bullet quoteleft quoteright quotedblleft quotedblright
+        bullet endash emdash tilde trademark scaron guilsinglright oe bullet zcaron Ydieresis space
+	exclamdown cent sterling currency yen brokenbar section dieresis copyright
 	ordfeminine guillemotleft logicalnot hyphen registered macron
 	degree plusminus twosuperior threesuperior acute mu paragraph
 	periodcentered cedilla onesuperior ordmasculine guillemotright
@@ -1294,4 +1280,5 @@ BEGIN
 
 1;
 __END__
+
 

@@ -8,7 +8,7 @@ BEGIN {
 	@EXPORT      = qw ();
 	@EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
 	@EXPORT_TAGS = qw ();
-	( $VERSION ) = '$Revisioning: 20011128.220656 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 20020418.102155 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 sub utf8c_to_ucs4c {
@@ -111,34 +111,54 @@ sub new {
 	bless($this,$class);
 	my $buf;
 	my $unimap='';
-	map {
-		if(-e "$_/PDF/API2/UniMap/$encoding.map"){
-			$unimap="$_/PDF/API2/UniMap/$encoding.map";
-		}
-	} @INC;
-
-	if(! -e $unimap) {
-		die " encoding='$encoding' not supported.";
-	} else {
+	
+	if($encoding=~/^uni(\d+)$/) {
+		my $uct=$1*256;
 		$this->{'enc'} = $encoding;
 		$this->{'u2c'} = {};
 		$this->{'c2u'} = {};
 		$this->{'c2n'} = {};
-		open(INF,"$unimap");
-		binmode(INF);
-		read(INF,$buf,4);
-		while(!eof(INF)) {
-			read(INF,$buf,4);
-			my ($ch,$um)=unpack('nn',$buf);
+		foreach my $ch (0..255) {
+			my $um=$ch+$uct;
 			$this->{'u2c'}->{$um}=$ch;
 			$this->{'c2u'}->{$ch}=$um;
 			$this->{'c2n'}->{$ch}=$u2n{$um} || sprintf('uni%04X',$um);
 		}
-		close(INF);
 		if(wantarray) {
 			return($this,$encoding);
 		} else {
 			return $this;
+		}
+	} else {
+		map {
+			if(-e "$_/PDF/API2/UniMap/$encoding.map"){
+				$unimap="$_/PDF/API2/UniMap/$encoding.map";
+			}
+		} @INC;
+
+		if(! -e $unimap) {
+			die " encoding='$encoding' not supported.";
+		} else {
+			$this->{'enc'} = $encoding;
+			$this->{'u2c'} = {};
+			$this->{'c2u'} = {};
+			$this->{'c2n'} = {};
+			open(INF,"$unimap");
+			binmode(INF);
+			read(INF,$buf,4);
+			while(!eof(INF)) {
+				read(INF,$buf,4);
+				my ($ch,$um)=unpack('nn',$buf);
+				$this->{'u2c'}->{$um}=$ch;
+				$this->{'c2u'}->{$ch}=$um;
+				$this->{'c2n'}->{$ch}=$u2n{$um} || sprintf('uni%04X',$um);
+			}
+			close(INF);
+			if(wantarray) {
+				return($this,$encoding);
+			} else {
+				return $this;
+			}
 		}
 	}
 }
@@ -291,7 +311,40 @@ BEGIN {
   '124'=>'bar',
   '125'=>'braceright',
   '126'=>'asciitilde',
-  '160'=>'space',
+  '127'=>'bullet',    		
+  '128'=>'Euro',      		
+  '129'=>'bullet',     		
+  '130'=>'quotesinglbase',      
+  '131'=>'florin',       	
+  '132'=>'quotedblbase', 	
+  '133'=>'ellipsis',     	
+  '134'=>'dagger',       	
+  '135'=>'daggerdbl',    	
+  '136'=>'circumflex',   	
+  '137'=>'perthousand',  	
+  '138'=>'Scaron',       	
+  '139'=>'guilsinglleft',       
+  '140'=>'OE',   		
+  '141'=>'bullet',      	
+  '142'=>'Zcaron',      	
+  '143'=>'bullet',      	
+  '144'=>'bullet',      	
+  '145'=>'quoteleft',   	
+  '146'=>'quoteright',  	
+  '147'=>'quotedblleft', 	
+  '148'=>'quotedblright',       
+  '149'=>'bullet',      	
+  '150'=>'endash',       	
+  '151'=>'emdash',       	
+  '152'=>'tilde',        	
+  '153'=>'trademark',    	
+  '154'=>'scaron',       	
+  '155'=>'guilsinglright',      
+  '156'=>'oe',   		
+  '157'=>'bullet',      	
+  '158'=>'zcaron',      	
+  '159'=>'Ydieresis',   	
+  '160'=>'space',      		
   '161'=>'exclamdown',
   '162'=>'cent',
   '163'=>'sterling',
