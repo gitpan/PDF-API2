@@ -20,7 +20,7 @@ $txt->text('Hello World !');
 ## $pdf->protect;
 
 $pdf->saveas('empty.pdf');
-
+$pdf->end();
 
 __END__
 

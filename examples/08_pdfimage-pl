@@ -35,6 +35,9 @@ $gfx->pdfimage($img,100,100,0.3);
 
 $pdf->saveas("$0.2.pdf");
 
+$pdf->end();
+$pdf2->end();
+
 exit;
 
 __END__

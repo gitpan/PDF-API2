@@ -668,22 +668,41 @@ sub release
     foreach my $key (keys %{$self})
     {
         my $ref = ref($self->{$key});
-        if ($ref =~ /^Font::TTF::/o)
-        {
-            # Sub-element, explicitly destruct.
-            my $val = $self->{$key};
-            delete $self->{$key};
-            $val->release();
-        }
-        elsif ($ref eq '')
+        if ($ref eq '')
         {
             # Remove scalar value.
             delete $self->{$key};
+        }
+        elsif ($ref eq 'ARRAY')
+        {
+            # Remove sub-array (of _scalars_)
+            delete $self->{$key};
+        }
+        elsif ($ref =~ /^Font::TTF::/o)
+        {
+            # TTF font structure, explicitly destruct.
+            my $val = $self->{$key};
+            delete $self->{$key};
+            $val->release();
         }
         elsif ($ref eq 'IO::File')
         {
             # IO object, destruct silently.
             delete $self->{$key};
+        }
+        elsif ($ref eq 'HASH')
+        {
+            # Remove sub-hash (of _scalars_)
+            delete $self->{$key};
+        }
+        elsif (UNIVERSAL::can($self->{$key},'release'))
+        {
+        	$self->{$key}->release();
+        	delete($self->{$key});
+        }
+        else 
+        {
+        	delete($self->{$key});
         }
     }
 

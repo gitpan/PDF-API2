@@ -48,8 +48,12 @@ foreach $fn (qw(
 
 }
 
+
+
 $pdf->saveas("$0.pdf");
 
+
+$pdf->end();
 exit;
 
 __END__

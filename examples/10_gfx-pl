@@ -42,7 +42,7 @@ $font=$pdf->corefont('Helvetica',1);
 	$gfx->stroke;
 
 $pdf->saveas("$0.pdf");
-
+$pdf->end();
 exit;
 
 __END__

@@ -172,6 +172,15 @@ sub release
             # Remove sub-hash (of _scalars_)
             delete $self->{$key};
         }
+        elsif (UNIVERSAL::can($self->{$key},'release'))
+        {
+        	$self->{$key}->release();
+        	delete($self->{$key});
+        }
+        else 
+        {
+        	delete($self->{$key});
+        }
     }
 
     ###########################################################################

@@ -67,6 +67,7 @@ foreach $t (
 }
 
 $pdf->saveas("$0.pdf");
+$pdf->end();
 
 exit;
 

@@ -123,6 +123,8 @@ foreach $fn (glob("*.ttf")) {
 
 
 $pdf2->saveas("$0.2.pdf");
+$pdf->end();
+$pdf2->end();
 
 $pdf=PDF::API2->open("$0.2.pdf");
 $pdf->clonepage(2);
@@ -140,6 +142,7 @@ $page->update;
 
 $pdf->saveas("$0.3.pdf");
 
+$pdf->end();
 
 exit;
 

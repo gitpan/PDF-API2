@@ -16,6 +16,8 @@ The following functions are exported
 
 use strict;
 use vars qw(@ISA @EXPORT $VERSION @EXPORT_OK);
+no warnings qw(uninitialized);
+
 require Exporter;
 
 @ISA = qw(Exporter);

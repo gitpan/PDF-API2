@@ -84,6 +84,8 @@ foreach $med (
 
 $pdf->saveas("$0.pdf");
 
+$pdf->end();
+
 exit;
 
 __END__

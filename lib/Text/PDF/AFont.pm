@@ -513,10 +513,10 @@ sub newCore {
 	
 	if(! -e $file) {die "file='$file' (was '$name.afm') not existant.";}
 
-	if(-e $file2) {
+	if(defined $file2 && -e $file2) {
 		return(new($class, $parent, $file2, $file, $pdfname, $encoding, @glyphs));
 	}
-	if(-e $file3) {
+	if(defined $file3 && -e $file3) {
 		return(new($class, $parent, $file3, $file, $pdfname, $encoding, @glyphs));
 	}
 

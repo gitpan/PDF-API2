@@ -262,7 +262,7 @@ sub read_dat
     my ($self) = @_;
     my ($dat, $num, $max, $i, $flag, $len, $val, $val1, $fp);
 
-    return $self if $self->{' read'} > 1;
+    return $self if(defined($self->{' read'}) && ($self->{' read'} > 1));
     $self->read unless $self->{' read'};
     $dat = $self->{' DAT'};
     $fp = 10;
@@ -563,7 +563,7 @@ sub update
             }
             
             $flag |= 512 if (defined $self->{'metric'} && $self->{'metric'} == $i);
-            if ($i == $#{$self->{'comps'}})
+            if ($i == scalar @{$self->{'comps'}})
             { $flag |= 256 if ($self->{'instLen'} > 0); }
             else
             { $flag |= 32; }

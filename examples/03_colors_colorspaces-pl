@@ -367,6 +367,7 @@ foreach my $icc (qw(
 
 $pdf->saveas("$0.pdf");
 
+$pdf->end();
 
 __END__
 

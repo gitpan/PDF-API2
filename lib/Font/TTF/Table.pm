@@ -389,6 +389,15 @@ sub release
                 $val->release();
             }
         }
+        elsif (UNIVERSAL::can($self->{$key},'release'))
+        {
+        	$self->{$key}->release();
+        	delete($self->{$key});
+        }
+        else 
+        {
+        	delete($self->{$key});
+        }
     }
 
     ###########################################################################

@@ -9,7 +9,7 @@
 package PDF::API2;
 
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 20011128.230201 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 20011230.072032 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head1 PDF::API2
 
@@ -442,7 +442,7 @@ Returns the document in a string.
 sub stringify {
 	my ($this)=@_;
 	my $str;
-	if($self->{reopened}==1) {
+	if((defined $self->{reopened}) && ($self->{reopened}==1)) {
 		$self->{pdf}->append_file;
 		$str=${$self->{pdf}->{' OUTFILE'}->string_ref};
 	} else {
@@ -468,9 +468,76 @@ Destroys the document.
 sub end {
 	my $self=shift(@_);
 	$self->{pdf}->release;
-	foreach my $k (keys %{$self}) {
-		delete $self->{$k};
-	} 
+	    foreach my $key (keys %{$self})
+	    {
+	        my $ref = ref($self->{$key});
+	        if ($ref eq '')
+	        {
+	            # Remove scalar value.
+	            delete $self->{$key};
+	        }
+	        elsif ($ref =~ /^Text::PDF::/o)
+	        {
+	            if ($key =~ /parent/io)
+	            {
+	                # Potential circular reference.
+	                delete $self->{$key};
+	            }
+	            else
+	            {
+	                # Sub-element, explicitly destruct.
+	                my $val = $self->{$key};
+	                delete $self->{$key};
+	                $val->release();
+	            }
+	        }
+	        elsif ($ref eq 'ARRAY')
+	        {
+	            # Remove sub-array (of _scalars_)
+	            delete $self->{$key};
+	        }
+	        elsif ($ref =~ /^Font::TTF::/o)
+	        {
+	            # TTF font structure, explicitly destruct.
+	            my $val = $self->{$key};
+	            delete $self->{$key};
+	            $val->release();
+	        }
+	        elsif ($ref eq 'IO::File')
+	        {
+	            # IO object, destruct silently.
+	            delete $self->{$key};
+	        }
+	        elsif ($ref eq 'HASH')
+	        {
+	            # Remove sub-hash (of _scalars_)
+	            delete $self->{$key};
+	        }
+	        elsif (UNIVERSAL::can($self->{$key},'release'))
+	        {
+	        	$self->{$key}->release();
+	        	delete($self->{$key});
+	        }
+	        else 
+	        {
+	        	delete($self->{$key});
+	        }
+	    }
+	
+	    ###########################################################################
+	    # Now that we think that we've gone back and freed up all of the memory
+	    # that we were using, check to make sure that we don't have any keys left
+	    # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
+	    # message.
+	    ###########################################################################
+	    foreach my $key (keys %{$self})
+	    {
+	        warn ref($self) . " still has '$key' key left after release.\n";
+	    }
+
+#	foreach my $k (keys %{$self}) {
+#		delete $self->{$k};
+#	} 
 	undef;
 }
 
@@ -732,6 +799,9 @@ sub image {
 	my ($self,$file)=@_;
         my $obj=PDF::API2::Image->new($self->{pdf},$file,$self->{time});
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+	if($obj->{SMask}) {
+		$self->{pdf}->new_obj($obj->{SMask}) unless($obj->{SMask}->is_obj($self->{pdf}));
+	}
 
 	$obj->{' apipdf'}=$self->{pdf};
         $obj->{' api'}=$self;
@@ -740,6 +810,49 @@ sub image {
 
 	$self->{pdf}->out_obj($self->{pages});
 	return($obj);
+}
+
+=item $pdf->imagemask $img, $file
+
+Appends an image mask to image object.
+
+B<Examples:>
+
+	$img=$pdf->image('yetanotherfun.jpg');
+	$pdf->imagemask($img,'yetanotherfun_mask.jpg');
+
+	$img=$pdf->image('truly24bitpic.png');
+	$pdf->imagemask($img,'truly24bitpic.png');
+
+	$img=$pdf->image('reallargefile.pnm');
+	$pdf->imagemask($img,'reallargefile_mask.pnm');
+
+B<Note:> This appends a pdf1.4 (Acrobat 5.x) transparency mask 
+(aka. Soft Mask) to the specified image. The mask may be a grayscale 
+JPG or PNM which is used as the transparency/opacity information. 
+
+B<PNG Note:> In case of a PNG the actual transparency or 
+alpha-channel information is read, but works only for 
+the following imagetypes: 
+
+	Indexed plus tRNS-Chunk
+	Grayscale plus Alpha-Channel
+	RGBA
+
+=cut
+
+sub imagemask {
+	my ($self,$img,$file)=@_;
+        my $obj=PDF::API2::Image->newMask($self->{pdf},$img,$file,$self->{time});
+	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+	$obj->{' apipdf'}=$self->{pdf};
+        $obj->{' api'}=$self;
+
+#	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+
+	$self->{pdf}->out_obj($self->{pages});
+	return($img);
 }
 
 =item $img = $pdf->pdfimage $file, $page_number
@@ -1790,10 +1903,10 @@ for use in the PDF.
 
 sub text {
 	my ($font,$text)=@_;
-	my ($newtext);
+	my $newtext='';
 	foreach my $g (0..length($text)-1) {
 		$newtext.=
-			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)\xa0-\xff]/)
+			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
 			? sprintf('\%03lo',vec($text,$g,8))
 			: substr($text,$g,1) ;
 	}
@@ -2002,7 +2115,7 @@ sub new {
 	my ($self) = {};
 
 	$class = ref $class if ref $class;
-	if($light==1) {
+	if((defined $light) && ($light==1)) {
 		$self = $class->SUPER::newCoreLight($pdf,$name,$key);
 		$self->{' apifontlight'}=1;
 	} else {
@@ -2019,7 +2132,7 @@ sub coerce {
 	my ($self) = {};
 	
 	$class = ref $class if ref $class;
-	if($light==1) {
+	if((defined $light) && ($light==1)) {
 		$self = $class->SUPER::newCoreLight(undef,$name,$key);
 		$self->{' apifontlight'}=1;
 	} else {
@@ -4918,6 +5031,34 @@ sub new {
 	return($obj);
 }
 
+sub newMask {
+	my ($class,$pdf,$img,$file,$tt)=@_;
+	my ($obj,$buf);
+	open(INF,$file);
+	binmode(INF);
+	read(INF,$buf,10,0);
+	close(INF);
+	if ($buf=~/^\xFF\xD8/) {
+		$obj=PDF::API2::JPEG->newMask($img,$file,$tt);
+	} elsif ($buf=~/^\x89PNG/) {
+		$obj=PDF::API2::PNG->newMask($img,$file,$tt);
+	} elsif ($buf=~/^P[456][\s\n]/) {
+		$obj=PDF::API2::PPM->newMask($img,$file,$tt);
+	} else {
+		die sprintf("image '$file' has unknown format with signature '%02x%02x%02x%02x%02x%02x'",
+			ord(substr($buf,0,1)),
+			ord(substr($buf,1,1)),
+			ord(substr($buf,2,1)),
+			ord(substr($buf,3,1)),
+			ord(substr($buf,4,1)),
+			ord(substr($buf,5,1))
+		);
+	}
+	$pdf->new_obj($obj);
+	$obj->{' apipdf'}.=$pdf;
+	return($obj);
+}
+
 =item $wd = $img->width
 
 =cut
@@ -4949,7 +5090,7 @@ use vars qw(@ISA);
 @ISA = qw(Text::PDF::Dict PDF::API2::Image);
 
 sub new {
-	my ($class,$file,$tt)=@_;
+	my ($class,$img,$file,$tt)=@_;
 	my $self = $class->SUPER::new();
 	$self->{' apiname'}='IMGxPPMx'.pdfkey($file).$tt;
 
@@ -4967,6 +5108,28 @@ sub new {
 	$self->{' height'}=$h;
 	$self->{' width'}=$w;
 
+	return($self);
+}
+
+sub newMask {
+	my ($class,$imgobj,$file,$tt)=@_;
+	my $self = $class->SUPER::new();
+	$self->{' apiname'}='IMGxPPMxMaskx'.pdfkey($file).$tt;
+
+	my ($w,$h,$bpc,$cs,$img)=maskPNM($file);
+
+	$self->{'Type'}=PDFName('XObject');
+	$self->{'Subtype'}=PDFName('Image');
+#	$self->{'Name'}=PDFName($self->{' apiname'});
+	$self->{'Width'}=PDFNum(intg($w));
+	$self->{'Height'}=PDFNum(intg($h));
+	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
+	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
+	$self->{'ColorSpace'}=PDFName($cs);
+	$self->{' stream'}=$img;
+	$self->{' height'}=$h;
+	$self->{' width'}=$w;
+	$imgobj->{SMask}=$self;
 	return($self);
 }
 
@@ -5033,6 +5196,55 @@ sub parsePNM {
 	return ($w,$h,$bpc,$cs,join('',@img));
 }
 
+sub maskPNM {
+	my $file=shift @_;
+	my $buf=shift @_;
+	my ($t,$s,$line);
+	my ($w,$h,$bpc,$cs,$img)=(0,0,'','','');
+	open(INF,$file);
+	binmode(INF);
+	$buf=<INF>;
+	$buf.=<INF>;
+	$cs='DeviceGray';
+	($t)=($buf=~/^(P\d+)\s+/);
+	if($t eq 'P4') {
+		($t,$w,$h)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+/);
+		$bpc=1;
+		for($line=0;$line<($w*$h/8);$line++) {
+			read(INF,$buf,1);
+			vec($img,$line,8)=vec($buf,0,8);
+		}
+	} elsif($t eq 'P5') {
+		$buf.=<INF>;
+		($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
+		if($bpc==255){
+			$s=1;
+		} else {
+			$s=255/$bpc;
+		}
+		$bpc=8;
+		for($line=0;$line<($w*$h);$line++) {
+			read(INF,$buf,1);
+			vec($img,$line,8)=vec($buf,0,8)*$s;
+		}
+	} elsif($t eq 'P6') {
+		$buf.=<INF>;
+		($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
+		if($bpc==255){
+			$s=1;
+		} else {
+			$s=255/$bpc;
+		}
+		$bpc=8;
+		for($line=0;$line<($w*$h);$line++) {
+			read(INF,$buf,3);
+			vec($img,$line,8)=(vec($buf,0,8)+vec($buf,1,8)+vec($buf,2,8))*$s/3;
+		}
+	}
+	close(INF);
+	return ($w,$h,$bpc,$cs,$img);
+}
+
 
 #==================================================================
 #	PDF::API2::JPEG
@@ -5097,6 +5309,59 @@ sub new {
 	return($self);
 }
 
+sub newMask {
+	my ($class,$imgobj,$file,$tt)=@_;
+	my $self = $class->SUPER::new();
+#	$self->{' apiname'}='IMGxJPEGxMaskx'.pdfkey($file).$tt;
+
+	my ($buf, $p, $h, $w, $c);
+
+	open(JF,$file);
+	binmode(JF);
+	read(JF,$buf,2);
+	while (1) {
+		read(JF,$buf,4);
+		my($ff, $mark, $len) = unpack("CCn", $buf);
+		last if( $ff != 0xFF);
+		last if( $mark == 0xDA || $mark == 0xD9);  # SOS/EOI
+		last if( $len < 2);
+		last if( eof(JF));
+		read(JF,$buf,$len-2);
+		next if ($mark == 0xFE);
+		next if ($mark >= 0xE0 && $mark <= 0xEF);
+		if (($mark >= 0xC0) && ($mark <= 0xCF)) {
+			($p, $h, $w, $c) = unpack("CnnC", substr($buf, 0, 6));
+			last;
+		}
+	}
+	close(JF);
+
+	$self->{'Type'}=PDFName('XObject');
+	$self->{'Subtype'}=PDFName('Image');
+#	$self->{'Name'}=PDFName($self->{' apiname'});
+	$self->{'Width'}=PDFNum(intg($w));
+	$self->{'Height'}=PDFNum(intg($h));
+	$self->{'Filter'}=PDFArray(PDFName('DCTDecode'));
+	$self->{' nofilt'}=1;
+	$self->{'BitsPerComponent'}=PDFNum($p);
+	if($c==3) {
+	        die 'cs=DeviceRGB not valid for Mask.';
+	} elsif($c==4) {
+	        die 'cs=DeviceCMYK not valid for Mask.';
+	} elsif($c==1) {
+	        $self->{'ColorSpace'}=PDFName('DeviceGray');
+	}
+
+	$self->{' streamfile'}=$file;
+	$self->{'Length'}=PDFNum(intg(-s $file));
+
+	$self->{' height'}=$h;
+	$self->{' width'}=$w;
+	$imgobj->{SMask}=$self;
+
+	return($self);
+}
+
 
 #==================================================================
 #	PDF::API2::PNG
@@ -5114,7 +5379,7 @@ sub new {
 	my $self = $class->SUPER::new();
 	$self->{' apiname'}='IMGxPNGx'.pdfkey($file).$tt;
 
-	my ($w,$h,$bpc,$cs,$img)=parsePNG($file);
+	my ($w,$h,$bpc,$cs,$img,$trans,$alpha)=parsePNG($file);
 
 	$self->{'Type'}=PDFName('XObject');
 	$self->{'Subtype'}=PDFName('Image');
@@ -5124,9 +5389,39 @@ sub new {
 	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
 	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
 	$self->{'ColorSpace'}=PDFName($cs);
+	if(ref $trans) {
+		$self->{'Mask'}=PDFArray(map { PDFNum($_) } @{$trans} );
+	}
 	$self->{' stream'}=$img;
 	$self->{' height'}=$h;
 	$self->{' width'}=$w;
+
+	if($alpha) {
+		$class->newMask($self,$file,$tt);
+	}
+
+	return($self);
+}
+
+sub newMask {
+	my ($class,$imgobj,$file,$tt)=@_;
+	my $self = $class->SUPER::new();
+#	$self->{' apiname'}='IMGxPNGx'.pdfkey($file).$tt;
+
+	my ($w,$h,$bpc,$cs,$img)=maskPNG($file);
+
+	$self->{'Type'}=PDFName('XObject');
+	$self->{'Subtype'}=PDFName('Image');
+#	$self->{'Name'}=PDFName($self->{' apiname'});
+	$self->{'Width'}=PDFNum(intg($w));
+	$self->{'Height'}=PDFNum(intg($h));
+	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
+	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
+	$self->{'ColorSpace'}=PDFName($cs);
+	$self->{' stream'}=$img;
+	$self->{' height'}=$h;
+	$self->{' width'}=$w;
+	$imgobj->{SMask}=$self;
 
 	return($self);
 }
@@ -5134,7 +5429,7 @@ sub new {
 sub parsePNG {
 	my $file=shift @_;
 	my $buf=shift @_;
-	my ($l,$crc,$w,$h,$bpc,$cs,$cm,$fm,$im,@pal,$img,@img,$filter);
+	my ($l,$crc,$w,$h,$bpc,$cs,$cm,$fm,$im,@pal,$img,@img,$filter,$trans,$alpha);
 	open(INF,$file);
 	binmode(INF);
 	seek(INF,8,0);
@@ -5160,7 +5455,29 @@ sub parsePNG {
 			}
 			read(INF,$buf,$l);
 			push(@img,$buf);
-		} elsif($buf eq '') {
+		} elsif($buf eq 'tRNS') {
+			if($cs==0) { # grayscale
+				read(INF,$buf,2);
+				my $tcol=unpack('n',$buf);
+				$tcol*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
+				$trans=[$tcol,$tcol];
+			} elsif($cs==2) { # RGB
+				read(INF,$buf,6);
+				my ($tcolr,$tcolg,$tcolb)=unpack('nnn',$buf);
+				$tcolr*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
+				$tcolb*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
+				$tcolg*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
+				$tcolr&=0xFF; # workaround for
+				$tcolg&=0xFF; # braindead photoshop
+				$tcolb&=0xFF; # png output
+				$trans=[$tcolr,$tcolr,$tcolg,$tcolg,$tcolb,$tcolb];
+			} elsif($cs==3) { # indexed
+				$alpha=1;
+			} elsif($cs==4) { # gray + alpha
+				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
+			} elsif($cs==6) { # RGB + alpha
+				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
+			}
 		} elsif($buf eq 'IEND') {
 			last;
 		} else {
@@ -5177,109 +5494,217 @@ sub parsePNG {
 	@img=split(//,$img);
 	$img='';
 	my $bpcm=($bpc>8) ? 8 : $bpc/8;
-	foreach my $y (1..$h) {
-		$filter=unpack('C',shift(@img));
-		if($filter>0){
-			##die "PNG FilterType=$filter unsupported";
-		}
-		foreach my $x (1..POSIX::ceil($w*$bpcm)) {
-			if($cs==0) { # grayscale
-				if($bpc==1) {
-					$buf=shift(@img);
-					$buf=unpack('C',$buf);
-					foreach my $bit (7,6,5,4,3,2,1,0) {
-						$img.=pack('C',(($buf >> $bit) & 1)*255);
-					}
-				} elsif($bpc==2) {
-					$buf=shift(@img);
-					$buf=unpack('C',$buf);
-					foreach my $bit (6,4,2,0) {
-						$img.=pack('C',((($buf >> $bit) & 3)+1)*64-1);
-					}
-				} elsif($bpc==4) {
-					$buf=shift(@img);
-					$buf=unpack('C',$buf);
-					foreach my $bit (4,0) {
-						$img.=pack('C',((($buf >> $bit) & 15)+1)*16-1);
-					}
-				} elsif($bpc==8) {
-					$img.=shift(@img);
-				} elsif($bpc==16) {
-					$buf=shift(@img).shift(@img);
-					$buf=unpack('n',$buf);
-					$buf=(($buf+1)/256)-1;
-					$img.=pack('C',$buf);
+		
+	if($cs==0) { # grayscale
+		foreach my $y (0..$h-1) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
+			if($bpc>8) {
+				foreach my $x (0..$w-1) {
+					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;		
 				}
-			} elsif($cs==2) { # RGB
-				if($bpc==8) {
-					$img.=shift(@img).shift(@img).shift(@img);
-				} elsif($bpc==16) {
-					foreach(1..3) {
-						$buf=shift(@img).shift(@img);
-						$buf=unpack('n',$buf);
-						$buf=(($buf+1)/256)-1;
-						$img.=pack('C',$buf);
-					}
-				}
-			} elsif($cs==3) { # indexed
-				if($bpc==1) {
-					$buf=shift(@img);
-					$buf=unpack('C',$buf);
-					foreach my $bit (7,6,5,4,3,2,1,0) {
-						$img.=$pal[(($buf >> $bit) & 1)];
-					}
-				} elsif($bpc==2) {
-					$buf=shift(@img);
-					$buf=unpack('C',$buf);
-					foreach my $bit (6,4,2,0) {
-						$img.=$pal[(($buf >> $bit) & 3)];
-					}
-				} elsif($bpc==4) {
-					$buf=shift(@img);
-					$buf=unpack('C',$buf);
-					foreach my $bit (4,0) {
-						$img.=$pal[(($buf >> $bit) & 15)];
-					}
-				} elsif($bpc==8) {
-					$img.=$pal[unpack('C',shift(@img))];
-				}
-			} elsif($cs==4) { # gray + alpha
-				if($bpc==8) {
-					$img.=shift(@img);
-					shift(@img);
-				} elsif($bpc==16) {
-					$buf=shift(@img).shift(@img);
-					$buf=unpack('n',$buf);
-					$buf=(($buf+1)/256)-1;
-					$img.=pack('C',$buf);
-					shift(@img);
-					shift(@img);
-				}
-			} elsif($cs==6) { # RGB + alpha
-				if($bpc==8) {
-					$img.=shift(@img).shift(@img).shift(@img);
-					shift(@img);
-				} elsif($bpc==16) {
-					foreach(1..3) {
-						$buf=shift(@img).shift(@img);
-						$buf=unpack('n',$buf);
-						$buf=(($buf+1)/256)-1;
-						$img.=pack('C',$buf);
-					}
-					shift(@img);
-					shift(@img);
+			} else {
+				foreach my $x (0..$w-1) {
+					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);		
 				}
 			}
 		}
-	}
-	if( ($cs==0) || ($cs==4) ) { 
+		$bpc=8 if($bpc>8); # all images have been converted to 8bit values !!
 		$cs='DeviceGray';
-	} elsif ( ($cs==2) || ($cs==3) || ($cs==6) ) {
+	} elsif($cs==2) { # RGB
+		foreach my $y (1..$h) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*3)));
+			foreach my $x (0..($w*3)-1) {
+				$img.=pack('C',vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
 		$cs='DeviceRGB';
+	} elsif($cs==3) { # indexed
+		foreach my $y (1..$h) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
+			foreach my $x (0..$w-1) {
+				$img.=$pal[vec($imgline,$x,$bpc)];		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+		$cs='DeviceRGB';
+	} elsif($cs==4) { # gray + alpha
+		foreach my $y (1..$h) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*2)));
+			foreach my $x (0..$w-1) {
+				$img.=pack('C',vec($imgline,$x*2,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+		$cs='DeviceGray';
+		$alpha=1;
+	} elsif($cs==6) { # RGB + alpha
+		foreach my $y (1..$h) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*4)));
+			foreach my $x (0..$w-1) {
+				$img.=pack('C',vec($imgline,$x*4,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+				$img.=pack('C',vec($imgline,$x*4+1,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+				$img.=pack('C',vec($imgline,$x*4+2,$bpc)*(2**(8*(1-($bpc/8))))-1);		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+		$cs='DeviceRGB';
+		$alpha=1;
 	} else {
-		$cs='';
+		die "PNG Colorspace=$cs unsupported";
 	}
-	$bpc=8; # all images have been converted to 8bit values !!
+
+	return ($w,$h,$bpc,$cs,$img,$trans,$alpha);
+}
+
+sub maskPNG {
+	my $file=shift @_;
+	my $buf=shift @_;
+	my ($l,$crc,$w,$h,$bpc,$cs,$cm,$fm,$im,@pal,@palt,$img,@img,$filter,$trans);
+	open(INF,$file);
+	binmode(INF);
+	seek(INF,8,0);
+	while(!eof(INF)) {
+		read(INF,$buf,4);
+		$l=unpack('N',$buf);
+		read(INF,$buf,4);
+	#	print STDERR "$buf\n";
+		if($buf eq 'IHDR') {
+			read(INF,$buf,$l);
+			($w,$h,$bpc,$cs,$cm,$fm,$im)=unpack('NNCCCCC',$buf);
+	#	print STDERR "cs=$cs\n";
+			if($im>0) {die "PNG InterlaceMethod=$im not supported";}
+		} elsif($buf eq 'PLTE') {
+			while($l) {
+				read(INF,$buf,3);
+				push(@pal,$buf);
+				$l-=3;
+			}
+		} elsif($buf eq 'IDAT') {
+			while($l>512) {
+				read(INF,$buf,512);
+				push(@img,$buf);
+				$l-=512;
+			}
+			read(INF,$buf,$l);
+			push(@img,$buf);
+		} elsif($buf eq 'tRNS') {
+			if($cs==0) { # grayscale
+			} elsif($cs==2) { # RGB
+			} elsif($cs==3) { # indexed
+				read(INF,$buf,$l);
+				@palt=unpack('C*',$buf);
+				$trans=1;
+			} elsif($cs==4) { # gray + alpha
+				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
+			} elsif($cs==6) { # RGB + alpha
+				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
+			}
+		} elsif($buf eq 'IEND') {
+			last;
+		} else {
+			# skip ahead
+			seek(INF,$l,1);
+		}
+		read(INF,$buf,4);
+		$crc=$buf;
+	}
+	close(INF);
+	$img=join('',@img);
+	use Compress::Zlib;
+	$img=uncompress($img);
+	@img=split(//,$img);
+	$img='';
+	my $bpcm=($bpc>8) ? 8 : $bpc/8;
+		
+	if($cs==0) { # grayscale
+		warn "Image $file does not contain transparency information !!\n(or are we here as an foreign masking image ??)" unless($trans);
+		foreach my $y (0..$h-1) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
+			if($bpc>8) {
+				foreach my $x (0..$w-1) {
+					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+				}
+			} else {
+				foreach my $x (0..$w-1) {
+					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);		
+				}
+			}
+		}
+		$bpc=8 if($bpc>8); # all images have been converted to 8bit values !!
+	} elsif($cs==2) { # RGB
+		warn "Image $file does not contain transparency information !!\n(or are we here as an foreign masking image ??)" unless($trans);
+		foreach my $y (1..$h) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*3)));
+			foreach my $x (0..$w-1) {
+				my $val=vec($imgline,$x*3,$bpc)*(2**(8*(1-($bpc/8))))-1;
+				$val+=vec($imgline,$x*3+1,$bpc)*(2**(8*(1-($bpc/8))))-1;
+				$val+=vec($imgline,$x*3+2,$bpc)*(2**(8*(1-($bpc/8))))-1;
+				$val/=3;
+				$img.=pack('C',$val);		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+	} elsif($cs==3) { # indexed
+		die "Image $file does not contain transparency information !!" unless($trans);
+		foreach my $y (0..$h-1) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
+			foreach my $x (0..$w-1) {
+				vec($img,($y*$w)+$x,8)=$palt[vec($trans,vec($imgline,$x,$bpc),8)];		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+	} elsif($cs==4) { # gray + alpha
+		foreach my $y (0..$h-1) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*2)));
+			foreach my $x (0..$w-1) {
+				vec($img,($y*$w)+$x,8)=vec($imgline,$x*2+1,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+	} elsif($cs==6) { # RGB + alpha
+		foreach my $y (0..$h-1) {
+			$filter=unpack('C',shift(@img));
+			die "PNG FilterType=$filter unsupported" if($filter>0);
+
+			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*4)));
+			foreach my $x (0..$w-1) {
+				vec($img,($y*$w)+$x,8)=vec($imgline,$x*4+3,$bpc)*(2**(8*(1-($bpc/8))))-1;		
+			}
+		}
+		$bpc=8; # all images have been converted to 8bit values !!
+	} else {
+		die "PNG Colorspace=$cs unsupported";
+	}
+	$cs='DeviceGray';
+
 	return ($w,$h,$bpc,$cs,$img);
 }
 
