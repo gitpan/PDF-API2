@@ -1,0 +1,65 @@
+#!/usr/bin/perl 
+
+use PDF::API2;
+
+$pdf=PDF::API2->new;
+
+$f1=$pdf->corefont('Helvetica',1);
+
+
+foreach $fn (qw(
+	Courier-Bold		Courier-BoldOblique		Courier-Oblique		Courier
+	Helvetica-Bold		Helvetica-BoldOblique		Helvetica-Oblique	Helvetica
+	Times-Bold		Times-BoldItalic		Times-Italic		Times-Roman
+	Symbol
+	ZapfDingbats
+	georgia georgiabold georgiaitalic georgiabolditalic
+	impact
+	trebuchet trebuchetbold trebuchetbolditalic trebuchetitalic
+	verdana verdanabold verdanaitalic verdanabolditalic
+	wingdings webdings
+	georgia georgiabold georgiaitalic georgiabolditalic
+	impact
+	trebuchet trebuchetbold trebuchetbolditalic trebuchetitalic
+	verdana verdanabold verdanaitalic verdanabolditalic
+)) {
+#		adobe-standard latin1 uni0 uni1
+#		uni0 uni1 uni2 uni3 uni240 uni255
+	foreach $en (undef) {
+
+		my $font=$pdf->cfont($fn,-encoding => $en);
+		print STDERR qq($fn - $en ---\n);
+		$page = $pdf->page;
+		$page->mediabox(595,842);
+		$txt=$page->text;
+		$txt->compress;
+		$txt->translate(100,700);
+		$txt->font($font,50);
+		$txt->lead(50);
+		$txt->text('Hello World !');
+		$txt->cr;
+		$txt->font($font,10);
+		$txt->text("german spec.chars: ae='ä' AE='Ä' oe='ö' OE='Ö' ue='ü' UE='Ü' ss='ß' !");
+		$txt->cr;
+		$txt->font($f1,20);
+		$txt->text("This is font: $fn ($en)");
+
+		$txt->font($font,20);
+
+		foreach $x (0..15) {
+			foreach $y (0..15) {
+				$txt->translate(50+(33*$x),50+(33*$y));
+				$txt->text(chr($y*16+$x));
+			}
+		}
+
+	}
+}
+
+$pdf->saveas("$0.pdf");
+
+
+$pdf->end();
+exit;
+
+__END__

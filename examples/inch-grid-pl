@@ -1,0 +1,40 @@
+#!/usr/bin/perl 
+
+use PDF::API2::Lite;
+use POSIX;
+
+$pdf=PDF::API2::Lite->new;
+
+$w=595;
+$h=842;
+
+foreach (1..3) {
+	$pdf->page($w,$h);
+
+	$pdf->strokecolor('black');
+
+	$pdf->linewidth(0.25);
+
+	$m=floor(($w-72)/72);
+	$n=floor(($h-72)/72);
+
+	foreach $x (1..$m) {
+		$pdf->move($x*72,72);
+		$pdf->line($x*72,$n*72);
+		$pdf->stroke;
+	}
+
+	foreach $x (1..$n) {
+		$pdf->move(72,$x*72);
+		$pdf->line($m*72,$x*72);
+		$pdf->stroke;
+	}
+	$w*=2;
+	$h*=2;
+}
+
+$pdf->saveas("$0.pdf");
+
+exit;
+
+__END__

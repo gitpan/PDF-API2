@@ -1,0 +1,24 @@
+#!/usr/bin/perl -w
+
+use PDF::API2;
+use PDF::API2::cFont;
+
+my $pdf  = PDF::API2->new(-file => "$0.pdf");
+$pdf->mediabox(595,842);
+my $page = $pdf->page;
+my $fnt = PDF::API2::cFont->new_api($pdf,'Arial',-encoding 
+=> 'latin1'); 
+my $txt = $page->hybrid;
+$txt->textstart;
+$txt->font($fnt, 20);
+$txt->translate(100,800);
+$txt->text("Text left-aligned 0123456789");
+$txt->translate(500,750);
+$txt->text_right("0123456789 Text right-aligned");
+$txt->translate(300,700);
+$txt->text_center("Text center-aligned");
+$txt->textend;
+$pdf->save;
+$pdf->end();
+
+__END__

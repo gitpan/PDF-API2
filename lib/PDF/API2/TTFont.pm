@@ -115,20 +115,18 @@ sub new {
 	return($self);
 }
 
-=item $pdfstring = $font->text $text
+=item $pdfstring = $font->text_ucs2 $text
 
 Returns a properly formated string-representation of $text
-for use in the PDF.
+for use in the PDF but requires $text to be in UCS2.
 
 =cut
 
-sub text {
-	my ($self,$text,$enc)=@_;
-	$enc=$enc||$self->{' encoding'};
-	my $newtext='';
-	$self->{' subvec'}='' unless($self->{' subvec'});
-	foreach (unpack("C*", $text)) {
-		my $g=$self->{' chrcid'}{$enc}{$_}||32;
+sub text_ucs2 {
+	my ($self,$text)=@_;
+	my ($newtext);
+	foreach my $x (0..(length($text)>>1)-1) {
+		my $g=$self->{' unicid'}{vec($text,$x,16)}||0;
 		$newtext.= sprintf('%04x',$g);
 		vec($self->{' subvec'},$g,1)=1;
 	}
@@ -145,9 +143,28 @@ for use in the PDF but requires $text to be in UTF8.
 sub text_utf8 {
 	my ($self,$text)=@_;
 	$text=utf8_to_ucs2($text);
-	my ($newtext);
-	foreach my $x (0..(length($text)>>1)-1) {
-		my $g=$self->{' unicid'}{vec($text,$x,16)}||0;
+	return $self->text_ucs2($text);
+}
+
+=item $pdfstring = $font->text $text
+
+Returns a properly formated string-representation of $text
+for use in the PDF.
+
+=cut
+
+sub text {
+	my ($self,$text,$enc)=@_;
+	$enc=$enc||$self->{' encoding'};
+	if(lc($enc) eq 'ucs2') {
+		return $self->text_ucs2($text);
+	} elsif(lc($enc) eq 'utf8') {
+		return $self->text_utf8($text);
+	}
+	my $newtext='';
+	$self->{' subvec'}='' unless($self->{' subvec'});
+	foreach (unpack("C*", $text)) {
+		my $g=$self->{' chrcid'}{$enc}{$_}||32;
 		$newtext.= sprintf('%04x',$g);
 		vec($self->{' subvec'},$g,1)=1;
 	}
@@ -169,10 +186,14 @@ sub width {
 		foreach my $x (0..(length($text)>>1)-1) {
 			$width += $self->{' uniwidth'}{vec($text,$x,16)};
 		}
-	} else {
-		foreach (unpack("C*", $text)) {
-			$width += $self->{' chrwidth'}{$enc}{$_||0};
-		}
+	} elsif($opts{-ucs2}) {
+			foreach my $x (0..(length($text)>>1)-1) {
+				$width += $self->{' uniwidth'}{vec($text,$x,16)};
+			}
+		} else {
+			foreach (unpack("C*", $text)) {
+				$width += $self->{' chrwidth'}{$enc}{$_||0};
+			}
 	}
 	$width/=1000;
 	return($width);
@@ -186,9 +207,32 @@ Returns the widths of the words in $text as if they were at size 1.
 
 sub width_array {
 	my ($self,$text,%opts)=@_;
-	my @text=split(/\s+/,$text);
-	my @widths=map {$self->width($_,%opts)} @text;
-	return(@widths);
+	if($opts{-ucs2}) {
+		my @text=split(/\0x00\0x20/,$text);
+		my @widths=map {$self->width($_,%opts)} @text;
+		return(@widths);
+	} else {
+		my @text=split(/\s+/,$text);
+		my @widths=map {$self->width($_,%opts)} @text;
+		return(@widths);
+	}
+}
+
+=item $wd = $font->width_ucs2 $text
+
+Returns the width of $text as if it were at size 1,
+but requires $text to be in UCS2.
+
+=cut
+
+sub width_ucs2 {
+	my ($self,$text,%opts)=@_;
+	my ($width);
+	foreach my $x (0..(length($text)>>1)-1) {
+		$width += $self->{' uniwidth'}{vec($text,$x,16)};
+	}
+	$width/=1000;
+	return($width);
 }
 
 =item $wd = $font->width_utf8 $text
@@ -201,12 +245,7 @@ but requires $text to be in UTF8.
 sub width_utf8 {
 	my ($self,$text,%opts)=@_;
 	$text=utf8_to_ucs2($text);
-	my ($width);
-	foreach my $x (0..(length($text)>>1)-1) {
-		$width += $self->{' uniwidth'}{vec($text,$x,16)};
-	}
-	$width/=1000;
-	return($width);
+	return $self->width_ucs2($text);
 }
 
 =item ($llx,$lly,$urx,$ury) = $font->bbox $text
@@ -229,6 +268,25 @@ sub bbox {
 	return map {$_/1000} ($f[0],$low,(($width*1000)+$l[2]),$high);
 }
 
+=item ($llx,$lly,$urx,$ury) = $font->bbox_ucs2 $ucs2text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox_ucs2 {
+	my ($self,$text)=@_;
+	my $width=$self->width_ucs2($text);
+	my @f=@{$self->{' unibbx'}{vec($text,0,16)}};
+	my @l=@{$self->{' unibbx'}{vec($text,(length($text)>>1)-1,16)}};
+	my ($high,$low);
+	foreach my $x (0..(length($text)>>1)-1) {
+		$high = $self->{' unibbx'}{vec($text,$x,16)}->[3]>$high ? $self->{' unibbx'}{vec($text,$x,16)}->[3] : $high;
+		$low  = $self->{' unibbx'}{vec($text,$x,16)}->[1]<$low  ? $self->{' unibbx'}{vec($text,$x,16)}->[1] : $low;
+	}
+	return map {$_/1000} ($f[0],$low,(($width*1000)+$l[2]),$high);
+}
+
 =item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $utf8text
 
 Returns the texts bounding-box as if it were at size 1.
@@ -238,15 +296,7 @@ Returns the texts bounding-box as if it were at size 1.
 sub bbox_utf8 {
 	my ($self,$text)=@_;
 	$text=utf8_to_ucs2($text);
-	my $width=$self->width_utf8($text);
-	my @f=@{$self->{' unibbx'}{vec($text,0,16)}};
-	my @l=@{$self->{' unibbx'}{vec($text,(length($text)>>1)-1,16)}};
-	my ($high,$low);
-	foreach my $x (0..(length($text)>>1)-1) {
-		$high = $self->{' unibbx'}{vec($text,$x,16)}->[3]>$high ? $self->{' unibbx'}{vec($text,$x,16)}->[3] : $high;
-		$low  = $self->{' unibbx'}{vec($text,$x,16)}->[1]<$low  ? $self->{' unibbx'}{vec($text,$x,16)}->[1] : $low;
-	}
-	return map {$_/1000} ($f[0],$low,(($width*1000)+$l[2]),$high);
+	return $self->bbox_ucs2($text);
 }
 
 =item $font->encode $encoding

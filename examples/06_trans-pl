@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+
+use PDF::API2;
+use PDF::API2::Util;
+use Text::PDF::Utils;
+
+$pdf=PDF::API2->new;
+
+$f1=$pdf->corefont('Helvetica',1);
+$f1->encode('latin1');
+
+
+$f2=$pdf->corefont('Times-Roman',1);
+$f2->encode('latin1');
+
+	$page = $pdf->page;
+	$page->mediabox(595,842);
+	$gfx=$page->gfx;
+
+#	$gfx->fillcolor('black');
+
+#	$gfx->rect(0,0,595,842);
+#	$gfx->fill;
+
+
+	$img=$pdf->image('transp_index.png');
+#	$img=$pdf->imagemask($img,'transp_index.png');
+	
+	$gfx->image($img,0,0);
+
+	$img=$pdf->image('./transp_rgb.png');
+#	$img=$pdf->imagemask($img,'./transp_rgb.png');
+
+	$gfx->image($img,0,400);
+
+$pdf->saveas("$0.pdf");
+
+$pdf->end();
+
+exit;
+
+__END__
