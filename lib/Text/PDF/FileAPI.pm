@@ -2,7 +2,7 @@ package Text::PDF::FileAPI;
 
 use strict;
 no strict "refs";
-use vars qw($cr %types $VERSION);
+use vars qw($cr %types $VERSION @ISA);
 no warnings qw(uninitialized);
 
 use IO::File;
@@ -99,16 +99,15 @@ sub release
     map { delete $self->{$_} } keys %{$self};
     while (my $item = shift @tofree)
     {
-        my $ref = ref($item);
-        if (UNIVERSAL::can($item,'release')
+        if (UNIVERSAL::can($item,'release'))
         {
             $item->release();
         }
-        elsif ($ref eq 'ARRAY')
+        elsif (ref($item) eq 'ARRAY')
         {
             push( @tofree, @{$item} );
         }
-        elsif ($ref eq 'HASH')
+        elsif (ref($item) eq 'HASH')
         {
             push( @tofree, values %{$item} );
             map { delete $item->{$_} } keys %{$item};
