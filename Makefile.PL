@@ -7,28 +7,6 @@ BEGIN {
 
 	%opts=@ARGV;
 
-	find( sub {
-		my $file=$_;
-		return if($file!~/\.pm$/);
-		my $st=stat($file);
-		my ($ss,$mm,$hh,$dd,$mn,$yy)=localtime($st->mtime);
-		my $tstr=sprintf('%04d%02d%02d.%02d%02d%02d',1900+$yy,$mn+1,$dd,$hh,$mm,$ss);
-		my $touch=sprintf('%04d%02d%02d%02d%02d.%02d',1900+$yy,$mn+1,$dd,$hh,$mm,$ss);
-		open(INF,$file);
-		@lines=<INF>;
-		$l=join('',@lines);
-		close(INF);
-		$l=~/\$Revisioning:\s+([^\s]+)\s+/gm;
-		if($1 && ($tstr ne $1)) {
-			$l=~s/(\$Revisioning:\s+)[^\s]+(\s+)/$1$tstr$2/gm;
-			open(INF,">$file");
-			print INF $l;
-			close(INF);
-			print `touch -m -t $touch $file`;
-			print "fixing versioning in $file.\n";
-		}
-	}, './lib/PDF');
-
 	if($opts{-version}) {
 		open(INF,">version.p");
 		print INF <<"EOT";
@@ -39,16 +17,45 @@ BEGIN {
 
 EOT
 		close(INF);	
+
+		find( sub {
+			my $file=$_;
+			return if($file!~/\.pm$/);
+			open(INF,$file);
+			@lines=<INF>;
+			$l=join('',@lines);
+			close(INF);
+			$l=~/\$Revisioning:\s+([^\s]+)\s+/gm;
+			if($1) {
+				$l=~s/(\$Revisioning:\s+)[^\s]+(\s+)/$1$opts{-version}$2/gm;
+				open(INF,">$file");
+				print INF $l;
+				close(INF);
+				print "fixing versioning in $file.\n";
+			}
+		}, './lib/PDF');
+
 	}
 }
 
 require 'version.p';
 
-print "Current version is: $version \n";
-
 @ver=split(/\./,$version);
 
-$tag='_'.(defined($opts{-tag}) ? $opts{-tag} : 'dev');
+$tag='_'.(defined($opts{-tag}) ? $opts{-tag} : 'dev') if(defined $opts{-tag});
+
+print <<'EOT';
+	 ____  ____  _____              _    ____ ___   ____
+	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+EOT
+print <<"EOT";
+						($version$tag)
+EOT
+
+
 
 WriteMakefile (
 	NAME		=>	"PDF::API2",

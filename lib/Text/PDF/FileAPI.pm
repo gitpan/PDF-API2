@@ -20,8 +20,22 @@ use Font::TTF::Font 0.28;
 
 @ISA=qw( Text::PDF::File );
 
-BEGIN {
-	$cr = $Text::PDF::File::cr;
+BEGIN
+{
+    my ($t, $type);
+    
+    $cr = '\s*(?:\015|\012|(?:\015\012))';
+    %types = (
+            'Page' => 'Text::PDF::Page',
+            'Pages' => 'Text::PDF::Pages'
+    );
+    
+    foreach $type (keys %types)
+    {
+        $t = $types{$type};
+        $t =~ s|::|/|og;
+        require "$t.pm";
+    }
 }
 
 sub open
@@ -76,36 +90,15 @@ sub open
 
 sub release
 {
-    my ($self) = @_;
+    my ($self,$explicitDestruct) = @_;
 
-    ###########################################################################
-    # Go through our list of keys/values and clean things up as needed.  We'll
-    # forcefully free up all of the memory for all of the values in our
-    # anonymous hash, and then recursively process all sub-data-structures to
-    # make sure that all of those get cleaned up properly as well:
-    # - Scalar values get explicitly deleted (as part of the mass cleanup).
-    # - Hash/List refs get their values added in to the list of things to
-    #   cleanup so we can process the structures recursively.
-    # - 'Text::PDF::*' elements get explicitly destructed to free up their
-    #   memory and break any potential circular references.
-    # - 'IO::File' elements get cleaned up as part of the mass cleanup, and
-    #   aren't explicitly listed below (although there are some in our
-    #   structure).
-    ###########################################################################
-    # NOTE: The checks below have been ordered such that the most commonly
-    #       occurring items get checked for and cleaned out first.
-    ###########################################################################
-    # FURTHER NOTE: Reducing the checks below to the least amount of checks
-    #               possible did not create any noticable performance
-    #               improvement.
-    ###########################################################################
     my @tofree = values %{$self};
-    map { delete $self->{$_} } keys %{$self};
+    map { $self->{$_}=undef; delete $self->{$_}; } keys %{$self};
     while (my $item = shift @tofree)
     {
         if (UNIVERSAL::can($item,'release'))
         {
-            $item->release();
+            $item->release(1);
         }
         elsif (ref($item) eq 'ARRAY')
         {
@@ -114,7 +107,11 @@ sub release
         elsif (ref($item) eq 'HASH')
         {
             push( @tofree, values %{$item} );
-            map { delete $item->{$_} } keys %{$item};
+            map { $item->{$_}=undef; delete $item->{$_}; } keys %{$item};
+        }
+        else
+        {
+        	$item=undef;
         }
     }
 }

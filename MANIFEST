@@ -10,6 +10,7 @@ docs/tutorial-howto.pod
 examples/01_document_n_pages-pl
 examples/02_corefonts-pl
 examples/02_postscript_fonts-pl
+examples/02_cfonts-w-lite-pl
 examples/02_truetype_fonts-pl
 examples/03_colors_colorspaces-pl
 examples/04_barcode-pl
@@ -21,6 +22,8 @@ examples/08_pdfimage-pl
 examples/09_paragraph_text-pl
 examples/10_gfx-pl
 examples/11_shade-pl
+examples/12_annots-url-pl
+examples/13_text-pl
 examples/transp_index.png
 examples/test_api2.pl
 examples/canterbury.afm
@@ -29,6 +32,7 @@ examples/canterbury.ttf
 examples/sRGB.icc
 lib/PDF/API2.pm
 lib/PDF/API2/Lite.pm
+lib/PDF/API2/cFont.pm
 lib/PDF/API2/Util.pm
 lib/PDF/API2/Color.pm
 lib/PDF/API2/UniMap.pm

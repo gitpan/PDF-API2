@@ -115,4 +115,13 @@ sub bpc {
 	return $self;
 }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
+
 1;

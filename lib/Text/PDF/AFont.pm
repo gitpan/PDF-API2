@@ -680,10 +680,30 @@ Returns the width of the text in em.
 sub width
 {
     my ($self, $text) = @_;
-    my ($width);
-    foreach (unpack("C*", $text))
-    { $width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]||0}||0; }
-    $width / 1000;
+    my $width=0;
+    foreach (unpack("C*", $text)) { 
+    	$width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]||'space'}||0; 
+    }
+    return($width / 1000);
+}
+
+=item ($llx,$lly,$urx,$ury) = $font->bbox $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox {
+	my ($self,$text)=@_;
+	my $width=$self->width(substr($text,0,length($text)-1));
+	my @f=@{$self->{' AFM'}{'bbx'}{$self->{' AFM'}{'char'}[unpack("C",substr($text,0,1))]}};
+	my @l=@{$self->{' AFM'}{'bbx'}{$self->{' AFM'}{'char'}[unpack("C",substr($text,-1,1))]}};
+	my ($high,$low);
+	foreach (unpack("C*", $text)) {
+		$high = $self->{' AFM'}{'bbx'}{$self->{' AFM'}{'char'}[$_]}->[3]>$high ? $self->{' AFM'}{'bbx'}{$self->{' AFM'}{'char'}[$_]}->[3] : $high;
+		$low  = $self->{' AFM'}{'bbx'}{$self->{' AFM'}{'char'}[$_]}->[1]<$low  ? $self->{' AFM'}{'bbx'}{$self->{' AFM'}{'char'}[$_]}->[1] : $low;
+	}
+	return map {$_/1000} ($f[0],$low,(($width*1000)+$l[2]),$high);
 }
 
 =head2 $f->out_text($text)

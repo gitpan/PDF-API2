@@ -1,0 +1,204 @@
+#!/usr/local/bin/perl
+
+use Data::Dumper;
+
+use PDF::API2;
+use PDF::API2::cFont;
+
+my $pdf  = PDF::API2->new(-file => "$0.pdf");
+$pdf->mediabox(595,842);
+
+my $page = $pdf->page;
+
+my $fnt = PDF::API2::cFont->new_api($pdf,'Arial',-encoding => 'latin1'); 
+
+#
+# this shows howto use text functions
+#
+
+my $txt = $page->text;
+$txt->compress;
+
+$txt->font($fnt, 20);
+$txt->translate(100,800);
+$txt->text("Text left-aligned 0123456789");
+
+$txt->translate(500,750);
+$txt->text_right("0123456789 Text right-aligned");
+
+$txt->translate(300,700);
+$txt->text_center("Text center-aligned");
+
+$txt->font($fnt, 15);
+$texting="Text justified:";
+foreach $y (600,500,400,300,200,100) {
+	$txt->translate(100,$y+30);
+	$txt->text_justify(400,"wh/overflow: $texting",-overflow=>1);
+	$txt->translate(100,$y);
+	$txt->text_justify(400,"wo/overflow: $texting");
+	$txt->translate(100,$y-30);
+	$txt->text_justify(400,"w/underflow: $texting",-underflow=>1);
+	$texting.=" 01 23 45 67 89";
+}
+
+my $gfx = $page->gfx;
+$gfx->compress;
+
+$gfx->strokecolor('darkred');
+$gfx->linewidth(1);
+$gfx->linedash(5,5);
+
+$gfx->move(100,0);
+$gfx->line(100,900);
+$gfx->stroke;
+
+$gfx->move(500,0);
+$gfx->line(500,900);
+$gfx->stroke;
+
+
+#
+# this shows howto use textstate, transform_rel, etc...
+#
+$page = $pdf->page;
+$txt = $page->text;
+## $txt->compress;
+
+$txt->font($fnt, 20);
+$txt->translate(300,600);
+foreach (1..6) {
+	$txt->text("hexagon");
+	$txt->transform_rel(-rotate=>60);
+}
+
+$txt->translate(300,200);
+%state=$txt->textstate;
+foreach my $r (1..6) {
+	$txt->text("hexagon");
+	$txt->textstate(%state);
+	$txt->transform_rel(-rotate=>60*$r);
+}
+
+if (0) {
+#
+# this shows howto layout a paragraph with autosizing
+#
+
+	@texts=qw| PDF 1.2 Reference Manual           November 27, 1996
+: Portable Document Format Reference Manual Version 1.2 Adobe Systems Incorporated
+November 27, 1996 Tim Bienz, Richard Cohn, and James R. Meehan Adobe Systems
+Incorporated 1  : November 27, 1996 Copyright  1993, 1996. Adobe Systems
+Incorporated. All rights reserved. Patents Pending. No part of this publication may
+be reproduced, stored in a retrieval system, or transmitted, in any form or by any
+means, electronic, mechanical, photocopying, recording, or otherwise, without the
+prior written consent of the publisher. Any software referred to herein is furnished
+under license and may only be used or copied in accordance with the terms of such
+license. Printed in the United States of America. This publication and the
+information herein is furnished AS IS, is subject to change without notice, and
+should not be construed as a commitment by Adobe Systems Incorporated. Adobe Systems
+Incorporated assumes no responsibility or liability for any errors or inaccuracies,
+makes no warranty of any kind (express, implied or statutory) with respect to this
+publication, and expressly disclaims any and all warranties of merchantability,
+fitness for particular purposes and noninfringement of third party rights. PostScript
+is a registered trademark of Adobe Systems Incorporated. All instances of the name
+PostScript in the text are references to the PostScript language as defined by Adobe
+Systems Incorporated unless otherwise stated. The name PostScript also is used as a
+product trademark for Adobe Systems' implementation of the PostScript language
+interpreter. Any references to a "PostScript printer," a "PostScript file," or a
+"PostScript driver" refer to printers, files, and driver programs (respectively)
+which are written in or support the PostScript language. The sentences in this book
+that use "PostScript language" as an adjective phrase are so constructed to reinforce
+that the name refers to the standard language definition as set forth by Adobe
+Systems Incorporated. Adobe, Acrobat, the Acrobat logo, Adobe Garamond, Adobe
+Illustrator , Carta, Distiller, FrameMaker, Minion, Photoshop, the Photoshop logo,
+Poetica, PostScript, and the PostScript logo are registered trademarks of Adobe
+Systems Incorporated. TrueType and QuickDraw are trademarks and Apple, Macintosh, and
+Mac are registered trademarks of Apple Computer, Inc. ITC Stone and ITC Zapf Dingbats
+are registered trademarks of International Typeface Corporation. Helvetica and Times
+are registered trademarks of Linotype­Hell AG and/or its subsidiaries. Microsoft and
+Windows are registered trademarks of Microsoft Corporation. SelectSet is a trademark
+of Agfa Division, Miles, Inc. Sun is a trademark of Sun Microsystems, Inc.
+SPARCstation is a registered trademark of SPARC International, Inc., licensed
+exclusively to Sun Microsystems, Inc. and is based upon an architecture developed by
+Sun Microsystems, Inc. NeXT is a trademark of NeXT Computer, Inc. UNIX is a
+registered trademark in the United States and other countries, licensed exclusively
+through X/Open Company, Ltd. All other brand or product names are the trademarks or
+registered trademarks of their respective holders. Library of Congress Cataloging-in-
+Publication Data Portable document format reference manual / Adobe Systems
+Incorporated. p.      cm. Includes bibliographical references (p. 207) and index.
+ISBN 0­201­62628­4 ENDENDEND|;
+
+foreach $h (400,700) {
+	$texting="";
+	$pages=scalar @texts;
+	$p=0;
+	foreach (@texts) {
+		$p++;
+		print STDERR "creating page $p of $pages \n";
+		$texting.="$_ ";
+		$page = $pdf->page;
+		$txt = $page->text;
+		$txt->compress;
+		$x=100;
+		$y=800;
+
+		$w=400;
+
+		@text=split(/[\s\n]+/,$texting);
+
+		$tw = $fnt->width(join(' ',@text));
+		$sw = $fnt->width(' ');
+
+		$fh = ((($w*$h)/$tw)**.5)*(($w>$h ? $h/$w : $w/$h)**.125);
+
+		$txt->translate($x,$y-$fh);
+		$txt->font($fnt,$fh);
+		$txt->lead($fh*1.2);
+
+
+		@linetext=();
+		while(scalar @text) {
+			while((($fnt->width(join(' ',@linetext))*$fh)<$w) && scalar @text) {
+				push @linetext, shift @text;
+			}
+			if(scalar @linetext) {
+				if(scalar @text || (($fnt->width(join(' ',@linetext))*$fh)>$w)) {
+					$txt->text_justify($w,join(' ',@linetext));
+				} else {
+					$txt->text(join(' ',@linetext));
+				}
+			}
+			$txt->nl;
+			@linetext=();
+		}
+
+		$gfx = $page->gfx;
+		$gfx->compress;
+
+		$gfx->strokecolor('darkred');
+		$gfx->linewidth(1);
+		$gfx->linedash(5,5);
+
+		$gfx->move($x,0);
+		$gfx->line($x,900);
+		$gfx->stroke;
+
+		$gfx->move($x+$w,0);
+		$gfx->line($x+$w,900);
+		$gfx->stroke;
+
+		$gfx->move(0,$y-$h);
+		$gfx->line(600,$y-$h);
+		$gfx->stroke;
+
+		$gfx->move(0,$y);
+		$gfx->line(600,$y);
+		$gfx->stroke;
+	}
+}
+
+}
+
+$pdf->save;
+
+$pdf->end();

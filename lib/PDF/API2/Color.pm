@@ -1,8 +1,9 @@
 package PDF::API2::Color;
 
 use vars qw( $VERSION );
+use PDF::API2::Util;
 
-( $VERSION ) = '$Revisioning: 20020418.102155 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.2.3.8 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 
@@ -21,7 +22,7 @@ usage within PDF-Documents especially with the Text::PDF::API modules.
 
 	use PDF::API2::Color;
 
-	$cl = PDF::API2::Color->new;
+	$cl = PDF::API2::Color->new($colorname);
 	$cl = PDF::API2::Color->newRGB($r,$g,$b);
 	$cl = PDF::API2::Color->newHSV($h,$s,$v);
 	$cl = PDF::API2::Color->newHSL($h,$s,$l);
@@ -177,8 +178,13 @@ sub HSLtoRGB ($$$) {
 
 sub new {
 	my $class=shift @_;
-	my $self={};
-	bless($self,$class);
+	my $self;
+	if(scalar @_) {
+		$self=$class->newRGB(namecolor(@_));
+	} else {
+		$self={};
+		bless($self,$class);
+	}
 	return($self);
 }
 
@@ -282,6 +288,18 @@ sub asGrey2 {
 	return((($r**2+$g**2+$b**2)**0.5)/3);
 }
 
+=item $luminance = $cl->asLum
+
+Returns $cl's grey value. Range [0 .. 1]. Functions 2 returns the geometric mean of the corresponding RGB values.
+
+=cut 
+
+sub asLum {
+	my $self=shift @_;
+	my ($r,$g,$b)=@{$self->{'rgb'}};
+	return(RGBtoLUM($r,$g,$b));
+}
+
 =item ( $c, $m, $y )= $cl->asCMY 
 
 Returns $cl's cmy values. Range [0 .. 1]. 
@@ -329,13 +347,27 @@ sub asCMYK3 {
 
 =item $hex = $cl->asHex 
 
-Returns $cl's rgb values as 6 hex-digits.
+Returns $cl's rgb values as html's hex-digits.
 
 =cut 
 
 sub asHex {
 	my $self=shift @_;
-	return sprintf('%02X%02X%02X',map {$_*255} $self->asRGB);
+	return sprintf('#%02X%02X%02X',map {$_*255} $self->asRGB);
+}
+
+sub asHexCMYK {
+	my $self=shift @_;
+	return sprintf('%%%02X%02X%02X%02X',map {$_*255} $self->asCMYK);
+}
+
+sub asHexHSV {
+	my $self=shift @_;
+	my ($h,$s,$v)=$self->asHSV;
+	$h+=360 while($h<0);
+	$h%=360;
+	$h/=360;
+	return sprintf('!%02X%02X%02X',map {$_*255} ($h,$s,$v));
 }
 
 =item $cl->setRGB $r, $g, $b 

@@ -10,10 +10,13 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 20020418.102155 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.2.3.8 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
+	$PDF::API2::Lite::useInternalFonts=0;
+	$PDF::API2::Lite::loadedInternalFonts=0;
 }
+
 
 
 =head1 PDF::API2::Lite
@@ -53,7 +56,7 @@ sub new {
 	my %opt=@_;
 	my $self={};
 	bless($self,$class);
-	$self->{api}=PDF::API2->new();
+	$self->{api}=PDF::API2->new(@_);
 	return $self;
 }
 
@@ -97,7 +100,8 @@ sub mediabox {
 
 =item $pdf->saveas $file
 
-Saves the document (may not be later modified).
+Saves the document (may not be modified later) and
+deallocates the pdf-structures.
 
 =cut
 
@@ -109,6 +113,17 @@ sub saveas {
 		$self->{api}->saveas($file);
 		return $self;
 	}
+	$self->{api}->end;
+	foreach my $k (keys %{$self}) {
+		if(UNIVERSAL::can($k,'release')) {
+			$k->release(1);
+		} elsif(UNIVERSAL::can($k,'end')) {
+			$k->end;
+		}
+		$self->{$k}=undef;
+		delete($self->{$k});
+	}
+	return undef;
 }
 
 
@@ -126,8 +141,16 @@ B<Examples:>
 =cut
 
 sub corefont {
-	my ($self,$name)=@_;
-	return $self->{api}->corefont($name,1);
+	my ($self,$name,@opts)=@_;
+	my $obj;
+	if($PDF::API2::Lite::useInternalFonts) {
+		eval " use PDF::API2::cFont; " unless($PDF::API2::Lite::loadedInternalFonts);
+		$PDF::API2::Lite::loadedInternalFonts=1;
+		$obj=PDF::API2::cFont->new_api($self->{api},$name,@opts);
+	} else {
+		$obj=$self->{api}->corefont($name,1);
+	}
+	return $obj;
 }
 
 =item $font = $pdf->ttfont $ttfile

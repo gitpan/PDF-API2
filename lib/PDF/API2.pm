@@ -1,16 +1,21 @@
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-# Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
 #
-#==================================================================
+#=======================================================================
 package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 20020423.125629 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.2.3.8 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -45,6 +50,7 @@ use Text::PDF::TTFont;
 use Text::PDF::TTFont0;
 
 use PDF::API2::Util;
+# use PDF::API2::cFont;
 
 use POSIX qw( ceil floor );
 
@@ -141,8 +147,10 @@ sub open {
 
 	my $fh=PDF::API2::IOString->new();
 	$fh->import($file);
-
 	$self->{pdf}=Text::PDF::FileAPI->open($fh,1);
+
+#	$self->{pdf}=Text::PDF::FileAPI->open($file,1);
+
 	$self->{pdf}->{' fname'}=$file;
 	$self->{pdf}->{'Root'}->realise;
 	$self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
@@ -151,6 +159,7 @@ sub open {
 	my @pages=proc_pages($self->{pdf},$self->{pages});
 	$self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
 	$self->{reopened}=1;
+	$self->{time}='_'.pdfkey(time());
 	my $dig=digest16(digest32($class,$file,%opt));
 	if(defined $self->{pdf}->{'ID'}){
 		$self->{pdf}->{'ID'}->realise;
@@ -198,8 +207,7 @@ sub page {
 		splice(@{$self->{pagestack}},$index,0,$page);
 	} else {
 		splice(@{$self->{pagestack}},$index-1,0,$page);
-	}
-	weaken($page) if($hasWeakRef);
+	}	
 	return $page;
 }
 
@@ -385,26 +393,22 @@ sub importpage {
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
 		$t_page->{Contents}=PDFArray();
-		my $content=PDFDict();
-		$self->{pdf}->new_obj($content);
-		$t_page->{Contents}->add_elements($content);
 
 		foreach my $k ($s_page->{Contents}->elementsof) {
+			my $content=PDFDict();
+			$self->{pdf}->new_obj($content);
+			$t_page->{Contents}->add_elements($content);
 
 			$k->realise;
-			if($k->{Filter}){
-				$k->{Filter}->realise;
-				foreach my $flt ($k->{Filter}->elementsof) {
-					my $fn=$flt->{val};
-					my $f="Text::PDF::$fn"->new();
-					$k->{' stream'}=$f->infilt($k->{' stream'},1) if($f);
-				}
-			}
-			$k->{' stream'}=~s/[\x0a\x0d]+/ /gm if($k->{' stream'});
-
-			$content->{' stream'}.=$k->{' stream'}." \n";
+		#	$k->read_stream(1);
 			
-			$content->{'Filter'}=PDFArray(PDFName('FlateDecode'));
+			if($k->{Filter}){
+				$content->{'Filter'}=PDFArray($k->{Filter}->elementsof);
+				$content->{' nofilt'}=1;
+				$content->{' stream'}=$k->{' stream'};
+			} else {
+				$content->{' stream'}=substr($k->{' stream'},0,$k->{Length}->val-1);
+			}
 			
 		}
 	}
@@ -476,6 +480,7 @@ sub saveas {
 	} else {
 		$self->{pdf}->out_file($file);
 	}
+	$self->end;
 }
 
 sub save {
@@ -487,6 +492,7 @@ sub save {
 	} else {
 		die "invalid method invokation: use 'saveas' instead.";
 	}
+	$self->end;
 }
 
 =item $string = $pdf->stringify
@@ -510,10 +516,11 @@ sub stringify {
 		$str=${$fh->string_ref};
 		$fh->realclose;
 	}
+	$self->end;
 	return($str);
 }
 
-sub release {return(undef);}
+sub release { $_[0]->end; return(undef);}
 
 =item $pdf->end
 
@@ -523,69 +530,14 @@ Destroys the document.
 
 sub end {
 	my $self=shift(@_);
-	$self->{pdf}->release;
+	$self->{pdf}->release if(defined($self->{pdf}));
+
 	    foreach my $key (keys %{$self})
 	    {
-	        my $ref = ref($self->{$key});
-	        if ($ref eq '')
-	        {
-	            # Remove scalar value.
-	            delete $self->{$key};
-		}
-	        elsif ($ref =~ /^Text::PDF::/o)
-	        {
-	            if ($key =~ /parent/io)
-	            {
-	                # Potential circular reference.
-	                delete $self->{$key};
-	            }
-	            else
-	            {
-	                # Sub-element, explicitly destruct.
-	                my $val = $self->{$key};
-	                delete $self->{$key};
-	                $val->release();
-	            }
-	        }
-	        elsif ($ref eq 'ARRAY')
-	        {
-	            # Remove sub-array (of _scalars_)
-	            delete $self->{$key};
-	        } elsif (UNIVERSAL::can($self->{$key},'release')) {
-	            my $val = $self->{$key};
-	            delete $self->{$key};
-	            $val->release();
-	        }
-	        elsif ($ref eq 'IO::File')
-	        {
-	            # IO object, destruct silently.
-	            delete $self->{$key};
-	        }
-	        elsif ($ref eq 'HASH')
-	        {
-	            # Remove sub-hash (of _scalars_)
-	            delete $self->{$key};
-	        }
-	        else
-	        {
-	        	delete($self->{$key});
-	        }
+	        $self->{$key}=undef;
+	        delete ($self->{$key});
 	    }
 
-	    ###########################################################################
-	    # Now that we think that we've gone back and freed up all of the memory
-	    # that we were using, check to make sure that we don't have any keys left
-	    # in our own hash (we shouldn't).  IF we do have keys left, throw a warning
-	    # message.
-	    ###########################################################################
-	    foreach my $key (keys %{$self})
-	    {
-	        warn ref($self) . " still has '$key' key left after release.\n";
-	    }
-
-#	foreach my $k (keys %{$self}) {
-#		delete $self->{$k};
-#	}
 	undef;
 }
 
@@ -659,7 +611,7 @@ B<Examples:>
 
 sub corefont {
 	my ($self,$name,$light)=@_;
-	my $key='FFx'.pdfkey($name,$light);
+	my $key='FFx'.pdfkey($name,$light,$self->{time});
 
 	my $obj;
 
@@ -687,7 +639,9 @@ sub corefont {
 
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
+	weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 
 	$self->resource('Font',$key,$obj);
 
@@ -695,6 +649,19 @@ sub corefont {
 	return($obj);
 }
 
+#sub cfont {
+#	my ($self,@opts)=@_;
+#
+#	my $obj=PDF::API2::cFont->new($self->{pdf},@opts);
+#	my $key=$obj->{' apiname'};
+#
+#	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+#
+#	$self->resource('Font',$key,$obj);
+#
+#	$self->{pdf}->out_obj($self->{pages});
+#	return($obj);
+#}
 
 =item $font = $pdf->psfont $pfbfile,$afmfile
 
@@ -710,20 +677,16 @@ B<Examples:>
 
 sub psfont {
 	my ($self,$pfb,$afm,$encoding,@glyphs)=@_;
-	my $key='PSx'.pdfkey(($pfb||'x').($afm||'y')).$self->{time};
-
-	if($^O eq 'MSWin32') {
-		my %opts=opts_from_pfm($pfb);
-		$pfb = defined $opts{-pfbfile} ? $opts{-pfbfile} : $pfb;
-		$afm = defined $opts{-pfbfile} ? undef : $afm;
-	}
+	my $key='PSx'.pdfkey(($pfb||'x').($afm||'y'),$self->{time});
 
 	my $obj=PDF::API2::PSFont->new($self->{pdf},$pfb,$afm,$key,$encoding,@glyphs);
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
+	weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 
 	$self->resource('Font',$key,$obj,$self->{reopened});
 
@@ -748,14 +711,16 @@ B<Examples:>
 sub ttfont {
 	my ($self,$file)=@_;
 
-	my $key='TTx'.pdfkey($file).$self->{time};
+	my $key='TTx'.pdfkey($file,$self->{time});
 
 	my $obj=PDF::API2::TTFont->new($self->{pdf},$file,$key);
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
+	weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 
 	$self->resource('Font',$key,$obj,$self->{reopened});
 
@@ -835,7 +800,9 @@ sub imagemask {
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
 	$obj->{' apipdf'}=$self->{pdf};
+	weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 
 #	$self->resource('XObject',$obj->{' apiname'},$obj,1);
 
@@ -967,7 +934,9 @@ sub shade {
 
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
+	weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 
 	$self->resource('Shading',$key,$obj,1);
 
@@ -1086,7 +1055,9 @@ sub barcode {
 
 	$obj->{' apiname'}=$key;
 	$obj->{' apipdf'}=$self->{pdf};
+	weaken($obj->{' apipdf'}) if($hasWeakRef);
 	$obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 
 	$self->resource('XObject',$key,$obj,1);
 
@@ -1102,6 +1073,7 @@ sub extgstate {
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 	$self->resource('ExtGState',$key,$obj,1);
         $obj->{' api'}=$self;
+	weaken($obj->{' api'}) if($hasWeakRef);
 	return($obj);
 }
 
@@ -1209,9 +1181,23 @@ sub new {
 }
 
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Outlines
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Outlines;
 
 use strict;
@@ -1240,14 +1226,32 @@ sub new {
 }
 
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Outline
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Outline;
 
-use strict;
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict);
+BEGIN {
+	use strict;
+	use vars qw( @ISA $hasWeakRef );
+	eval " use WeakRef; ";
+	$hasWeakRef= $@ ? 0 : 1;
+	@ISA = qw(Text::PDF::Dict);
+}
 
 use Text::PDF::Dict;
 use Text::PDF::Utils;
@@ -1269,7 +1273,9 @@ sub new {
 	my ($class,$api,$parent,$prev)=@_;
 	my $self = $class->SUPER::new;
 	$self->{' apipdf'}=$api->{pdf};
+	weaken($self->{' apipdf'}) if($hasWeakRef);
 	$self->{' api'}=$api;
+	weaken($self->{' api'}) if($hasWeakRef);
 	$self->{Parent}=$parent if(defined $parent);
 	$self->{Prev}=$prev if(defined $prev);
 	return($self);
@@ -1453,13 +1459,35 @@ sub out_obj {
 sub outobjdeep {
 	my ($self,@param)=@_;
 	$self->fix_outline;
-	return $self->SUPER::outobjdeep(@param);
+	foreach my $k (qw/ api apipdf apipage /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	my @ret=$self->SUPER::outobjdeep(@param);
+	foreach my $k (qw/ First Parent Next Last Prev /) {
+		$self->{$k}=undef;
+		delete($self->{$k});
+	}
+	return @ret;
 }
 
-
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::ColorSpace
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::ColorSpace;
 
 use strict;
@@ -1486,7 +1514,6 @@ sub new {
 	my ($class,$pdf,$key,%opts)=@_;
 	my $self = $class->SUPER::new();
 	$self->{' apiname'}=$key;
-#	$self->{' apipdf'}=$pdf;
 
 	if($opts{-type} eq 'CalRGB') {
 
@@ -1592,9 +1619,32 @@ sub isLab { $_[0]->{' type'}=~/lab/ ? 1 : 0 ; }
 sub isGray { $_[0]->{' type'}=~/gray/ ? 1 : 0 ; }
 sub isIndexed { $_[0]->{' type'}=~/index/ ? 1 : 0 ; }
 
-#==================================================================
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::ExtGState
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::ExtGState;
 
 use strict;
@@ -1620,7 +1670,6 @@ sub new {
 	my ($class,$pdf,$key)=@_;
 	my $self = $class->SUPER::new;
 	$self->{' apiname'}=$key;
-	$self->{' apipdf'}=$pdf;
 	$self->{Type}=PDFName('ExtGState');
 	return($self);
 }
@@ -1795,10 +1844,32 @@ sub renderingintent {
 	return($self);
 }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Font
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Font;
 use strict;
 use PDF::API2::UniMap;
@@ -1823,9 +1894,7 @@ sub clone {
 	$res->{' apiname'}.='_CLONEx'.pdfkey($key);
 	$res->{'Name'}=PDFName($res->{' apiname'});
 
-        $res->{' api'}->{pages}->{'Resources'}=$res->{' api'}->{pages}->{'Resources'} || PDFDict();
-        $res->{' api'}->{pages}->{'Resources'}->{'Font'}=$res->{' api'}->{pages}->{'Resources'}->{'Font'} || PDFDict();
-	$res->{' api'}->{pages}->{'Resources'}->{'Font'}->{$res->{' apiname'}}=$res;
+	$res->{' api'}->resource('Font',$res->{' apiname'},$res);
 
 	return($res);
 }
@@ -1909,12 +1978,25 @@ Returns the width of $text as if it were at size 1.
 
 sub width {
 	my ($self,$text)=@_;
-	my ($width);
+	my $width=0;
 	foreach (unpack("C*", $text)) {
-		$width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]};
+		$width += $self->{' AFM'}{'wx'}{$self->{' AFM'}{'char'}[$_]||'space'}||0;
 	}
 	$width/=1000;
 	return($width);
+}
+
+=item @widths = $font->width_array $text
+
+Returns the widths of the words in $text as if they were at size 1.
+
+=cut
+
+sub width_array {
+	my ($self,$text)=@_;
+	my @text=split(/\s+/,$text);
+	my @widths=map {$self->width($_)} @text;
+	return(@widths);
 }
 
 sub ascent      { return $_[0]->{' ascent'}; }
@@ -1924,11 +2006,33 @@ sub fontbbx     { return @{$_[0]->{' fontbbox'}}; }
 sub capheight   { return $_[0]->{' capheight'}; }
 sub xheight     { return $_[0]->{' xheight'}; }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
 
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::CoreFont
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::CoreFont;
 use strict;
 use PDF::API2::Util;
@@ -1960,7 +2064,11 @@ sub new {
 	}
 	$self->{' apiname'}=$key;
 	$self->{' apipdf'}=$pdf;
-	$self->encodeProperLight('latin1',32,255);
+	if(($name ne 'ZapfDingbats') && ($name ne 'Symbol')) {
+		$self->encodeProperLight('latin1',32,255) ;
+	} else {
+		$self->encodeProperLight('asis') ;
+	}
 	return($self);
 }
 
@@ -1985,10 +2093,32 @@ sub coerce {
 	return($self);
 }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::PSFont
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::PSFont;
 use strict;
 use PDF::API2::Util;
@@ -2020,15 +2150,39 @@ sub new {
 	return($self);
 }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
 
-#==================================================================
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::TTFont
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::TTFont;
 use strict;
 use PDF::API2::UniMap qw( utf8_to_ucs2 );
 use PDF::API2::Util;
 use Text::PDF::Utils;
+use POSIX;
 
 use vars qw(@ISA);
 @ISA = qw( Text::PDF::TTFont0 PDF::API2::Font );
@@ -2053,23 +2207,34 @@ sub new {
 	$font->{'cmap'}->read;
 	$font->{'hmtx'}->read;
 	$font->{'post'}->read;
+	$font->{'loca'}->read;
 	my $upem = $font->{'head'}->read->{'unitsPerEm'};
 
 	$self->{' unicid'}=();
 	$self->{' uniwidth'}=();
+	$self->{' unibbx'}=();
 	my @map=$font->{'cmap'}->reverse;
 	foreach my $x (0..scalar(@map)) {
 		$self->{' unicid'}{$map[$x]||0}=$x;
 		$self->{' uniwidth'}{$map[$x]||0}=$font->{'hmtx'}{'advance'}[$x]*1000/$upem;
+		$self->{' unibbx'}{$map[$x]||0}=[
+			ceil($font->{'loca'}->{'glyphs'}[$x]->read->{'xMin'} * 1000 / $upem),
+			ceil($font->{'loca'}->{'glyphs'}[$x]->{'yMin'} * 1000 / $upem),
+			ceil($font->{'loca'}->{'glyphs'}[$x]->{'xMax'} * 1000 / $upem),
+			ceil($font->{'loca'}->{'glyphs'}[$x]->{'yMax'} * 1000 / $upem)
+		] if($font->{'loca'}->{'glyphs'}[$x]);
 	}
 	$self->{' encoding'}='latin1';
 	$self->{' chrcid'}={};
 	$self->{' chrcid'}->{'latin1'}=();
 	$self->{' chrwidth'}={};
 	$self->{' chrwidth'}->{'latin1'}=();
+	$self->{' chrbbx'}={};
+	$self->{' chrbbx'}->{'latin1'}=();
 	foreach my $x (0..255) {
 		$self->{' chrcid'}->{'latin1'}{$x}=$self->{' unicid'}{$x}||$self->{' unicid'}{32};
-		$self->{' chrwidth'}->{'latin1'}{$x}=$font->{'hmtx'}{'advance'}[$self->{' unicid'}{$x}||$self->{' unicid'}{32}]*1000/$upem;
+		$self->{' chrwidth'}->{'latin1'}{$x}=$self->{' uniwidth'}{$x}||$self->{' uniwidth'}{32};
+		$self->{' chrbbx'}->{'latin1'}{$x}=$self->{' unibbx'}{$x}||$self->{' unibbx'}{32};
 	}
     
     $self->{' ascent'}=int($font->{'hhea'}->read->{'Ascender'} * 1000 / $upem);
@@ -2120,10 +2285,10 @@ for use in the PDF.
 sub text {
 	my ($self,$text,$enc)=@_;
 	$enc=$enc||$self->{' encoding'};
-	my ($newtext);
+	my $newtext='';
 	$self->{' subvec'}='' unless($self->{' subvec'});
 	foreach (unpack("C*", $text)) {
-		my $g=$self->{' chrcid'}{$enc}{$_};
+		my $g=$self->{' chrcid'}{$enc}{$_}||32;
 		$newtext.= sprintf('%04x',$g);
 		vec($self->{' subvec'},$g,1)=1;
 	}
@@ -2142,7 +2307,7 @@ sub text_utf8 {
 	$text=utf8_to_ucs2($text);
 	my ($newtext);
 	foreach my $x (0..(length($text)>>1)-1) {
-		my $g=$self->{' unicid'}{vec($text,$x,16)};
+		my $g=$self->{' unicid'}{vec($text,$x,16)}||0;
 		$newtext.= sprintf('%04x',$g);
 		vec($self->{' subvec'},$g,1)=1;
 	}
@@ -2158,12 +2323,25 @@ Returns the width of $text as if it were at size 1.
 sub width {
 	my ($self,$text,$enc)=@_;
 	$enc=$enc||$self->{' encoding'};
-	my ($width);
+	my $width=0;
 	foreach (unpack("C*", $text)) {
-		$width += $self->{' chrwidth'}{$enc}{$_};
+		$width += $self->{' chrwidth'}{$enc}{$_||0};
 	}
 	$width/=1000;
 	return($width);
+}
+
+=item @widths = $font->width_array $text
+
+Returns the widths of the words in $text as if they were at size 1.
+
+=cut
+
+sub width_array {
+	my ($self,$text)=@_;
+	my @text=split(/\s+/,$text);
+	my @widths=map {$self->width($_)} @text;
+	return(@widths);
 }
 
 =item $wd = $font->width_utf8 $text
@@ -2184,6 +2362,46 @@ sub width_utf8 {
 	return($width);
 }
 
+=item ($llx,$lly,$urx,$ury) = $font->bbox $text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox {
+	my ($self,$text,$enc)=@_;
+	$enc=$enc||$self->{' encoding'};
+	my $width=$self->width(substr($text,0,length($text)-1),$enc);
+	my @f=@{$self->{' chrbbx'}{$enc}{unpack("C",substr($text,0,1))}};
+	my @l=@{$self->{' chrbbx'}{$enc}{unpack("C",substr($text,-1,1))}};
+	my ($high,$low);
+	foreach (unpack("C*", $text)) {
+		$high = $self->{' chrbbx'}{$enc}{$_}->[3]>$high ? $self->{' chrbbx'}{$enc}{$_}->[3] : $high;
+		$low  = $self->{' chrbbx'}{$enc}{$_}->[1]<$low  ? $self->{' chrbbx'}{$enc}{$_}->[1] : $low;
+	}
+	return map {$_/1000} ($f[0],$low,(($width*1000)+$l[2]),$high);
+}
+
+=item ($llx,$lly,$urx,$ury) = $font->bbox_utf8 $utf8text
+
+Returns the texts bounding-box as if it were at size 1.
+
+=cut
+
+sub bbox_utf8 {
+	my ($self,$text)=@_;
+	$text=utf8_to_ucs2($text);
+	my $width=$self->width_utf8($text);
+	my @f=@{$self->{' unibbx'}{vec($text,0,16)}};
+	my @l=@{$self->{' unibbx'}{vec($text,(length($text)>>1)-1,16)}};
+	my ($high,$low);
+	foreach my $x (0..(length($text)>>1)-1) {
+		$high = $self->{' unibbx'}{vec($text,$x,16)}->[3]>$high ? $self->{' unibbx'}{vec($text,$x,16)}->[3] : $high;
+		$low  = $self->{' unibbx'}{vec($text,$x,16)}->[1]<$low  ? $self->{' unibbx'}{vec($text,$x,16)}->[1] : $low;
+	}
+	return map {$_/1000} ($f[0],$low,(($width*1000)+$l[2]),$high);
+}
+
 =item $font->encode $encoding
 
 Changes the encoding of the font object. Since encodings are one virtual
@@ -2194,10 +2412,7 @@ in ::API2 for truetype fonts you DONT have to use 'clone'.
 sub encode {
 	my ($self,$enc)=@_;
 
-	$self->{' apipdf'}->{' encoding'}=$self->{' apipdf'}->{' encoding'} || {};
-	$self->{' apipdf'}->{' encoding'}->{$enc}=$self->{' apipdf'}->{' encoding'}->{$enc} || PDF::API2::UniMap->new($enc);
-
-	my $map=$self->{' apipdf'}->{' encoding'}->{$enc};
+	my $map=PDF::API2::UniMap->new($enc);
 
 	my $ttf=$self->{' font'};
 	my $upem = $ttf->{'head'}->read->{'unitsPerEm'};
@@ -2216,14 +2431,36 @@ sub encode {
 	return($self);
 }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Page
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Page;
 
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA %pgsz);
 @ISA = qw(Text::PDF::Pages);
 use Text::PDF::Pages;
 use Text::PDF::Utils;
@@ -2253,6 +2490,45 @@ sub new {
     delete $self->{'Kids'};
     $parent->add_page($self, $index);
     $self;
+}
+
+%pgsz=(
+	'4a'		=>	[ 4760	, 6716	],
+	'2a'		=>	[ 3368	, 4760	],
+	'a0'		=>	[ 2380	, 3368	],
+	'a1'		=>	[ 1684	, 2380	],
+	'a2'		=>	[ 1190	, 1684	],
+	'a3'		=>	[ 842	, 1190	],
+	'a4'		=>	[ 595	, 842	],
+	'a5'		=>	[ 421	, 595	],
+	'a6'		=>	[ 297	, 421	],
+	'4b'		=>	[ 5656	, 8000	],
+	'2b'		=>	[ 4000	, 5656	],
+	'b0'		=>	[ 2828	, 4000	],
+	'b1'		=>	[ 2000	, 2828	],
+	'b2'		=>	[ 1414	, 2000	],
+	'b3'		=>	[ 1000	, 1414	],
+	'b4'		=>	[ 707	, 1000	],
+	'b5'		=>	[ 500	, 707	],
+	'b6'		=>	[ 353	, 500	],
+	'letter'	=>	[ 612	, 792	],
+	'broadsheet'	=>	[ 1296	, 1584	],
+	'ledger'	=>	[ 1224	, 792	],
+	'tabloid'	=>	[ 792	, 1224	],
+	'legal'		=>	[ 612	, 1008	],
+	'executive'	=>	[ 522	, 756	],
+	'36x36'		=>	[ 2592	, 2592	],
+);
+
+sub _pagesize {
+	my $s=shift @_;
+	if($pgsz{lc($s)}) {
+		return @{$pgsz{lc($s)}};
+	} elsif($s=~/^[\d\.]+$/) {
+		return($s,$s);
+	} else {
+		return(595,842);
+	}
 }
 
 =item $page = PDF::API2::Page->coerce $pdf, $pdfpage
@@ -2288,7 +2564,13 @@ sub update {
 
 =item $page->mediabox $llx, $lly, $urx, $ury
 
-Sets the mediabox.
+=item $page->mediabox $alias
+
+Sets the mediabox.  This method supports the following aliases: 
+'4A', '2A', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 
+'4B', '2B', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 
+'LETTER', 'BROADSHEET', 'LEDGER', 'TABLOID', 'LEGAL', 
+'EXECUTIVE', and '36X36'.
 
 =cut
 
@@ -2298,9 +2580,13 @@ sub mediabox {
 		$self->{'MediaBox'}=PDFArray(
 			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
 		);
-	} else {
+	} elsif(defined $y1) {
 		$self->{'MediaBox'}=PDFArray(
 			map { PDFNum(float($_)) } (0,0,$x1,$y1)
+		);
+	} else {
+		$self->{'MediaBox'}=PDFArray(
+			map { PDFNum(float($_)) } (0,0,_pagesize($x1))
 		);
 	}
 	$self;
@@ -2310,7 +2596,9 @@ sub mediabox {
 
 =item $page->cropbox $llx, $lly, $urx, $ury
 
-Sets the cropbox.
+=item $page->cropbox $alias
+
+Sets the cropbox.  This method supports the same aliases as mediabox.
 
 =cut
 
@@ -2320,9 +2608,13 @@ sub cropbox {
 		$self->{'CropBox'}=PDFArray(
 			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
 		);
-	} else {
+	} elsif(defined $y1) {
 		$self->{'CropBox'}=PDFArray(
 			map { PDFNum(float($_)) } (0,0,$x1,$y1)
+		);
+	} else {
+		$self->{'CropBox'}=PDFArray(
+			map { PDFNum(float($_)) } (0,0,_pagesize($x1))
 		);
 	}
 	$self;
@@ -2332,7 +2624,9 @@ sub cropbox {
 
 =item $page->bleedbox $llx, $lly, $urx, $ury
 
-Sets the bleedbox.
+=item $page->bleedbox $alias
+
+Sets the bleedbox.  This method supports the same aliases as mediabox.
 
 =cut
 
@@ -2342,9 +2636,13 @@ sub bleedbox {
 		$self->{'BleedBox'}=PDFArray(
 			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
 		);
-	} else {
+	} elsif(defined $y1) {
 		$self->{'BleedBox'}=PDFArray(
 			map { PDFNum(float($_)) } (0,0,$x1,$y1)
+		);
+	} else {
+		$self->{'BleedBox'}=PDFArray(
+			map { PDFNum(float($_)) } (0,0,_pagesize($x1))
 		);
 	}
 	$self;
@@ -2354,7 +2652,7 @@ sub bleedbox {
 
 =item $page->trimbox $llx, $lly, $urx, $ury
 
-Sets the trimbox.
+Sets the trimbox.  This method supports the same aliases as mediabox.
 
 =cut
 
@@ -2364,9 +2662,13 @@ sub trimbox {
 		$self->{'TrimBox'}=PDFArray(
 			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
 		);
-	} else {
+	} elsif(defined $y1) {
 		$self->{'TrimBox'}=PDFArray(
 			map { PDFNum(float($_)) } (0,0,$x1,$y1)
+		);
+	} else {
+		$self->{'TrimBox'}=PDFArray(
+			map { PDFNum(float($_)) } (0,0,_pagesize($x1))
 		);
 	}
 	$self;
@@ -2376,7 +2678,9 @@ sub trimbox {
 
 =item $page->artbox $llx, $lly, $urx, $ury
 
-Sets the artbox.
+=item $page->artbox $alias
+
+Sets the artbox.  This method supports the same aliases as mediabox.
 
 =cut
 
@@ -2386,9 +2690,13 @@ sub artbox {
 		$self->{'ArtBox'}=PDFArray(
 			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
 		);
-	} else {
+	} elsif(defined $y1) {
 		$self->{'ArtBox'}=PDFArray(
 			map { PDFNum(float($_)) } (0,0,$x1,$y1)
+		);
+	} else {
+		$self->{'ArtBox'}=PDFArray(
+			map { PDFNum(float($_)) } (0,0,_pagesize($x1))
 		);
 	}
 	$self;
@@ -2544,10 +2852,32 @@ sub ship_out
     $self;
 }
 
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Annotation
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Annotation;
 
 use strict;
@@ -2574,6 +2904,15 @@ sub new {
 	my $self=$class->SUPER::new;
 	$self->{Type}=PDFName('Annot');
 	return($self);
+}
+
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf apipage /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
 }
 
 =item $ant->link $page, %opts
@@ -2653,7 +2992,7 @@ Sets the rectangle of the annotation.
 sub rect {
 	my ($self,@r)=@_;
 	die "insufficient parameters to annotation->rect( ) " unless(scalar @r == 4);
-	$self->{Rect}=PDFArray( map { PDFNum($_) } $r[0..3] );
+	$self->{Rect}=PDFArray( map { PDFNum($_) } $r[0],$r[1],$r[2],$r[3], );
 	return($self);
 }
 
@@ -2666,7 +3005,7 @@ Sets the border-styles of the annotation, if applicable.
 sub border {
 	my ($self,@r)=@_;
 	die "insufficient parameters to annotation->border( ) " unless(scalar @r == 3);
-	$self->{Border}=PDFArray( map { PDFNum($_) } $r[0..2] );
+	$self->{Border}=PDFArray( map { PDFNum($_) } $r[0],$r[1],$r[2] );
 	return($self);
 }
 
@@ -2787,9 +3126,23 @@ sub dest {
 }
 
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Content
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Content;
 
 use strict;
@@ -2864,9 +3217,13 @@ sub compress {
 }
 
 sub outobjdeep {
-	my ($self, $fh, $pdf) = @_;
+	my ($self, @opts) = @_;
 	$self->restore;
-	$self->SUPER::outobjdeep($fh, $pdf);
+	foreach my $k (qw/ api apipdf apipage /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
 }
 
 =item $co->fillcolor $grey
@@ -3282,9 +3639,23 @@ sub resource {
 	return($self);
 }
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Gfx
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Gfx;
 
 use strict;
@@ -3888,9 +4259,23 @@ sub egstate {
 }
 
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Text
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Text;
 
 use strict;
@@ -3915,27 +4300,216 @@ sub new {
 	my ($class)=@_;
 	my $self = $class->SUPER::new(@_);
 	$self->add('BT');
+	$self->{' font'}=undef;
+	$self->{' fontsize'}=0;
+	$self->{' charspace'}=0;
 	$self->{' hspace'}=100;
+	$self->{' wordspace'}=0;
+	$self->{' lead'}=0;
+	$self->{' rise'}=0;
+	$self->{' render'}=0;
+	$self->{' matrix'}=[1,0,0,1,0,0];
+	$self->{' fillcolor'}=[0];
+	$self->{' strokecolor'}=[0];
+	$self->{' translate'}=[0,0];
+	$self->{' scale'}=[1,1];
+	$self->{' skew'}=[0,0];
+	$self->{' rotate'}=0;
 	return($self);
+}
+
+=item %state = $txt->textstate %state
+
+Sets or gets the current text-object state.
+
+=cut
+
+sub textstate {
+	my $self=shift @_;
+	my %state;
+	if(scalar @_) {
+		%state=@_;
+		foreach my $k (qw( charspace hspace wordspace lead rise render )) {
+			next unless($state{$k});
+			eval " \$self->$k(\$state{\$k}); ";
+		}
+		if($state{font} && $state{fontsize}) {
+			$self->font($state{font},$state{fontsize});
+		}
+		if($state{matrix}) {
+			$self->matrix(@{$state{matrix}});
+			@{$self->{' translate'}}=@{$state{translate}};
+			$self->{' rotate'}=$state{rotate};
+			@{$self->{' scale'}}=@{$state{scale}};
+			@{$self->{' skew'}}=@{$state{skew}};
+		}
+		if($state{fillcolor}) {
+			$self->fillcolor(@{$state{fillcolor}});
+		}
+		if($state{strokecolor}) {
+			$self->strokecolor(@{$state{strokecolor}});
+		}
+		%state=();
+	} else {
+		foreach my $k (qw( font fontsize charspace hspace wordspace lead rise render )) {
+			$state{$k}=$self->{" $k"};
+		}
+		$state{matrix}=[@{$self->{" matrix"}}];
+		$state{rotate}=$self->{" rotate"};
+		$state{scale}=[@{$self->{" scale"}}];
+		$state{skew}=[@{$self->{" skew"}}];
+		$state{translate}=[@{$self->{" translate"}}];
+		$state{fillcolor}=[@{$self->{" fillcolor"}}];
+		$state{strokecolor}=[@{$self->{" strokecolor"}}];
+	}
+	return(%state);
+}
+
+=item ($tx,$ty) = $txt->textpos
+
+Gets the current estimated text position.
+
+=cut
+
+sub textpos {
+	my $self=shift @_;
+	my (@m)=$self->matrix;
+	return($m[4],$m[5]);
 }
 
 =item $txt->matrix $a, $b, $c, $d, $e, $f
 
 Sets the matrix.
 
+B<PLEASE NOTE:> This method is not expected to be called by the user
+and else will 'die'. This was implemented to keep proper state in the
+text-object, so please use transform, transform_rel, translate, scale, 
+skew or rotate instead.
+
 =cut
 
 sub matrix {
 	my $self=shift @_;
-	my ($a,$b,$c,$d,$e,$f)=@_;
-	$self->add((floats($a,$b,$c,$d,$e,$f)),'Tm');
+	my $cl=caller;
+	my @cl=caller;
+	die sprintf("unauthorized call from package=%s,file=%s,line=%i",@cl) if($cl !~ /^PDF::API2/);
+	if(scalar @_) {
+		my ($a,$b,$c,$d,$e,$f)=@_;
+		$self->add((floats($a,$b,$c,$d,$e,$f)),'Tm');
+		@{$self->{' matrix'}}=($a,$b,$c,$d,$e,$f);
+	}
+	return(@{$self->{' matrix'}});
+}
+
+sub transform {
+	my ($self,%opt)=@_;
+	$self->SUPER::transform(%opt);
+	if($opt{-translate}) {
+		@{$self->{' translate'}}=@{$opt{-translate}};
+	} else {
+		@{$self->{' translate'}}=(0,0);
+	}
+	if($opt{-rotate}) {
+		$self->{' rotate'}=$opt{-rotate};
+	} else {
+		$self->{' rotate'}=0;
+	}
+	if($opt{-scale}) {
+		@{$self->{' scale'}}=@{$opt{-scale}};
+	} else {
+		@{$self->{' scale'}}=(1,1);
+	}
+	if($opt{-skew}) {
+		@{$self->{' skew'}}=@{$opt{-skew}};
+	} else {
+		@{$self->{' skew'}}=(0,0);
+	}
+	return($self);
+}
+
+sub translate {
+	my ($self,$x,$y)=@_;
+	$self->transform(-translate=>[$x,$y]);
+}
+
+sub scale {
+	my ($self,$sx,$sy)=@_;
+	$self->transform(-scale=>[$sx,$sy]);
+}
+
+sub skew {
+	my ($self,$a,$b)=@_;
+	$self->transform(-skew=>[$a,$b]);
+}
+
+sub rotate {
+	my ($self,$a)=@_;
+	$self->transform(-rotate=>$a);
+}
+
+=item $txt->transform_rel %opts
+
+Sets transformations (eg. translate, rotate, scale, skew) in pdf-canonical order, 
+but relative to the previously set values.
+
+B<Example:>
+
+	$txt->transform_rel(
+		-translate => [$x,$y],
+		-rotate    => $rot,
+		-scale     => [$sx,$sy],
+		-skew      => [$sa,$sb],
+	)
+
+=cut 
+
+sub transform_rel {
+	my ($self,%opt)=@_;
+	my ($sa1,$sb1)=@{$opt{-skew} ? $opt{-skew} : [0,0]};
+	my ($sa0,$sb0)=@{$self->{" skew"}};
+	
+
+	my ($sx1,$sy1)=@{$opt{-scale} ? $opt{-scale} : [1,1]};
+	my ($sx0,$sy0)=@{$self->{" scale"}};
+
+	my $rot1=$opt{"-rotate"} || 0;
+	my $rot0=$self->{" rotate"};
+
+	my ($tx1,$ty1)=@{$opt{-translate} ? $opt{-translate} : [0,0]};
+	my ($tx0,$ty0)=@{$self->{" translate"}};
+
+	$self->transform(
+		-skew=>[$sa0+$sa1,$sb0+$sb1],
+		-scale=>[$sx0*$sx1,$sy0*$sy1],
+		-rotate=>$rot0+$rot1,
+		-translate=>[$tx0+$tx1,$ty0+$ty1],
+	);
+	return($self);
+}
+
+sub matrix_update {
+	my ($self,$tx,$ty)=@_;
+	my ($a,$b,$c,$d,$e,$f)=$self->matrix;
+	my $mtx=PDF::API2::Matrix->new([$a,$b,0],[$c,$d,0],[$e,$f,1]);
+	my $tmtx=PDF::API2::Matrix->new([$tx,$ty,1]);
+	$tmtx=$tmtx->multiply($mtx);
+	@{$self->{' matrix'}}=(
+		$a,$b,
+		$c,$d,
+		$tmtx->[0][0],$tmtx->[0][1]
+	);
+	@{$self->{' translate'}}=($tmtx->[0][0],$tmtx->[0][1]);
 	return($self);
 }
 
 sub outobjdeep {
-	my ($self, $fh, $pdf) = @_;
+	my ($self, @opts) = @_;
 	$self->add('ET');
-	$self->SUPER::outobjdeep($fh, $pdf);
+	foreach my $k (qw/ api apipdf apipage font fontsize charspace hspace wordspace lead rise render matrix fillcolor strokecolor translate scale skew rotate /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
 }
 
 =item $txt->font $fontobj,$size
@@ -3953,66 +4527,87 @@ sub font {
 	return($self);
 }
 
-=item $txt->charspace $spacing
+=item $spacing = $txt->charspace $spacing
 
 =cut
 
 sub charspace {
 	my ($self,$para)=@_;
-	$self->add(float($para),'Tc');
+	if($para) {
+		$self->{' charspace'}=$para;
+		$self->add(float($para,6),'Tc');
+	}
+	return $self->{' charspace'};
 }
 
-=item $txt->wordspace $spacing
+=item $spacing = $txt->wordspace $spacing
 
 =cut
 
 sub wordspace {
 	my ($self,$para)=@_;
-	$self->add(float($para),'Tw');
+	if($para) {
+		$self->{' wordspace'}=$para;
+		$self->add(float($para,6),'Tw');
+	}
+	return $self->{' wordspace'};
 }
 
-=item $txt->hspace $spacing
+=item $spacing = $txt->hspace $spacing
 
 =cut
 
 sub hspace {
 	my ($self,$para)=@_;
-	$self->{' hspace'}=$para;
-	$self->add(float($para),'Tz');
+	if($para) {
+		$self->{' hspace'}=$para;
+		$self->add(float($para,6),'Tz');
+	}
+	return $self->{' hspace'};
 }
 
-=item $txt->lead $leading
+=item $leading = $txt->lead $leading
 
 =cut
 
 sub lead {
         my ($self,$para)=@_;
         if (defined ($para)) {
-                $self->add(float($para),'TL');
                 $self->{' lead'} = $para;
+                $self->add(float($para),'TL');
         }
         return $self->{' lead'};
 }
 
-=item $txt->rise $rise
+=item $rise = $txt->rise $rise
 
 =cut
 
 sub rise {
-	my ($self,$para)=@_;
-	$self->add(float($para),'Ts');
+        my ($self,$para)=@_;
+        if (defined ($para)) {
+                $self->{' rise'} = $para;
+                $self->add(float($para),'Ts');
+        }
+        return $self->{' rise'};
 }
 
-=item $txt->render $rendering
+=item $rendering = $txt->render $rendering
 
 =cut
 
 sub render {
 	my ($self,$para)=@_;
-	$self->add(intg($para),'Tr');
+        if (defined ($para)) {
+                $self->{' render'} = $para;
+		$self->add(intg($para),'Tr');
+        }
+        return $self->{' render'};
 }
 
 =item $txt->cr $linesize
+
+takes an optional argument giving a custom leading between lines.
 
 =cut
 
@@ -4020,8 +4615,10 @@ sub cr {
 	my ($self,$para)=@_;
 	if(defined($para)) {
 		$self->add(0,float($para),'Td');
+		$self->matrix_update(0,$para);
 	} else {
 		$self->add('T*');
+		$self->matrix_update(0,$self->lead);
 	}
 }
 
@@ -4032,6 +4629,7 @@ sub cr {
 sub nl {
 	my ($self)=@_;
 	$self->add('T*');
+	$self->matrix_update(0,$self->lead);
 }
 
 =item $txt->distance $dx,$dy
@@ -4041,23 +4639,43 @@ sub nl {
 sub distance {
 	my ($self,$dx,$dy)=@_;
 	$self->add(float($dx),float($dy),'Td');
+	$self->matrix_update($dx,$dy);
 }
 
-=item $txt->text $string
+=item $width = $txt->advancewidth $string
+
+Returns the width of the string based on all currently set text-attributes.
+
+=cut
+
+sub advancewidth {
+	my ($self,@txt)=@_;
+	my $text=join(' ',@txt);
+	@txt=split(/\s+/,$text);
+	my $num_space=(scalar @txt)-1;
+	$text=join(' ',@txt);
+	my $num_char=length($text);
+	my $glyph_width=$self->{' font'}->width($text)*$self->{' fontsize'};
+	my $word_spaces=$self->wordspace*$num_space;
+	my $char_spaces=$self->charspace*$num_char;
+	my $advance=($glyph_width+$word_spaces+$char_spaces)*$self->{' hspace'}/100;
+	return $advance;
+}
 
 =item $width = $txt->text $string
 
 Applys text to the content and optionally returns the width of the given text.
 
-B<Note:> Does not consider transformations, but only the set fontsize !
-
 =cut
 
 sub text {
 	my ($self,@txt)=@_;
-	my $text=join('',@txt);
+	my $text=join(' ',@txt);
+	@txt=split(/\s+/,$text);
+	$text=join(' ',@txt);
 	$self->add($self->{' font'}->text($text),'Tj');
-	my $wd=$self->{' font'}->width($text)*$self->{' fontsize'};
+	my $wd=$self->advancewidth($text);
+	$self->matrix_update($wd,0);
 	return($wd);
 
 }
@@ -4068,9 +4686,10 @@ sub text {
 
 sub text_center {
 	my ($self,$text)=@_;
-	$self->distance(float(-($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100)/2)),0);
-	$self->add($self->{' font'}->text($text),'Tj');
-	$self->distance(float($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100)/2),0);
+	my $width=$self->advancewidth($text);
+	$self->distance(float(-($width/2)),0);
+	$self->text($text);
+##	$self->distance(float($width/2),0);
 }
 
 =item $txt->text_right $string
@@ -4079,9 +4698,66 @@ sub text_center {
 
 sub text_right {
 	my ($self,$text)=@_;
-	$self->distance(float(-($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100))),0);
-	$self->add($self->{' font'}->text($text),'Tj');
-	$self->distance(float($self->{' font'}->width($text)*$self->{' fontsize'}*($self->{' hspace'}/100)),0);
+	my $width=$self->advancewidth($text);
+	$self->distance(float(-$width),0);
+	$self->text($text);
+##	$self->distance(float($width),0);
+}
+
+=item ($flowwidth, $overflow) = $txt->text_justify $width, $string [, -overflow => 1 ] [, -underflow => 1 ]
+
+If -overflow is given, $overflow will contain any text, which wont 
+fit into width without exessive scaling and $flowwidth will be 0. 
+
+If -underflow is given, and $text is smaller than $width, $flowwidth will contain the delta between
+$width and the text-advancewidth AND text will typeset using $txt->text. 
+
+=cut
+
+sub text_justify {
+	my ($self,$width,$text,%opts)=@_;
+
+	my @texts=split(/\s+/,$text);
+	$text=join(' ',@texts);
+	my ($overflow,$ofw);
+
+	if($opts{-overflow}) {
+		my @linetext=();
+		
+		while(($self->advancewidth(join(' ',@linetext)) < $width) && scalar @texts){
+			push @linetext, shift @texts;
+		}
+		$overflow=join(' ',@texts);
+		$text=join(' ',@linetext);
+	} else {
+		$text=join(' ',@texts);
+	}
+
+	if($opts{-underflow} && ($self->advancewidth($text) < $width)) {
+		$ofw=$width-$self->advancewidth($text);
+		$self->text($text);
+		return ($ofw,$overflow);
+	} else {
+		$ofw=0;
+	}
+
+	my @wds=$self->{' font'}->width_array($text);
+	my $swt=$self->{' font'}->width(' ');
+	my $wth=$self->advancewidth($text);
+
+#	if(($wth < $width) && (scalar @wds >1)) {
+#		$self->wordspace(
+#		(($width-$wth)/(scalar @wds -1))-$swt-($self->wordspace*$self->hspace/100)
+#		);
+#		$self->add($self->{' font'}->text($text),'Tj');
+#		$self->wordspace(0);
+#	} else {
+		my $hs=$self->hspace;
+		$self->hspace($hs*$width/$wth);
+		$self->text($text);
+		$self->hspace($hs);
+#	}
+	return ($ofw,$overflow);
 }
 
 =item $txt->text_utf8 $utf8string
@@ -4111,7 +4787,8 @@ sub textln {
 	my ($text);
 	while(scalar @txt > 0) {
 		$text=shift @txt;
-		$self->add($self->{' font'}->text($text),'Tj','T*');
+		$self->text($text);
+		$self->nl;
 	}
 }
 
@@ -4145,27 +4822,59 @@ sub paragraph {
 	return($idt,$y+$ht-$h,@txt);
 }
 
-sub paragraphformat {
-	my ($self,$x,$y,$wd,$ht,$idt,@txtobj)=@_;
-	my $yy=$y-$ht;
-	my @t;
-	while(scalar @txtobj>0 && $y>$yy) {
-		my $text=shift @txtobj;
-		if(ref($text)=~/Font/i) {
-			$self->font($text,$self->{' fontsize'});
-			next; 
-		}
-		while(ref($text) ? scalar @{$text}>0 : (defined $text) && ($text ne '')) {
-			($idt,$y,@t)=$self->paragraph($x,$y,$wd,$y-$yy,$idt,ref($text) ? @{$text} : $text);
-			$text=[@t];
-		}
+#sub paragraphformat {
+#	my ($self,$x,$y,$wd,$ht,$idt,@txtobj)=@_;
+#	my $yy=$y-$ht;
+#	my @t;
+#	while(scalar @txtobj>0 && $y>$yy) {
+#		my $text=shift @txtobj;
+#		if(ref($text)=~/Font/i) {
+#			$self->font($text,$self->{' fontsize'});
+#			next; 
+#		}
+#		while(ref($text) ? scalar @{$text}>0 : (defined $text) && ($text ne '')) {
+#			($idt,$y,@t)=$self->paragraph($x,$y,$wd,$y-$yy,$idt,ref($text) ? @{$text} : $text);
+#			$text=[@t];
+#		}
+#	}
+#	return($idt,$y,@txtobj);
+#}
+
+sub fillcolor {
+	my $self=shift @_;
+	if(scalar @_) {
+		$self->SUPER::fillcolor(@_);
+		@{$self->{' fillcolor'}}=@_;
 	}
-	return($idt,$y,@txtobj);
+	return(@{$self->{' fillcolor'}});
 }
 
-#==================================================================
+sub strokecolor {
+	my $self=shift @_;
+	if(scalar @_) {
+		$self->SUPER::strokecolor(@_);
+		@{$self->{' strokecolor'}}=@_;
+	}
+	return(@{$self->{' strokecolor'}});
+}
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Hybrid
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Hybrid;
 
 use strict;
@@ -4188,7 +4897,21 @@ Returns a new hybrid content object (called from $page->hybrid).
 sub new {
 	my ($class)=@_;
 	my $self = PDF::API2::Content::new(@_);
+	$self->{' font'}=undef;
+	$self->{' fontsize'}=0;
+	$self->{' charspace'}=0;
 	$self->{' hspace'}=100;
+	$self->{' wordspace'}=0;
+	$self->{' lead'}=0;
+	$self->{' rise'}=0;
+	$self->{' render'}=0;
+	$self->{' matrix'}=[1,0,0,1,0,0];
+	$self->{' fillcolor'}=[0];
+	$self->{' strokecolor'}=[0];
+	$self->{' translate'}=[0,0];
+	$self->{' scale'}=[1,1];
+	$self->{' skew'}=[0,0];
+	$self->{' rotate'}=0;
 	return($self);
 }
 
@@ -4199,24 +4922,35 @@ Sets the matrix.
 =cut
 
 sub matrix {
-	my $self=shift @_;
-	my ($a,$b,$c,$d,$e,$f)=@_;
+	my ($self,$a,$b,$c,$d,$e,$f)= @_;
 	if($self->{' apiistext'} == 1) {
-		$self->add(floats($a,$b,$c,$d,$e,$f),'Tm');
+		return PDF::API2::Text::matrix(@_);
 	} else {
 		$self->add(floats($a,$b,$c,$d,$e,$f),'cm');
 	}
 	return($self);
 }
 
+
 sub outobjdeep {
 	my ($self) = @_;
+	if($self->{' apiistext'} != 1) {
+		$self->add('ET');
+	}
+	foreach my $k (qw/ api apipdf apipage font fontsize charspace hspace wordspace lead rise render matrix fillcolor strokecolor translate scale skew rotate /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
 	PDF::API2::Content::outobjdeep(@_);
 }
 
 sub transform {
 	my ($self)=@_;
-	PDF::API2::Content::transform(@_);
+	if($self->{' apiistext'} != 1) {
+		PDF::API2::Content::transform(@_);
+	} else {
+		PDF::API2::Text::transform(@_);
+	}
 	return($self);
 }
 
@@ -4226,9 +4960,24 @@ sub transform {
 
 sub textstart {
 	my ($self)=@_;
-	if($self->{' apiistext'} != 1) {
+	if(!defined($self->{' apiistext'}) || $self->{' apiistext'} != 1) {
 		$self->add('BT');
 		$self->{' apiistext'}=1;
+		$self->{' font'}=undef;
+		$self->{' fontsize'}=0;
+		$self->{' charspace'}=0;
+		$self->{' hspace'}=100;
+		$self->{' wordspace'}=0;
+		$self->{' lead'}=0;
+		$self->{' rise'}=0;
+		$self->{' render'}=0;
+		@{$self->{' matrix'}}=(1,0,0,1,0,0);
+		@{$self->{' fillcolor'}}=(0);
+		@{$self->{' strokecolor'}}=(0);
+		@{$self->{' translate'}}=(0,0);
+		@{$self->{' scale'}}=(1,1);
+		@{$self->{' skew'}}=(0,0);
+		$self->{' rotate'}=0;
 	}
 	return($self);
 }
@@ -4247,9 +4996,23 @@ sub textend {
 }
 
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::PdfImage
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::PdfImage;
 
 use strict;
@@ -4291,9 +5054,32 @@ sub height {
 	return($self->{' ry'}-$self->{' ly'});
 }
 
-#==================================================================
+sub outobjdeep {
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep(@opts);
+}
+
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Barcode
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Barcode;
 
 ## use strict;
@@ -4892,7 +5678,7 @@ sub new {
 	my (@bar,@ext);
 
 	$opts{-type}=lc($opts{-type});
-	$self->{' font'}=$opts{-font};
+	$self->{' bfont'}=$opts{-font};
 
 	$self->{' umzn'}=$opts{-umzn};		# (u)pper (m)ending (z)o(n)e
 	$self->{' lmzn'}=$opts{-lmzn};		# (l)ower (m)ending (z)o(n)e
@@ -5002,7 +5788,7 @@ sub drawbar {
 			$str=join($self->{' spcr'},split(//,$str));
 			$self->textstart;
 			$self->translate($x+($xo/2),$t);
-			$self->font($self->{' font'},$f);
+			$self->font($self->{' bfont'},$f);
 			$self->text_center($str);
 			$self->textend;
 		}
@@ -5013,7 +5799,7 @@ sub drawbar {
 		$t=$self->{' quzn'}-$f;
 		$self->textstart;
 		$self->translate(($self->{' quzn'}+$x)/2,$t);
-		$self->font($self->{' font'},$f);
+		$self->font($self->{' bfont'},$f);
 		$self->text_center($bartext);
 		$self->textend;
 	}
@@ -5051,14 +5837,32 @@ sub font {
 }
 
 sub outobjdeep {
-	my ($self, $fh, $pdf) = @_;
+	my ($self, @opts) = @_;
+	foreach my $k (qw/ api apipdf apipage font fontsize charspace hspace wordspace lead rise render matrix fillcolor strokecolor translate scale skew rotate bfont /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
 	use Text::PDF::Dict;
-	Text::PDF::Dict::outobjdeep($self,$fh, $pdf);
+	Text::PDF::Dict::outobjdeep(@_);
 }
 
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
+#
+#=======================================================================
+#
 #	PDF::API2::Image
-#==================================================================
+#
+#=======================================================================
 package PDF::API2::Image;
 use strict;
 use PDF::API2::Util;
@@ -5166,647 +5970,25 @@ sub height {
 }
 
 
-#==================================================================
-#	PDF::API2::PPM
-#==================================================================
-package PDF::API2::PPM;
-use strict;
-use PDF::API2::Util;
-use Text::PDF::Utils;
-
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict PDF::API2::Image);
-
-
-sub new {
-	my ($class,$file,$tt)=@_;
-	my $self = $class->SUPER::new();
-	$self->{' apiname'}='IMGxPPMx'.pdfkey($file).$tt;
-
-	my ($w,$h,$bpc,$cs,$img)=parsePNM($file);
-
-	$self->{'Type'}=PDFName('XObject');
-	$self->{'Subtype'}=PDFName('Image');
-	$self->{'Name'}=PDFName($self->{' apiname'});
-	$self->{'Width'}=PDFNum(intg($w));
-	$self->{'Height'}=PDFNum(intg($h));
-	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
-	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
-	$self->{'ColorSpace'}=PDFName($cs);
-	$self->{' stream'}=$img;
-	$self->{' height'}=$h;
-	$self->{' width'}=$w;
-
-	return($self);
-}
-
-sub newMask {
-	my ($class,$imgobj,$file,$tt)=@_;
-	my $self = $class->SUPER::new();
-	$self->{' apiname'}='IMGxPPMxMaskx'.pdfkey($file).$tt;
-
-	my ($w,$h,$bpc,$cs,$img)=maskPNM($file);
-
-	$self->{'Type'}=PDFName('XObject');
-	$self->{'Subtype'}=PDFName('Image');
-#	$self->{'Name'}=PDFName($self->{' apiname'});
-	$self->{'Width'}=PDFNum(intg($w));
-	$self->{'Height'}=PDFNum(intg($h));
-	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
-	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
-	$self->{'ColorSpace'}=PDFName($cs);
-	$self->{' stream'}=$img;
-	$self->{' height'}=$h;
-	$self->{' width'}=$w;
-	$imgobj->{SMask}=$self;
-	return($self);
-}
-
-sub parsePNM {
-	my $file=shift @_;
-	my ($buf,$t,$s,$line);
-	my ($w,$h,$bpc,$cs,$img,@img)=(0,0,'','','');
-	open(INF,$file);
-	binmode(INF);
-	$buf=<INF>;
-	$buf.=<INF>;
-	($t)=($buf=~/^(P\d+)\s+/);
-	if($t eq 'P4') {
-		($t,$w,$h)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+/);
-		$bpc=1;
-		$s=0;
-		for($line=($w*$h/8);$line>0;$line--) {
-			read(INF,$buf,1);
-			push(@img,$buf);
-		}
-		$cs='DeviceGray';
-	} elsif($t eq 'P5') {
-		$buf.=<INF>;
-		($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
-		if($bpc==255){
-			$s=0;
-		} else {
-			$s=255/$bpc;
-		}
-		$bpc=8;
-		for($line=($w*$h);$line>0;$line--) {
-			read(INF,$buf,1);
-			if($s>0) {
-				$buf=pack('C',(unpack('C',$buf)*$s));
-			}
-			push(@img,$buf);
-		}
-		$cs='DeviceGray';
-	} elsif($t eq 'P6') {
-		$buf.=<INF>;
-		($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
-		if($bpc==255){
-			$s=0;
-		} else {
-			$s=255/$bpc;
-		}
-		$bpc=8;
-		if($s>0) {
-			for($line=($w*$h);$line>0;$line--) {
-				read(INF,$buf,1);
-				push(@img,pack('C',(unpack('C',$buf)*$s)));
-				read(INF,$buf,1);
-				push(@img,pack('C',(unpack('C',$buf)*$s)));
-				read(INF,$buf,1);
-				push(@img,pack('C',(unpack('C',$buf)*$s)));
-			}
-		} else {
-			@img=<INF>;
-		}
-		$cs='DeviceRGB';
-	}
-	close(INF);
-	return ($w,$h,$bpc,$cs,join('',@img));
-}
-
-sub maskPNM {
-	my $file=shift @_;
-	my $buf=shift @_;
-	my ($t,$s,$line);
-	my ($w,$h,$bpc,$cs,$img)=(0,0,'','','');
-	open(INF,$file);
-	binmode(INF);
-	$buf=<INF>;
-	$buf.=<INF>;
-	$cs='DeviceGray';
-	($t)=($buf=~/^(P\d+)\s+/);
-	if($t eq 'P4') {
-		($t,$w,$h)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+/);
-		$bpc=1;
-		for($line=0;$line<($w*$h/8);$line++) {
-			read(INF,$buf,1);
-			vec($img,$line,8)=vec($buf,0,8);
-		}
-	} elsif($t eq 'P5') {
-		$buf.=<INF>;
-		($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
-		if($bpc==255){
-			$s=1;
-		} else {
-			$s=255/$bpc;
-		}
-		$bpc=8;
-		for($line=0;$line<($w*$h);$line++) {
-			read(INF,$buf,1);
-			vec($img,$line,8)=vec($buf,0,8)*$s;
-		}
-	} elsif($t eq 'P6') {
-		$buf.=<INF>;
-		($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
-		if($bpc==255){
-			$s=1;
-		} else {
-			$s=255/$bpc;
-		}
-		$bpc=8;
-		for($line=0;$line<($w*$h);$line++) {
-			read(INF,$buf,3);
-			vec($img,$line,8)=(vec($buf,0,8)+vec($buf,1,8)+vec($buf,2,8))*$s/3;
-		}
-	}
-	close(INF);
-	return ($w,$h,$bpc,$cs,$img);
-}
-
-
-#==================================================================
-#	PDF::API2::JPEG
-#==================================================================
-package PDF::API2::JPEG;
-use strict;
-use PDF::API2::Util;
-use Text::PDF::Utils;
-
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict PDF::API2::Image);
-
-sub new {
-	my ($class,$file,$tt)=@_;
-	my $self = $class->SUPER::new();
-	$self->{' apiname'}='IMGxJPEGx'.pdfkey($file).$tt;
-
-	my ($buf, $p, $h, $w, $c);
-
-	open(JF,$file);
-	binmode(JF);
-	read(JF,$buf,2);
-	while (1) {
-		read(JF,$buf,4);
-		my($ff, $mark, $len) = unpack("CCn", $buf);
-		last if( $ff != 0xFF);
-		last if( $mark == 0xDA || $mark == 0xD9);  # SOS/EOI
-		last if( $len < 2);
-		last if( eof(JF));
-		read(JF,$buf,$len-2);
-		next if ($mark == 0xFE);
-		next if ($mark >= 0xE0 && $mark <= 0xEF);
-		if (($mark >= 0xC0) && ($mark <= 0xCF)) {
-			($p, $h, $w, $c) = unpack("CnnC", substr($buf, 0, 6));
-			last;
-		}
-	}
-	close(JF);
-
-	$self->{'Type'}=PDFName('XObject');
-	$self->{'Subtype'}=PDFName('Image');
-	$self->{'Name'}=PDFName($self->{' apiname'});
-	$self->{'Width'}=PDFNum(intg($w));
-	$self->{'Height'}=PDFNum(intg($h));
-	$self->{'Filter'}=PDFArray(PDFName('DCTDecode'));
-	$self->{' nofilt'}=1;
-	$self->{'BitsPerComponent'}=PDFNum($p);
-	if($c==3) {
-	        $self->{'ColorSpace'}=PDFName('DeviceRGB');
-	} elsif($c==4) {
-	        $self->{'ColorSpace'}=PDFName('DeviceCMYK');
-	} elsif($c==1) {
-	        $self->{'ColorSpace'}=PDFName('DeviceGray');
-	}
-
-	$self->{' streamfile'}=$file;
-	$self->{'Length'}=PDFNum(intg(-s $file));
-
-	$self->{' height'}=$h;
-	$self->{' width'}=$w;
-
-	return($self);
-}
-
-sub newMask {
-	my ($class,$imgobj,$file,$tt)=@_;
-	my $self = $class->SUPER::new();
-#	$self->{' apiname'}='IMGxJPEGxMaskx'.pdfkey($file).$tt;
-
-	my ($buf, $p, $h, $w, $c);
-
-	open(JF,$file);
-	binmode(JF);
-	read(JF,$buf,2);
-	while (1) {
-		read(JF,$buf,4);
-		my($ff, $mark, $len) = unpack("CCn", $buf);
-		last if( $ff != 0xFF);
-		last if( $mark == 0xDA || $mark == 0xD9);  # SOS/EOI
-		last if( $len < 2);
-		last if( eof(JF));
-		read(JF,$buf,$len-2);
-		next if ($mark == 0xFE);
-		next if ($mark >= 0xE0 && $mark <= 0xEF);
-		if (($mark >= 0xC0) && ($mark <= 0xCF)) {
-			($p, $h, $w, $c) = unpack("CnnC", substr($buf, 0, 6));
-			last;
-		}
-	}
-	close(JF);
-
-	$self->{'Type'}=PDFName('XObject');
-	$self->{'Subtype'}=PDFName('Image');
-#	$self->{'Name'}=PDFName($self->{' apiname'});
-	$self->{'Width'}=PDFNum(intg($w));
-	$self->{'Height'}=PDFNum(intg($h));
-	$self->{'Filter'}=PDFArray(PDFName('DCTDecode'));
-	$self->{' nofilt'}=1;
-	$self->{'BitsPerComponent'}=PDFNum($p);
-	if($c==3) {
-	        die 'cs=DeviceRGB not valid for Mask.';
-	} elsif($c==4) {
-	        die 'cs=DeviceCMYK not valid for Mask.';
-	} elsif($c==1) {
-	        $self->{'ColorSpace'}=PDFName('DeviceGray');
-	}
-
-	$self->{' streamfile'}=$file;
-	$self->{'Length'}=PDFNum(intg(-s $file));
-
-	$self->{' height'}=$h;
-	$self->{' width'}=$w;
-	$imgobj->{SMask}=$self;
-
-	return($self);
-}
-
-
-#==================================================================
-#	PDF::API2::PNG
-#==================================================================
-package PDF::API2::PNG;
-use strict;
-use PDF::API2::Util;
-use Text::PDF::Utils;
-
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict PDF::API2::Image);
-
-sub new {
-	my ($class,$file,$tt)=@_;
-	my $self = $class->SUPER::new();
-	$self->{' apiname'}='IMGxPNGx'.pdfkey($file).$tt;
-
-	my ($w,$h,$bpc,$cs,$img,$trans,$alpha)=parsePNG($file);
-
-	$self->{'Type'}=PDFName('XObject');
-	$self->{'Subtype'}=PDFName('Image');
-	$self->{'Name'}=PDFName($self->{' apiname'});
-	$self->{'Width'}=PDFNum(intg($w));
-	$self->{'Height'}=PDFNum(intg($h));
-	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
-	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
-	$self->{'ColorSpace'}=PDFName($cs);
-	if(ref $trans) {
-		$self->{'Mask'}=PDFArray(map { PDFNum($_) } @{$trans} );
-	}
-	$self->{' stream'}=$img;
-	$self->{' height'}=$h;
-	$self->{' width'}=$w;
-
-	if($alpha) {
-		$class->newMask($self,$file,$tt);
-	}
-
-	return($self);
-}
-
-sub newMask {
-	my ($class,$imgobj,$file,$tt)=@_;
-	my $self = $class->SUPER::new();
-#	$self->{' apiname'}='IMGxPNGx'.pdfkey($file).$tt;
-
-	my ($w,$h,$bpc,$cs,$img)=maskPNG($file);
-
-	$self->{'Type'}=PDFName('XObject');
-	$self->{'Subtype'}=PDFName('Image');
-#	$self->{'Name'}=PDFName($self->{' apiname'});
-	$self->{'Width'}=PDFNum(intg($w));
-	$self->{'Height'}=PDFNum(intg($h));
-	$self->{'Filter'}=PDFArray(PDFName('FlateDecode'));
-	$self->{'BitsPerComponent'}=PDFNum(intg($bpc));
-	$self->{'ColorSpace'}=PDFName($cs);
-	$self->{' stream'}=$img;
-	$self->{' height'}=$h;
-	$self->{' width'}=$w;
-	$imgobj->{SMask}=$self;
-
-	return($self);
-}
-
-sub parsePNG {
-	my $file=shift @_;
-	my $buf=shift @_;
-	my ($l,$crc,$w,$h,$bpc,$cs,$cm,$fm,$im,@pal,$img,@img,$filter,$trans,$alpha);
-	open(INF,$file);
-	binmode(INF);
-	seek(INF,8,0);
-	while(!eof(INF)) {
-		read(INF,$buf,4);
-		$l=unpack('N',$buf);
-		read(INF,$buf,4);
-		if($buf eq 'IHDR') {
-			read(INF,$buf,$l);
-			($w,$h,$bpc,$cs,$cm,$fm,$im)=unpack('NNCCCCC',$buf);
-			if($im>0) {die "PNG InterlaceMethod=$im not supported";}
-		} elsif($buf eq 'PLTE') {
-			while($l) {
-				read(INF,$buf,3);
-				push(@pal,$buf);
-				$l-=3;
-			}
-		} elsif($buf eq 'IDAT') {
-			while($l>512) {
-				read(INF,$buf,512);
-				push(@img,$buf);
-				$l-=512;
-			}
-			read(INF,$buf,$l);
-			push(@img,$buf);
-		} elsif($buf eq 'tRNS') {
-			if($cs==0) { # grayscale
-				read(INF,$buf,2);
-				my $tcol=unpack('n',$buf);
-				$tcol*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
-				$trans=[$tcol,$tcol];
-			} elsif($cs==2) { # RGB
-				read(INF,$buf,6);
-				my ($tcolr,$tcolg,$tcolb)=unpack('nnn',$buf);
-				$tcolr*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
-				$tcolb*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
-				$tcolg*=(2**(8*(1-($bpc/8))))-1 if($bpc>8);
-				$tcolr&=0xFF; # workaround for
-				$tcolg&=0xFF; # braindead photoshop
-				$tcolb&=0xFF; # png output
-				$trans=[$tcolr,$tcolr,$tcolg,$tcolg,$tcolb,$tcolb];
-			} elsif($cs==3) { # indexed
-				$alpha=1;
-			} elsif($cs==4) { # gray + alpha
-				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
-			} elsif($cs==6) { # RGB + alpha
-				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
-			}
-		} elsif($buf eq 'IEND') {
-			last;
-		} else {
-			# skip ahead
-			seek(INF,$l,1);
-		}
-		read(INF,$buf,4);
-		$crc=$buf;
-	}
-	close(INF);
-	$img=join('',@img);
-	use Compress::Zlib;
-	$img=uncompress($img);
-	@img=split(//,$img);
-	$img='';
-	my $bpcm=($bpc>8) ? 8 : $bpc/8;
-
-	if($cs==0) { # grayscale
-		foreach my $y (0..$h-1) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
-			if($bpc>8) {
-				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;
-				}
-			} else {
-				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);
-				}
-			}
-		}
-		$bpc=8 if($bpc>8); # all images have been converted to 8bit values !!
-		$cs='DeviceGray';
-	} elsif($cs==2) { # RGB
-		foreach my $y (1..$h) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*3)));
-			foreach my $x (0..($w*3)-1) {
-				$img.=pack('C',vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1);
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-		$cs='DeviceRGB';
-	} elsif($cs==3) { # indexed
-		foreach my $y (1..$h) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
-			foreach my $x (0..$w-1) {
-				$img.=$pal[vec($imgline,$x,$bpc)];
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-		$cs='DeviceRGB';
-	} elsif($cs==4) { # gray + alpha
-		foreach my $y (1..$h) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*2)));
-			foreach my $x (0..$w-1) {
-				$img.=pack('C',vec($imgline,$x*2,$bpc)*(2**(8*(1-($bpc/8))))-1);
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-		$cs='DeviceGray';
-		$alpha=1;
-	} elsif($cs==6) { # RGB + alpha
-		foreach my $y (1..$h) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*4)));
-			foreach my $x (0..$w-1) {
-				$img.=pack('C',vec($imgline,$x*4,$bpc)*(2**(8*(1-($bpc/8))))-1);
-				$img.=pack('C',vec($imgline,$x*4+1,$bpc)*(2**(8*(1-($bpc/8))))-1);
-				$img.=pack('C',vec($imgline,$x*4+2,$bpc)*(2**(8*(1-($bpc/8))))-1);
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-		$cs='DeviceRGB';
-		$alpha=1;
-	} else {
-		die "PNG Colorspace=$cs unsupported";
-	}
-
-	return ($w,$h,$bpc,$cs,$img,$trans,$alpha);
-}
-
-sub maskPNG {
-	my $file=shift @_;
-	my $buf=shift @_;
-	my ($l,$crc,$w,$h,$bpc,$cs,$cm,$fm,$im,@pal,@palt,$img,@img,$filter,$trans);
-	open(INF,$file);
-	binmode(INF);
-	seek(INF,8,0);
-	while(!eof(INF)) {
-		read(INF,$buf,4);
-		$l=unpack('N',$buf);
-		read(INF,$buf,4);
-	#	print STDERR "$buf\n";
-		if($buf eq 'IHDR') {
-			read(INF,$buf,$l);
-			($w,$h,$bpc,$cs,$cm,$fm,$im)=unpack('NNCCCCC',$buf);
-	#	print STDERR "cs=$cs\n";
-			if($im>0) {die "PNG InterlaceMethod=$im not supported";}
-		} elsif($buf eq 'PLTE') {
-			while($l) {
-				read(INF,$buf,3);
-				push(@pal,$buf);
-				$l-=3;
-			}
-		} elsif($buf eq 'IDAT') {
-			while($l>512) {
-				read(INF,$buf,512);
-				push(@img,$buf);
-				$l-=512;
-			}
-			read(INF,$buf,$l);
-			push(@img,$buf);
-		} elsif($buf eq 'tRNS') {
-			if($cs==0) { # grayscale
-			} elsif($cs==2) { # RGB
-			} elsif($cs==3) { # indexed
-				read(INF,$buf,$l);
-				@palt=unpack('C*',$buf);
-				$trans=1;
-			} elsif($cs==4) { # gray + alpha
-				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
-			} elsif($cs==6) { # RGB + alpha
-				warn "PNG: 'tRNS' chunk unsupported with alpha-channel";
-			}
-		} elsif($buf eq 'IEND') {
-			last;
-		} else {
-			# skip ahead
-			seek(INF,$l,1);
-		}
-		read(INF,$buf,4);
-		$crc=$buf;
-	}
-	close(INF);
-	$img=join('',@img);
-	use Compress::Zlib;
-	$img=uncompress($img);
-	@img=split(//,$img);
-	$img='';
-	my $bpcm=($bpc>8) ? 8 : $bpc/8;
-
-	if($cs==0) { # grayscale
-		warn "Image $file does not contain transparency information !!\n(or are we here as an foreign masking image ??)" unless($trans);
-		foreach my $y (0..$h-1) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
-			if($bpc>8) {
-				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),8)=vec($imgline,$x,$bpc)*(2**(8*(1-($bpc/8))))-1;
-				}
-			} else {
-				foreach my $x (0..$w-1) {
-					vec($img,$x+($y*$w),$bpc)=vec($imgline,$x,$bpc);
-				}
-			}
-		}
-		$bpc=8 if($bpc>8); # all images have been converted to 8bit values !!
-	} elsif($cs==2) { # RGB
-		warn "Image $file does not contain transparency information !!\n(or are we here as an foreign masking image ??)" unless($trans);
-		foreach my $y (1..$h) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*3)));
-			foreach my $x (0..$w-1) {
-				my $val=vec($imgline,$x*3,$bpc)*(2**(8*(1-($bpc/8))))-1;
-				$val+=vec($imgline,$x*3+1,$bpc)*(2**(8*(1-($bpc/8))))-1;
-				$val+=vec($imgline,$x*3+2,$bpc)*(2**(8*(1-($bpc/8))))-1;
-				$val/=3;
-				$img.=pack('C',$val);
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-	} elsif($cs==3) { # indexed
-		die "Image $file does not contain transparency information !!" unless($trans);
-		foreach my $y (0..$h-1) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm)));
-			foreach my $x (0..$w-1) {
-				vec($img,($y*$w)+$x,8)=$palt[vec($trans,vec($imgline,$x,$bpc),8)];
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-	} elsif($cs==4) { # gray + alpha
-		foreach my $y (0..$h-1) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*2)));
-			foreach my $x (0..$w-1) {
-				vec($img,($y*$w)+$x,8)=vec($imgline,$x*2+1,$bpc)*(2**(8*(1-($bpc/8))))-1;
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-	} elsif($cs==6) { # RGB + alpha
-		foreach my $y (0..$h-1) {
-			$filter=unpack('C',shift(@img));
-			die "PNG FilterType=$filter unsupported" if($filter>0);
-
-			my $imgline=join('',splice(@img,0,POSIX::ceil($w*$bpcm*4)));
-			foreach my $x (0..$w-1) {
-				vec($img,($y*$w)+$x,8)=vec($imgline,$x*4+3,$bpc)*(2**(8*(1-($bpc/8))))-1;
-			}
-		}
-		$bpc=8; # all images have been converted to 8bit values !!
-	} else {
-		die "PNG Colorspace=$cs unsupported";
-	}
-	$cs='DeviceGray';
-
-	return ($w,$h,$bpc,$cs,$img);
-}
-
-
-#==================================================================
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-# Copyright 1998-2000 Gisle Aas.
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
 #
-# modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
+#=======================================================================
 #
-#==================================================================
+#	PDF::API2::IOString
+#	Original Copyright 1998-2000 Gisle Aas.
+#	modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
+#
+#=======================================================================
 package PDF::API2::IOString;
 
 require 5.005_03;
@@ -6217,31 +6399,25 @@ sub string_ref
 *sref = \&string_ref;
 
 
-# Matrix.pm --
-# Author          : Ulrich Pfeifer
-# Created On      : Tue Oct 24 18:34:08 1995
-# Last Modified By: Ulrich Pfeifer
-# Last Modified On: Wed Jul 10 20:12:18 1996
-# Language        : Perl
-# Update Count    : 143
-# Status          : Unknown, Use with caution!
+#=======================================================================
+#	 ____  ____  _____              _    ____ ___   ____
+#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-# (C) Copyright 1995, Universität Dortmund, all rights reserved.
+#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-# $Locker:  $
-# $Log: API2.pm,v $
-# Revision 1.1  2001/11/22 20:51:56  Administrator
-# genesis
+#	This library is free software; you can redistribute it 
+#	and/or modify it under the same terms as Perl itself.
 #
-# Revision 0.2  1996/07/10 17:48:14  pfeifer
-# Fixes from Mike Beachy <beachy@chem.columbia.edu>
+#=======================================================================
 #
-# Revision 0.1  1995/10/25  09:48:39  pfeifer
-# Initial revision
+#	PDF::API2::Matrix
+#	Original Copyright 1995-96 Ulrich Pfeifer.
+#	modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-# modified for use by PDF::API2 by alfred reibenschuh 2001-08-20
-# documentation deleted !
-
+#=======================================================================
 package PDF::API2::Matrix;
 
 sub new {
@@ -6354,12 +6530,13 @@ sub solve {
 sub print {
     my $self = shift;
 
+    print STDERR "Matrix: \n";
     print @_ if scalar(@_);
     for my $row (@{$self}) {
         for my $col (@{$row}) {
-            printf "%10.5f ", $col;
+            printf STDERR "%10.5f ", $col;
         }
-        print "\n";
+        print STDERR "\n";
     }
 }
 
