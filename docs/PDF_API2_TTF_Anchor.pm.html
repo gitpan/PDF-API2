@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">TITLE
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Anchor - Anchor points for GPOS tables
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The Anchor defines an anchor point on a glyph providing various information
+depending on how much is available, including such information as the co-ordinates,
+a curve point and even device specific modifiers.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>x
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">XCoordinate of the anchor point
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>y
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">YCoordinate of the anchor point
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>p
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Curve point on the glyph to use as the anchor point
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>xdev
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Device table (delta) for the xcoordinate
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>ydev
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Device table (delta) for the ycoordinate
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>xid
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">XIdAnchor for multiple master horizontal metric id
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>yid
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">YIdAnchor for multiple master vertical metric id
+
+</FONT></P>
+</TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">new
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new Anchor
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">read($fh)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the anchor from the given file handle at that point. The file handle is left
+at an arbitrary read point, usually the end of something!
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">out($fh, $style)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs the Anchor to the given file handle at this point also addressing issues
+of deltas. If $style is set, then no output is set to the file handle. The return
+value is the output string.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$a->out_xml($context)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs the anchor in XML
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

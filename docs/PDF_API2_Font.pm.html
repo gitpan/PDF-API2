@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::Font
+
+</FONT></H2>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$font2 = $font->clone $subkey
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns a clone of a font object.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>@glyphs = $font->glyphs $encoding
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns an array with glyphnames of the specified encoding.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$font->encode $encoding
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Changes the encoding of the font object. If you want more than one encoding
+for one font use 'clone' and then 'encode'.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>Note:</B> The following encodings are supported (as of version 0.1.16_beta):
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+	adobe-standard adobe-symbol adobe-zapf-dingbats
+	cp1250 cp1251 cp1252
+	cp437 cp850
+	es es2 pt pt2
+	iso-8859-1 iso-8859-2 latin1 latin2
+	koi8-r koi8-u
+	macintosh
+	microsoft-dingbats
+
+</FONT></PRE></TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>Note:</B> Other encodings must be seperately installed via the pdf-api2-unimaps archive.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$pdfstring = $font->text $text
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns a properly formated string-representation of $text
+for use in the PDF.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$pdfstring = $font->text_hex $text
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns a properly formated hex-representation of $text
+for use in the PDF.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$wd = $font->width $text
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns the width of $text as if it were at size 1.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>@widths = $font->width_array $text
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns the widths of the words in $text as if they were at size 1.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">alfred reibenschuh
+
+</FONT></P>
+</BODY>
+</HTML>

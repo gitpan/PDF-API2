@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">TITLE
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">SIL::TTF::Delta - Opentype Device tables
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Each device table corresponds to a set of deltas for a particular point over
+a range of ppem values.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>first
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The first ppem value in the range
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>last
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The last ppem value in the range
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>val
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This is an array of deltas corresponding to each ppem in the range between
+first and last inclusive.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>fmt
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This is the fmt used (log2 of number bits per value) when the device table was
+read. It is recalculated on output.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">new
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new device table
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads a device table from the given IO object at the current location
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">out($fh, $style)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs a device table to the given IO object at the current location, or just
+returns the data to be output if $style != 0
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$d->out_xml($context)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs a delta in XML
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

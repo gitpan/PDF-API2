@@ -98,7 +98,7 @@ sub name_to_string ($;$)
     my ($str, $pdf) = @_;
     $str =~ s|^/||o;
 
-    if (!(defined ($pdf) && $pdf->{' version'} < 2))
+    if (!(defined ($pdf) && $pdf->{' version'} && $pdf->{' version'} < 2))
       { $str =~ s/#([0-9a-f]{2})/chr(hex($1))/oige; }
     return $str;
 }

@@ -23,7 +23,7 @@ BEGIN {
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	@ISA = qw(PDF::API2::PDF::Dict);
-	( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 }
 
@@ -81,13 +81,13 @@ sub next {
 
 sub first {
 	my $self=shift @_;
-	$self->{First}=$self->{' childs'}->[0] if(defined $self->{' childs'});
+	$self->{First}=$self->{' childs'}->[0] if(defined $self->{' childs'} && defined $self->{' childs'}->[0]);
 	return $self->{First} ;
 }
 
 sub last {
 	my $self=shift @_;
-	$self->{Last}=$self->{' childs'}->[-1] if(defined $self->{' childs'});
+	$self->{Last}=$self->{' childs'}->[-1] if(defined $self->{' childs'} && defined $self->{' childs'}->[-1]);
 	return $self->{Last};
 }
 

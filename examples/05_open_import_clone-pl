@@ -8,37 +8,9 @@ if(-f $ARGV[0]) {
 	$pdf=PDF::API2->new;
 }
 
+delete $pdf->{forcecompress};
 
 $i=0;
-
-foreach $fn (qw(
-	Courier-Bold
-	Courier-BoldOblique
-	Courier-Oblique
-	Courier
-	Helvetica-Bold
-	Helvetica-BoldOblique
-	Helvetica-Oblique
-	Helvetica
-	Symbol
-	Times-Bold
-	Times-BoldItalic
-	Times-Italic
-	Times-Roman
-	ZapfDingbats
-)) {
-
-	$page = $pdf->page;
-	$page->mediabox(595,842);
-	$txt=$page->text;
-
-	$font=$pdf->corefont($fn,1);
-	
-	$txt->translate(100,$i*50);
-	$txt->font($font,50);
-	$txt->text('Hello World !');
-	$i++;
-}
 
 foreach $fn (glob("*.pfb")) {
 
@@ -48,7 +20,7 @@ foreach $fn (glob("*.pfb")) {
 	$font=$pdf->psfont($fn,$ff);
 
 	foreach $fe (qw(
-		adobe-standard	cp437	cp850	latin1
+		latin1
 	)) {
 
 		$page = $pdf->page;
@@ -77,9 +49,9 @@ $pdf->saveas("$0.pdf");
 
 $pdf=PDF::API2->open("$0.pdf");
 $pdf2=PDF::API2->new;
-$pdf2->importpage($pdf,24,1);
+delete $pdf2->{forcecompress};
+$pdf2->importpage($pdf,1);
 $page=$pdf2->clonepage(1);
-$page=$pdf2->openpage(2);
 
 $font=$pdf2->corefont('Helvetica-Bold',1);
 
@@ -91,17 +63,16 @@ $txt->text('Updated World !');
 
 foreach $fn (glob("*.ttf")) {
 
-	$font=$pdf2->ttfont($fn);
 
 	foreach $fe (qw(
-		adobe-standard	cp437	cp850	latin1
+		latin1
 	)) {
 
 		$page = $pdf->page;
 		$page->mediabox(595,842);
 		$txt=$page->text;
 
-		$font->encode($fe);
+		$font=$pdf2->ttfont($fn, -encode=>$fe);
 
 		$txt=$page->text;
 		$txt->translate(100,700);
@@ -125,8 +96,8 @@ $pdf->end();
 $pdf2->end();
 
 $pdf=PDF::API2->open("$0.2.pdf");
-$pdf->clonepage(1);
-$page=$pdf->openpage(2);
+$page=$pdf->clonepage(1);
+delete $pdf->{forcecompress};
 
 $font=$pdf->corefont('Helvetica-Bold',1);
 

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Post - Holds the Postscript names for each glyph
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Holds the postscript names for glyphs. Note that they are not held as an
+array, but as indexes into two lists. The first list is the standard Postscript
+name list defined by the TrueType standard. The second comes from the font
+directly.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Looking up a glyph from a Postscript name or a name from a glyph number is
+achieved through methods rather than variable lookup.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This class handles PostScript table types of 1, 2, 2.5 & 3, but not version 4.
+Support for version 2.5 is as per Apple spec rather than MS.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The way to look up Postscript names or glyphs is:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    $pname = $f->{'post'}{'VAL'}[$gnum];
+    $gnum = $f->{'post'}{'STRINGS'}{$pname};
+
+</FONT></PRE></TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Due to different systems having different limitations, there are various class
+variables available to control what post table types can be written.
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$PDF::API2::TTF::Post::no25
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">If set tells PDF::API2::TTF::Post::out to use table type 2 instead of 2.5 in case apps
+can't handle version 2.5.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>VAL
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Contains an array indexed by glyph number of Postscript names. This is used when
+writing out a font.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>STRINGS
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">An associative array of Postscript names mapping to the highest glyph with that
+name. These may not be in sync with VAL.
+
+</FONT></P>
+</TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3">In addition there are the standard introductory variables defined in the
+standard:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    FormatType
+    italicAngle
+    underlinePosition
+    underlineThickness
+    isFixedPitch
+    minMemType42
+    maxMemType42
+    minMemType1
+    maxMemType1
+
+</FONT></PRE></TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the Postscript table into memory from disk
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out($fh)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Writes out a new Postscript name table from memory or copies from disk
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_element($context, $depth, $key, $val)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs the names as one block of XML
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>*
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">No support for type 4 tables
+
+</FONT></P>
+</TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

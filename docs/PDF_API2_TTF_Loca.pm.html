@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Loca - the Locations table, which is intimately tied to the glyf table
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The location table holds the directory of locations of each glyph within the
+glyf table. Due to this relationship and the unimportance of the actual locations
+when it comes to holding glyphs in memory, reading the location table results
+in the creation of glyph objects for each glyph and stores them here.
+So if you are looking for glyphs, don't look in the <CODE>glyf</CODE> table, look here
+instead.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Things get complicated if you try to change the glyph list within the one table.
+The recommendation is to create another clean location object to replace this
+table in the font, ensuring that the old table is read first and to transfer
+or copy glyphs across from the read table to the new table.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The instance variables do not start with a space
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>glyphs
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">An array of glyph objects for each glyph.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>glyphtype
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">A string containing the class name to create for each new glyph. If empty,
+defaults to <A HREF="PDF::API2::TTF::Glyph">PDF::API2::TTF::Glyph</A>.
+
+</FONT></P>
+</TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->new
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new location table making sure it has a glyphs array
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the location table creating glyph objects (<A HREF="PDF::API2::TTF::Glyph">PDF::API2::TTF::Glyph</A>) for each glyph
+allowing their later reading.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out($fh)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Writes the location table out to $fh. Notice that not having read the location
+table implies that the glyf table has not been read either, so the numbers in
+the location table are still valid. Let's hope that <CODE>maxp/numGlyphs</CODE> and
+<CODE>head/indexToLocFmt</CODE> haven't changed otherwise we are in big trouble.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The function uses the OUTLOC location in the glyph calculated when the glyf
+table was attempted to be output.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out_xml($context, $depth)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">No need to output a loca table, this is dynamically generated
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->glyphs_do(&func)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Calls func for each glyph in this location table in numerical order:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    &func($glyph, $glyph_num)
+
+</FONT></PRE></TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">None known
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

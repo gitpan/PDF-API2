@@ -15,7 +15,7 @@ use vars qw(@ISA $VERSION );
 
 @ISA = qw(PDF::API2::PDF::Image);
 
-( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head2 PDF::API2::PDF::ImageJPEG
 
@@ -29,7 +29,9 @@ sub new {
 	my ($class,$pdf,$name,$file)=@_;
 	my $self = $class->SUPER::new($pdf,$name);
 	my $fh = IO::File->new;
-	$fh->open("< $file");
+	open($fh,$file);
+	binmode($fh);
+
 	$self->readjpeg($pdf,$fh);
 	$fh->close;
 	$self->{' streamfile'}=$file;
@@ -66,7 +68,6 @@ sub readjpeg {
 
 	my ($buf, $p, $h, $w, $c, $ff, $mark, $len);
 
-	binmode($fh);
 	$fh->seek(0,0);
 	$fh->read($buf,2);
 	while (1) {

@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::OS_2 - the OS/2 table in a TTF font
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The OS/2 table has two versions and forms, one an extension of the other. This
+module supports both forms and the switching between them.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">No other variables than those in table and those in the standard:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    Version
+    xAvgCharWidth
+    usWeightClass
+    usWidthClass
+    fsType
+    ySubscriptXSize
+    ySubScriptYSize
+    ySubscriptXOffset
+    ySubscriptYOffset
+    ySuperscriptXSize
+    ySuperscriptYSize
+    ySuperscriptXOffset
+    ySuperscriptYOffset
+    yStrikeoutSize
+    yStrikeoutPosition
+    sFamilyClass
+    bFamilyType
+    bSerifStyle
+    bWeight
+    bProportion
+    bContrast
+    bStrokeVariation
+    bArmStyle
+    bLetterform
+    bMidline
+    bXheight
+    ulUnicodeRange1
+    ulUnicodeRange2
+    ulUnicodeRange3
+    ulUnicodeRange4
+    achVendID
+    fsSelection
+    usFirstCharIndex
+    usLastCharIndex
+    sTypoAscender
+    sTypoDescender
+    sTypoLineGap
+    usWinAscent
+    usWinDescent
+    ulCodePageRange1
+    ulCodePageRange2
+    xHeight
+    CapHeight
+    defaultChar
+    breakChar
+    maxLookups
+
+</FONT></PRE></TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Notice that versions 0, 1 & 2 of the table are supported. Notice also that the
+Panose variable has been broken down into its elements.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads in the various values from disk (see details of OS/2 table)
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out($fh)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Writes the table to a file either from memory or by copying.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_element($context, $depth, $key, $value)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Tidies up the hex values to output them in hex
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_end($context, $tag, %attrs)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Now handle them on the way back in
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->update
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Updates the OS/2 table by getting information from other sources:
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Updates the <CODE>firstChar</CODE> and <CODE>lastChar</CODE> values based on the MS table in the
+cmap.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Updates the sTypoAscender, sTypoDescender & sTypoLineGap to be the same values
+as Ascender, Descender and Linegap from the hhea table (assuming it is dirty)
+and also sets usWinAscent to be the sum of Ascender+Linegap and usWinDescent to
+be the negative of Descender.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">None known
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

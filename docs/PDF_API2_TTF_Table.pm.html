@@ -1,0 +1,197 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Table - Superclass for tables and used for tables we don't have a class for
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Looks after the purely table aspects of a TTF table, such as whether the table
+has been read before, locating the file pointer, etc. Also copies tables from
+input to output.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Instance variables start with a space
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>read
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Flag which indicates that the table has already been read from file.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>dat
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Allows the creation of unspecific tables. Data is simply output to any font
+file being created.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>INFILE
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The read file handle
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>OFFSET
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Location of the file in the input file
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>LENGTH
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Length in the input directory
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>CSUM
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Checksum read from the input file's directory
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>PARENT
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> that table is part of
+
+</FONT></P>
+</TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::TTF::Table->new(%parms)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new table or subclass. Table instance variables are passed in
+at this point as an associative array.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the table from the input file. Acts as a superclass to all true tables.
+This method marks the table as read and then just sets the input file pointer
+but does not read any data. If the table has already been read, then returns
+<CODE>undef</CODE> else returns <CODE>$self</CODE>
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->read_dat
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the table into the <CODE>dat</CODE> instance variable for those tables which don't
+know any better
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out($fh)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Writes out the table to the font file. If there is anything in the
+<CODE>data</CODE> instance variable then this is output, otherwise the data is copied
+from the input file to the output
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out_xml($context)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs this table in XML format. The table is first read (if not already read) and then if
+there is no subclass, then the data is dumped as hex data
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_element
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Output a particular element based on its contents.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_end($context, $tag, %attrs)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Handles the default type of <data> for those tables which aren't subclassed
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->dirty($val)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This sets the dirty flag to the given value or 1 if no given value. It returns the
+value of the flag
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->update
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Each table knows how to update itself. This consists of doing whatever work
+is required to ensure that the memory version of the table is consistent
+and that other parameters in other tables have been updated accordingly.
+I.e. by the end of sending <CODE>update</CODE> to all the tables, the memory version
+of the font should be entirely consistent.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Some tables which do no work indicate to themselves the need to update
+themselves by setting isDirty above 1. This method resets that accordingly.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->empty
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Clears a table of all data to the level of not having been read
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->release
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Releases ALL of the memory used by this table, and all of its component/child
+objects.  This method is called automatically by
+'<CODE>PDF::API2::TTF::Font-&GT;release</CODE>' (so you don't have to call it yourself).
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>NOTE</B>, that it is important that this method get called at some point prior
+to the actual destruction of the object.  Internally, we track things in a
+structure that can result in circular references, and without calling
+'<CODE>release()</CODE>' these will not properly get cleaned up by Perl.  Once this
+method has been called, though, don't expect to be able to do anything with the
+<CODE>PDF::API2::TTF::Table</CODE> object; it'll have <B>no</B> internal state whatsoever.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>Developer note:</B>  As part of the brute-force cleanup done here, this method
+will throw a warning message whenever unexpected key values are found within
+the <CODE>PDF::API2::TTF::Table</CODE> object.  This is done to help ensure that any
+unexpected and unfreed values are brought to your attention so that you can bug
+us to keep the module updated properly; otherwise the potential for memory
+leaks due to dangling circular references will exist.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">No known bugs
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

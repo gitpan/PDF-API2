@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::Filter - Abstract superclass for PDF stream filters
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">SYNOPSIS
+
+</FONT></H1>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    $f = PDF::API2::PDF::Filter->new;
+    $str = $f->outfilt($str, 1);
+    print OUTFILE $str;
+
+</FONT></PRE></TD></TR></TABLE>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    while (read(INFILE, $dat, 4096))
+    { $store .= $f->infilt($dat, 0); }
+    $store .= $f->infilt("", 1);
+
+</FONT></PRE></TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">A Filter object contains state information for the process of outputting
+and inputting data through the filter. The precise state information stored
+is up to the particular filter and may range from nothing to whole objects
+created and destroyed.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Each filter stores different state information for input and output and thus
+may handle one input filtering process and one output filtering process at
+the same time.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::PDF::Filter->new
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new filter object with empty state information ready for processing
+data both input and output.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$dat = $f->infilt($str, $isend)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Filters from output to input the data. Notice that $isend == 0 implies that there
+is more data to come and so following it $f may contain state information
+(usually due to the break-off point of $str not being tidy). Subsequent calls
+will incorporate this stored state information.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">$isend == 1 implies that there is no more data to follow. The
+final state of $f will be that the state information is empty. Error messages
+are most likely to occur here since if there is required state information to
+be stored following this data, then that would imply an error in the data.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$str = $f->outfilt($dat, $isend)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Filter stored data ready for output. Parallels <CODE>infilt</CODE>.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::PDF::ASCII85Decode - Ascii85 filter for PDF streams. Inherits from
+<A HREF="PDF::API2::PDF::Filter">PDF::API2::PDF::Filter</A>
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::PDF::RunLengthDecode - Run Length encoding filter for PDF streams. Inherits from
+<A HREF="PDF::API2::PDF::Filter">PDF::API2::PDF::Filter</A>
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::PDF::ASCIIHexDecode - Ascii Hex encoding (very inefficient) for PDF streams.
+Inherits from <A HREF="PDF::API2::PDF::Filter">PDF::API2::PDF::Filter</A>
+
+</FONT></P>
+</BODY>
+</HTML>

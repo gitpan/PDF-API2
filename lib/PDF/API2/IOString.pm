@@ -21,10 +21,10 @@ package PDF::API2::IOString;
 
 require 5.006;
 use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Symbol ();
-use IO::File;
+use FileHandle;
 
 sub new
 {
@@ -35,21 +35,22 @@ sub new
     $self;
 }
 
-sub import {
+sub import_from_file {
 	my $self = shift @_;
-	my $file = shift @_||0;
+	my $file = shift @_;
 	my $buf = "";
 	*$self->{buf} = \$buf;
 	*$self->{pos} = 0;
 	*$self->{lno} = 0;
-
+	return unless($file);
+	
 	my $in;
-	my $inf=IO::File->new;
-	$inf->open($file);
-	eval {
-		binmode($inf);
-	};
-	while(!eof($inf)) {
+	my $inf = new FileHandle;
+	open($inf,$file);
+	binmode($inf);
+
+	$inf->seek(0,0);
+	while(!$inf->eof) {
 		$inf->read($in,512);
 		$self->print($in);
 	}

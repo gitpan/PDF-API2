@@ -9,7 +9,7 @@ PDF::Filter - Abstract superclass for PDF stream filters
     $f = PDF::API2::PDF::Filter->new;
     $str = $f->outfilt($str, 1);
     print OUTFILE $str;
-    
+
     while (read(INFILE, $dat, 4096))
     { $store .= $f->infilt($dat, 0); }
     $store .= $f->infilt("", 1);
@@ -79,7 +79,7 @@ sub release
 
 # check that everything has gone - it better had!
     foreach my $key (keys %{$self})
-    { # warn ref($self) . " still has '$key' key left after release.\n"; 
+    { # warn ref($self) . " still has '$key' key left after release.\n";
     	$self->{$key}=undef;
     	delete($self->{$key});
     }
@@ -138,8 +138,8 @@ sub infilt
 {
     my ($self, $str, $isend) = @_;
     my ($res, $i, $j, @c, $b, $num);
-
-    if ($self->{'incache'} ne "")
+	$num=0;
+    if (exists($self->{'incache'}) && $self->{'incache'} ne "")
     {
         $str = $self->{'incache'} . $str;
         $self->{'incache'} = "";

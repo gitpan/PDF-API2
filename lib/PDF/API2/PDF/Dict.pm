@@ -101,7 +101,7 @@ sub outobjdeep
     while (($key, $val) = each %{$self})
     {
         next if ($key =~ m/^[\s\-]/o || $specs{$key});
-        next if ($val eq '');
+        next if (($val || '') eq '');
 	$key = PDF::API2::PDF::Name::string_to_name ($key, $pdf);
         $fh->print("/$key ");
         $val->outobj($fh, $pdf, %opts);
@@ -155,18 +155,18 @@ sub outobjdeep
             { $str = $f->outfilt($str, 1); }
         }
         $fh->print($str);
-        if (@filts > 0)
-        {
-            $len = $fh->tell - $loc + 1;
-            if ($self->{'Length'}{'val'} != $len)
-            {
-                $self->{'Length'}{'val'} = $len;
-                $pdf->out_obj($self->{'Length'}) if ($self->{'Length'}->is_obj($pdf));
-            }
-        }
-        $fh->print("\n") unless ($str =~ m/$cr$/o);
-        $fh->print("\nendstream\n");
-#        $self->{'Length'}->outobjdeep($fh);
+        $fh->print("\n");
+#        if (@filts > 0)
+#        {
+#            $len = $fh->tell - $loc + 1;
+#            if ($self->{'Length'}{'val'} != $len)
+#            {
+#                $self->{'Length'}{'val'} = $len;
+#                $pdf->out_obj($self->{'Length'}) if ($self->{'Length'}->is_obj($pdf));
+#            }
+#        }
+#        $fh->print("\n") unless ($str =~ m/$cr$/o);
+#        $fh->print("\nendstream"); # next is endobj which has the final cr
     } elsif (defined $self->{' streamfile'})
     {
         open(DICTFH, $self->{' streamfile'}) || die "Unable to open $self->{' streamfile'}";
@@ -190,18 +190,31 @@ sub outobjdeep
             { $str = $f->outfilt($str, 1); }
             $fh->print($str);
         }
+        $fh->print("\n");
         
-        $len = $fh->tell - $loc + 1;
-        if ($self->{'Length'}{'val'} != $len)
-        {
-            $self->{'Length'}{'val'} = $len;
-            $pdf->out_obj($self->{'Length'}) if ($self->{'Length'}->is_obj($pdf));
-        }
-        
-        $fh->print("\n") unless ($str =~ m/$cr$/o);
-        $fh->print("\nendstream\n");
-#        $self->{'Length'}->outobjdeep($fh);
+#        $len = $fh->tell - $loc + 1;
+#        if ($self->{'Length'}{'val'} != $len)
+#        {
+#            $self->{'Length'}{'val'} = $len;
+#            $pdf->out_obj($self->{'Length'}) if ($self->{'Length'}->is_obj($pdf));
+#        }
+#        
+#        $fh->print("\n") unless ($str =~ m/$cr$/o);
+#        $fh->print("\nendstream"); # next is endobj which has the final cr
     }
+
+    if (defined $self->{' stream'} or defined $self->{' streamfile'})
+    {
+       $len = $fh->tell - $loc + 1;
+       if ($self->{'Length'}{'val'} != $len)
+       {
+           $self->{'Length'}{'val'} = $len;
+           $pdf->out_obj($self->{'Length'}) if ($self->{'Length'}->is_obj($pdf));
+       }
+        
+        $fh->print("\nendstream"); # next is endobj which has the final cr
+    }
+
 }
 
 sub outxmldeep

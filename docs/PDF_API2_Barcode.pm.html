@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::Barcode
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Subclassed from PDF::API2::Hybrid.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$bc = PDF::API2::Barcode->new $pdfkey, %options
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns a new barcode object (called from $pdf->barcode).
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>Example:</B>
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+	PDF::API2::Barcode->new(
+		$key,
+		-font	=> $fontobj,	# the font to use for text
+		-type	=> '3of9',	# the type of barcode
+		-code	=> '0123456789', # the code of the barcode
+		-extn	=> '012345',	# the extension of the barcode
+					# (if applicable)
+		-umzn	=> 10,		# (u)pper (m)ending (z)o(n)e
+		-lmzn	=> 10,		# (l)ower (m)ending (z)o(n)e
+		-zone	=> 50,		# height (zone) of bars
+		-quzn	=> 10,		# (qu)iet (z)o(n)e
+		-ofwt	=> 0.01,	# (o)ver(f)low (w)id(t)h
+		-fnsz	=> 10,		# (f)o(n)t(s)i(z)e
+		-text	=> 'alternative text'
+	);
+
+</FONT></PRE></TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>Note:</B> There is currently only support for the following barcodes:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+	3of9, 3of9ext, 3of9chk, 3of9extchk,
+	code128a, code128b, code128c, ean128,
+	ean13
+
+</FONT></PRE></TD></TR></TABLE>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$wd = $bc->width
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>$ht = $bc->height
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">alfred reibenschuh
+
+</FONT></P>
+</BODY>
+</HTML>

@@ -24,11 +24,17 @@ use PDF::API2::PDF::Dict;
 use POSIX;
 use vars qw(@ISA $VERSION);
 @ISA = qw( PDF::API2::PDF::Dict );
-( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =item $font = PDF::API2::TrueTypeFont->new $pdf, $file, %options
 
 Returns a font object.
+
+Defined Options:
+
+	-nonembed ... prohibits embedding of the font (you cant use utf8 with that).
+
+	-encode ... specify fonts encoding for non-utf8 text.
 
 =cut
 
@@ -73,7 +79,7 @@ sub new {
 
 	my @w=();
 
-	$self->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
+	$self->{'PdfApi2Encoding'}=PDFStr($opts{-encode}) if($opts{-encode});
 	$self->{'Encoding'}=PDFDict();
 	$self->{'Encoding'}->{'Type'}=PDFName('Encoding');
 	$self->{'Encoding'}->{'BaseEncoding'}=PDFName('WinAnsiEncoding');
@@ -2224,7 +2230,11 @@ sub new {
 	$self->data->{subname}=$self->font->{'name'}->find_name(2);
 	$self->data->{subname}=~s/\s//og;
 
-	$self->data->{issymbol} = ($self->mstable->{'Platform'} == 3 && $self->mstable->{'Encoding'} == 0) || 0;
+  if(defined($self->mstable)) {
+  	$self->data->{issymbol} = ($self->mstable->{'Platform'} == 3 && $self->mstable->{'Encoding'} == 0) || 0;
+  } else {
+  	$self->data->{issymbol} = 0;
+  }
 
 	$self->data->{upem}=$self->font->{'head'}->read->{'unitsPerEm'};
 
@@ -2269,7 +2279,7 @@ sub new {
 			0xA0 .. 0xFF
 		];
 	}
-	if($self->font->{'post'}->read->{FormatType} == 3) {
+	if(($self->font->{'post'}->read->{FormatType} == 3) && defined($self->mstable)) {
 		$self->data->{ng} = {};
 		$self->data->{gn} = [];
 		foreach my $u (sort {$a<=>$b} keys %{$self->mstable->{val}}) {

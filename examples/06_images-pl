@@ -39,6 +39,7 @@ foreach my $i (glob('*.jpg')) {
 	$gfx->image($img,400,400,150,150);
 }
 
+
 if($hasGD) {
 	foreach my $i (glob('*.png')) {
 		$page = $pdf->page;
@@ -62,27 +63,6 @@ if($hasGD) {
 
 		$gfx->image($img,400,400,150,150);
 	}
-}
-
-foreach my $i (glob('*.p?m')) {
-	$page = $pdf->page;
-	$page->mediabox(595,842);
-	$txt=$page->text;
-	$txt->compress;
-
-	$txt->translate(100,800);
-	$txt->font($f1,30);
-	$txt->text("image: $i");
-
-	$gfx=$page->gfx;
-
-	my $img=$pdf->image($i);
-	
-	$gfx->image($img,0,0);
-
-	$gfx->image($img,200,200,72/150);
-
-	$gfx->image($img,400,400,150,150);
 }
 
 $pdf->saveas("$0.pdf");

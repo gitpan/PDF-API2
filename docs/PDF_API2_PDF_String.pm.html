@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::PDF::String - PDF String type objects and superclass for simple objects
+that are basically stringlike (Number, Name, etc.)
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::PDF::String->from_pdf($string)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new string object (not a full object yet) from a given string.
+The string is parsed according to input criteria with escaping working.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::PDF::String->new($string)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new string object (not a full object yet) from a given string.
+The string is parsed according to input criteria with escaping working.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->convert($str)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns $str converted as per criteria for input from PDF file
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->val
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns the value of this string (the string itself).
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$->as_pdf
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns the string formatted for output as PDF for PDF File object $pdf.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->outobjdeep
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs the string in PDF format, complete with necessary conversions
+
+</FONT></P>
+</BODY>
+</HTML>

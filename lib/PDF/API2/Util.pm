@@ -4,7 +4,7 @@ use vars qw($VERSION @ISA @EXPORT %colors);
 use Math::Trig;
 use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 0.3a30 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b39 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Exporter;
 @ISA = qw(Exporter);
@@ -996,7 +996,7 @@ sub namecolor {
 }
 
 sub pdfkey {
-	my $ddata=join('',@_);
+	my $ddata= (scalar @_) ? join('',@_):scalar localtime();
 	my $mdkey='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789gT';
 	my $xdata="0" x 8;
 	my $off=0;

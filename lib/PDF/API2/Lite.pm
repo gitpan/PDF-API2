@@ -10,7 +10,7 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3a30 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b39 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }

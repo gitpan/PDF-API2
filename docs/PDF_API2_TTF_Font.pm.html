@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Font - Memory representation of a font
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">SYNOPSIS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Here is the regression test (you provide your own font). Run it once and then
+again on the output of the first run. There should be no differences between
+the outputs of the two runs.
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    $f = PDF::API2::TTF::Font->open($ARGV[0]);
+
+</FONT></PRE></TD></TR></TABLE>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    # force a read of all the tables
+    $f->tables_do(sub { $_[0]->read; });
+
+</FONT></PRE></TD></TR></TABLE>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    # force read of all glyphs (use read_dat to use lots of memory!)
+    # $f->{'loca'}->glyphs_do(sub { $_[0]->read; });
+    $f->{'loca'}->glyphs_do(sub { $_[0]->read_dat; });
+    # NB. no need to $g->update since $f->{'glyf'}->out will do it for us
+
+</FONT></PRE></TD></TR></TABLE>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    $f->out($ARGV[1]);
+    $f->release;            # clear up memory forcefully!
+
+</FONT></PRE></TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">A Truetype font consists of a header containing a directory of tables which
+constitute the rest of the file. This class holds that header and directory and
+also creates objects of the appropriate type for each table within the font.
+Note that it does not read each table into memory, but creates a short reference
+which can be read using the form:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    $f->{$tablename}->read;
+
+</FONT></PRE></TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Classes are included that support many of the different TrueType tables. For
+those for which no special code exists, the table type <CODE>table</CODE> is used, which
+defaults to <A HREF="PDF::API2::TTF::Table">PDF::API2::TTF::Table</A>. The current tables which are supported are:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    table       PDF::API2::TTF::Table      - for unknown tables
+    GDEF        PDF::API2::TTF::GDEF
+    GPOS        PDF::API2::TTF::GPOS
+    GSUB        PDF::API2::TTF::GSUB
+    LTSH        PDF::API2::TTF::LTSH
+    OS/2        PDF::API2::TTF::OS_2
+    PCLT        PDF::API2::TTF::PCLT
+    bsln        PDF::API2::TTF::Bsln
+    cmap        PDF::API2::TTF::Cmap       - see also PDF::API2::TTF::OldCmap
+    cvt         PDF::API2::TTF::Cvt_
+    fdsc        PDF::API2::TTF::Fdsc
+    feat        PDF::API2::TTF::Feat
+    fmtx        PDF::API2::TTF::Fmtx
+    fpgm        PDF::API2::TTF::Fpgm
+    glyf        PDF::API2::TTF::Glyf       - see also PDF::API2::TTF::Glyph
+    hdmx        PDF::API2::TTF::Hdmx
+    head        PDF::API2::TTF::Head
+    hhea        PDF::API2::TTF::Hhea
+    hmtx        PDF::API2::TTF::Hmtx
+    kern        PDF::API2::TTF::Kern       - see alternative PDF::API2::TTF::AATKern
+    loca        PDF::API2::TTF::Loca
+    maxp        PDF::API2::TTF::Maxp
+    mort        PDF::API2::TTF::Mort       - see also PDF::API2::TTF::OldMort
+    name        PDF::API2::TTF::Name
+    post        PDF::API2::TTF::Post
+    prep        PDF::API2::TTF::Prep
+    prop        PDF::API2::TTF::Prop
+    vhea        PDF::API2::TTF::Vhea
+    vmtx        PDF::API2::TTF::Vmtx
+
+</FONT></PRE></TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Links are:
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><A HREF="PDF::API2::TTF::Table">PDF::API2::TTF::Table</A> <A HREF="PDF::API2::TTF::GDEF">PDF::API2::TTF::GDEF</A> <A HREF="PDF::API2::TTF::GPOS">PDF::API2::TTF::GPOS</A> <A HREF="PDF::API2::TTF::GSUB">PDF::API2::TTF::GSUB</A> <A HREF="PDF::API2::TTF::LTSH">PDF::API2::TTF::LTSH</A>
+<A HREF="PDF::API2::TTF::OS_2">PDF::API2::TTF::OS_2</A> <A HREF="PDF::API2::TTF::PCLT">PDF::API2::TTF::PCLT</A> <A HREF="PDF::API2::TTF::Bsln">PDF::API2::TTF::Bsln</A> <A HREF="PDF::API2::TTF::Cmap">PDF::API2::TTF::Cmap</A> <A HREF="PDF::API2::TTF::Cvt_">PDF::API2::TTF::Cvt_</A>
+<A HREF="PDF::API2::TTF::Fdsc">PDF::API2::TTF::Fdsc</A> <A HREF="PDF::API2::TTF::Feat">PDF::API2::TTF::Feat</A> <A HREF="PDF::API2::TTF::Fmtx">PDF::API2::TTF::Fmtx</A> <A HREF="PDF::API2::TTF::Fpgm">PDF::API2::TTF::Fpgm</A> <A HREF="PDF::API2::TTF::Glyf">PDF::API2::TTF::Glyf</A>
+<A HREF="PDF::API2::TTF::Hdmx">PDF::API2::TTF::Hdmx</A> <A HREF="PDF::API2::TTF::Head">PDF::API2::TTF::Head</A> <A HREF="PDF::API2::TTF::Hhea">PDF::API2::TTF::Hhea</A> <A HREF="PDF::API2::TTF::Hmtx">PDF::API2::TTF::Hmtx</A> <A HREF="PDF::API2::TTF::Kern">PDF::API2::TTF::Kern</A>
+<A HREF="PDF::API2::TTF::Loca">PDF::API2::TTF::Loca</A> <A HREF="PDF::API2::TTF::Maxp">PDF::API2::TTF::Maxp</A> <A HREF="PDF::API2::TTF::Mort">PDF::API2::TTF::Mort</A> <A HREF="PDF::API2::TTF::Name">PDF::API2::TTF::Name</A> <A HREF="PDF::API2::TTF::Post">PDF::API2::TTF::Post</A>
+<A HREF="PDF::API2::TTF::Prep">PDF::API2::TTF::Prep</A> <A HREF="PDF::API2::TTF::Prop">PDF::API2::TTF::Prop</A> <A HREF="PDF::API2::TTF::Vhea">PDF::API2::TTF::Vhea</A> <A HREF="PDF::API2::TTF::Vmtx">PDF::API2::TTF::Vmtx</A> <A HREF="PDF::API2::TTF::OldCmap">PDF::API2::TTF::OldCmap</A>
+<A HREF="PDF::API2::TTF::Glyph">PDF::API2::TTF::Glyph</A> <A HREF="PDF::API2::TTF::AATKern">PDF::API2::TTF::AATKern</A> <A HREF="PDF::API2::TTF::OldMort">PDF::API2::TTF::OldMort</A>
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+
+</FONT></PRE></TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Instance variables begin with a space (and have lengths greater than the 4
+characters which make up table names).
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>nocsum
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This is used during output to disable the creation of the file checksum in the
+head table. For example, during DSIG table creation, this flag will be set to
+ensure that the file checksum is left at zero.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>fname (R)
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Contains the filename of the font which this object was read from.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>INFILE (P)
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The file handle which reflects the source file for this font.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>OFFSET (P)
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Contains the offset from the beginning of the read file of this particular
+font directory, thus providing support for TrueType Collections.
+
+</FONT></P>
+</TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::TTF::Font->AddTable($tablename, $class)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Adds the given class to be used when representing the given table name. It also
+'requires' the class for you.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::TTF::Font->Init
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">For those people who like making fonts without reading them. This subroutine
+will require all the table code for the various table types for you. Not
+needed if using PDF::API2::TTF::Font::read before using a table.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::TTF::Font->new(%props)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new font object and initialises with the given properties. This is
+primarily for use when a TTF is embedded somewhere. Notice that the properties
+are automatically preceded by a space when inserted into the object. This is in
+order that fields do not clash with tables.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::TTF::Font->open($fname)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the header and directory for the given font file and creates appropriate
+objects for each table in the font.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads a Truetype font directory starting from the current location in the file.
+This has been separated from the <CODE>open</CODE> function to allow support for embedded
+TTFs for example in TTCs. Also reads the <CODE>head</CODE> and <CODE>maxp</CODE> tables immediately.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->out($fname [, @tablelist])
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Writes a TTF file consisting of the tables in tablelist. The list is checked to
+ensure that only tables that exist are output. (This means that you can't have
+non table information stored in the font object with key length of exactly 4)
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">In many cases the user simply wants to output all the tables in alphabetical order.
+This can be done by not including a @tablelist, in which case the subroutine will
+output all the defined tables in the font in alphabetical order.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns $f on success and undef on failure, including warnings.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">All output files must include the <CODE>head</CODE> table.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->out_xml($filename [, @tables])
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs the font in XML format
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->XML_start($context, $tag, %attrs)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Handles start messages from the XML parser. Of particular interest to us are <font> and
+<table>.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->update
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Sends update to all the tables in the font and then resets all the isDirty
+flags on each table. The data structure in now consistent as a font (we hope).
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->dirty
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Dirties all the tables in the font
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->tables_do(&func)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Calls &func for each table in the font. Calls the table in alphabetical sort
+order as per the order in the directory:
+
+</FONT></P>
+<TABLE WIDTH="100%" CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD BGCOLOR="#DDDDDD"><PRE><FONT SIZE="2">
+    &func($table, $name);
+
+</FONT></PRE></TD></TR></TABLE>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$f->release
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Releases ALL of the memory used by the TTF font and all of its component
+objects.  After calling this method, do <B>NOT</B> expect to have anything left in
+the <CODE>PDF::API2::TTF::Font</CODE> object.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>NOTE</B>, that it is important that you call this method on any
+<CODE>PDF::API2::TTF::Font</CODE> object when you wish to destruct it and free up its memory.
+Internally, we track things in a structure that can result in circular
+references, and without calling '<CODE>release()</CODE>' these will not properly get
+cleaned up by Perl.  Once you've called this method, though, don't expect to be
+able to do anything else with the <CODE>PDF::API2::TTF::Font</CODE> object; it'll have <B>no</B>
+internal state whatsoever.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3"><B>Developer note:</B> As part of the brute-force cleanup done here, this method
+will throw a warning message whenever unexpected key values are found within
+the <CODE>PDF::API2::TTF::Font</CODE> object.  This is done to help ensure that any unexpected
+and unfreed values are brought to your attention so that you can bug us to keep
+the module updated properly; otherwise the potential for memory leaks due to
+dangling circular references will exist.  
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Bugs abound aplenty I am sure. There is a lot of code here and plenty of scope.
+The parts of the code which haven't been implemented yet are:
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>Post
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Version 4 format types are not supported yet.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>Cmap
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Format type 2 (MBCS) has not been implemented yet and therefore may cause
+somewhat spurious results for this table type.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>Kern
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Only type 0 & type 2 tables are supported (type 1 & type 3 yet to come).
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>TTC
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The current PDF::API2::TTF::Font::out method does not support the writing of TrueType
+Collections.
+
+</FONT></P>
+</TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3">In addition there are weaknesses or features of this module library
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>*
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">There is very little (or no) error reporting. This means that if you have
+garbled data or garbled data structures, then you are liable to generate duff
+fonts.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>*
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The exposing of the internal data structures everywhere means that doing
+radical re-structuring is almost impossible. But it stop the code from becoming
+ridiculously large.
+
+</FONT></P>
+</TD></TR></TABLE>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Apart from these, I try to keep the code in a state of "no known bugs", which
+given the amount of testing this code has had, is not a guarantee of high
+quality, yet.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">For more details see the appropriate class files.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Copyright Martin Hosken 1998.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">No warranty or expression of effectiveness, least of all regarding anyone's
+safety, is implied in this software or documentation.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">Licensing
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The Perl TTF module is licensed under the Perl Artistic License.
+
+</FONT></P>
+</BODY>
+</HTML>

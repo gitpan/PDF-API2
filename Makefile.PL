@@ -40,6 +40,10 @@ EOT
 	}
 }
 
+if($opts{-docs}) {
+	system(q# for x in `grep '.pm$' MANIFEST`; do y="`echo $x |tr '/' '_'|sed 's/^lib_//g'`"; ./contrib/pod_to_html.pl $x >docs/$y.html; done #);
+}
+
 require 'version.p';
 
 @ver=split(/\./,$version);

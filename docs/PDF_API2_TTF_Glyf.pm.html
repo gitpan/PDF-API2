@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Glyf - The Glyf data table
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This is a stub table. The real data is held in the loca table. If you want to get a glyf
+look it up in the loca table as <CODE>$f-</CODE>{'loca'}{'glyphs'}[$num]>. It won't be here!
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The difference between reading this table as opposed to the loca table is that
+reading this table will cause updated glyphs to be written out rather than just
+copying the glyph information from the input file. This causes font writing to be
+slower. So read the glyf as opposed to the loca table if you want to change glyf
+data. Read the loca table only if you are just wanting to read the glyf information.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This class is used when writing the glyphs though.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->read
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Reads the <CODE>loca</CODE> table instead!
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out($fh)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Writes out all the glyphs in the parent's location table, calculating a new
+output location for each one.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->out_xml($context, $depth)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Outputs all the glyphs in the glyph table just where they are supposed to be output!
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_start($context, $tag, %attrs)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Pass control to glyphs as they occur
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$t->XML_end($context, $tag, %attrs)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Collect up glyphs and put them into the loca table
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">None known
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

@@ -5,8 +5,9 @@ use PDF::API2;
 $pdf=PDF::API2->new;
 
 $f1=$pdf->corefont('Helvetica',1);
-
-foreach $fn (glob("*.TTF")) {
+my @fff=glob("*.otf");
+push(@fff,glob("*.ttf"));
+foreach $fn (@fff) {
 
 	foreach $fe (qw(
 		adobe-standard	cp437	cp850	latin1
@@ -36,7 +37,6 @@ foreach $fn (glob("*.TTF")) {
 		}
 
 	}
-	last;
 }
 
 $pdf->saveas("$0.pdf");

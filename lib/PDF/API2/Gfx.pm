@@ -24,7 +24,7 @@ use PDF::API2::Content;
 use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 use Math::Trig;
-( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 =head2 PDF::API2::Gfx
@@ -562,6 +562,7 @@ sub barcode {
 	$self->add("/$obj->{' apiname'}",'Do');
 	$self->restore;
 	$self->resource('XObject',$obj->{' apiname'},$obj);
+	$self->resource('Font',$obj->{' font'}->{' apiname'},$obj->{' font'});
 	return($self);
 }
 

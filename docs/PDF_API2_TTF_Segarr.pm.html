@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="Generator" CONTENT="pdf_to_html">
+	</HEAD>
+<BODY
+	BGCOLOR="#FFFFFF"
+	TEXT="#000000"
+	LINK="#0000FF"
+	VLINK="#808000"
+	ALINK="#FF00FF"
+>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">NAME
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">PDF::API2::TTF::Segarr - Segmented array
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">DESCRIPTION
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Holds data either directly or indirectly as a series of arrays. This class
+looks after the set of arrays and masks the individual sub-arrays, thus saving
+a class, we hope.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">INSTANCE VARIABLES
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">All instance variables do not start with a space.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The segmented array is simply an array of segments
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Each segment is a more complex affair:
+
+</FONT></P>
+<TABLE CELLSPACING="0" CELLPADDING="0" BORDER="0"><TR><TD>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>START
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">In terms of the array, the address for the 0th element in this segment.
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>LEN
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Number of elements in this segment
+
+</FONT></P>
+</TD></TR><TR><TD> &nbsp; &nbsp; &nbsp; &nbsp; </TD></TR><TR><TD COLSPAN="2"><FONT FACE="Verdana, Arial" COLOR="#B25000" SIZE="3"><B>VAL
+
+</B></FONT></TD></TR><TR><TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD>
+<P><FONT FACE="Verdana, Arial" SIZE="3">The array which contains the elements
+
+</FONT></P>
+</TD></TR></TABLE>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">METHODS
+
+</FONT></H1>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">PDF::API2::TTF::Segarr->new($size)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new segmented array with a given data size
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->fastadd_segment($start, $is_sparse, @dat)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new segment and adds it to the array assuming no overlap between
+the new segment and any others in the array. $is_sparse indicates whether the
+passed in array contains <CODE>undef</CODE>s or not. If false no checking is done (which
+is faster, but riskier). If equal to 2 then 0 is considered undef as well.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Returns the number of segments inserted.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->add_segment($start, $overwrite, @dat)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a new segment and adds it to the array allowing for possible overlaps
+between the new segment and the existing ones. In the case of overlaps, elements
+from the new segment are deleted unless $overwrite is set in which case the
+elements already there are over-written.
+
+</FONT></P>
+<P><FONT FACE="Verdana, Arial" SIZE="3">This method also checks the data coming in to see if it is sparse (i.e. contains
+undef values). Gaps cause new segments to be created or not to over-write existing
+values.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->tidy
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Merges any immediately adjacent segments
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->at($addr, [$len])
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Looks up the data held at the given address by locating the appropriate segment
+etc. If $len > 1 then returns an array of values, spaces being filled with undef.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->remove($addr, [$len])
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Removes the item or items from addr returning them as an array or the first
+value in a scalar context. This is very like <CODE>at</CODE>, including padding with
+undef, but it deletes stuff as it goes.
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->copy
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Deep copies this array
+
+</FONT></P>
+<H2><FONT FACE="Verdana, Arial" COLOR="#0050B2">$s->copy_seg($seg)
+
+</FONT></H2>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Creates a deep copy of a segment
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">BUGS
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">No known bugs.
+
+</FONT></P>
+<H1><FONT FACE="Verdana, Arial" COLOR="#0050B2">AUTHOR
+
+</FONT></H1>
+<P><FONT FACE="Verdana, Arial" SIZE="3">Martin Hosken Martin_Hosken@sil.org. See <A HREF="PDF::API2::TTF::Font">PDF::API2::TTF::Font</A> for copyright and
+licensing.
+
+</FONT></P>
+</BODY>
+</HTML>

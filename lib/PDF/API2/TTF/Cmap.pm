@@ -208,16 +208,18 @@ sub find_ms
     my ($self) = @_;
     my ($i, $s, $alt, $found);
 
-    return $self->{' mstable'} if defined $self->{' mstable'};
-    $self->read;
-    for ($i = 0; $i < $self->{'Num'}; $i++)
+    return($self->{' mstable'}) if(defined $self->{' mstable'});
+
+    $self->read unless($self->{' read'});
+
+    foreach $i (0..($self->{Num}-1))
     {
-        $s = $self->{'Tables'}[$i];
+        $s = $self->{Tables}[$i];
         if ($s->{'Platform'} == 3)
         {
             $self->{' mstable'} = $s;
-            last if ($s->{'Encoding'} == 10);
-            $found = 1 if ($s->{'Encoding'} == 1);
+            $found = 1 if(($s->{'Encoding'} == 1) || ($s->{'Encoding'} == 0));
+            last if ($found);
         } elsif ($s->{'Platform'} == 0 || ($s->{'Platform'} == 2 && $s->{'Encoding'} == 1))
         { $alt = $s; }
     }

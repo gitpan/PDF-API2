@@ -7,7 +7,7 @@
 #
 #	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-#	This library is free software; you can redistribute it 
+#	This library is free software; you can redistribute it
 #	and/or modify it under the same terms as Perl itself.
 #
 #=======================================================================
@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3a30 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3b39 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 	$seq="AA";
@@ -74,9 +74,11 @@ use POSIX qw( ceil floor );
 
 =head2 PDF::API2
 
+=over 4
+
 =item $pdf = PDF::API->new %opts
 
-Creates a new pdf-file object. If you know beforehand 
+Creates a new pdf-file object. If you know beforehand
 to save the pdf to file you can give the '-file' option,
 to minimize possible memory requirements.
 
@@ -109,6 +111,7 @@ sub new {
        	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
        	$self->{pdf}->{' id'}=$dig;
        	$self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
+       	$self->preferences(%opt);
 	if($opt{-file}) {
 		$self->{' filed'}=$opt{-file};
 		$self->{pdf}->create_file($opt{-file});
@@ -134,65 +137,65 @@ B<Options:>
 	-hidewindowui ... Specifying whether to hide user interface elements.
 	-fitwindow ... Specifying whether to resize the document’s window to the size of the displayed page.
 	-centerwindow ... Specifying whether to position the document’s window in the center of the screen.
-	-displaytitle ... Specifying whether the window’s title bar should display the document title 
+	-displaytitle ... Specifying whether the window’s title bar should display the document title
 			taken from the Title entry of the document information dictionary.
 	-afterfullscreenthumbs ... Thumbnail images visible after Full-screen mode.
 	-afterfullscreenoutlines ... Document outline visible after Full-screen mode.
-	
-	-firstpage => [ $pageobj, %opts] ... Specifying the page to be displayed, 
+
+	-firstpage => [ $pageobj, %opts] ... Specifying the page to be displayed,
 			plus one of the following options:
-			
+
 		-fit => 1
-		
+
 		Display the page designated by page, with its contents magnified just enough to
 		fit the entire page within the window both horizontally and vertically. If the
 		required horizontal and vertical magnification factors are different, use the
 		smaller of the two, centering the page within the window in the other dimension.
-		
+
 		-fith => $top
-		
+
 		Display the page designated by page, with the vertical coordinate top positioned
 		at the top edge of the window and the contents of the page magnified just enough
 		to fit the entire width of the page within the window.
-		
+
 		-fitv => $left
-		
+
 		Display the page designated by page, with the horizontal coordinate left positioned
 		at the left edge of the window and the contents of the page magnified just enough
 		to fit the entire height of the page within the window.
-		
+
 		-fitr => [ $left, $bottom, $right, $top ]
-		
+
 		Display the page designated by page, with its contents magnified just enough to
 		fit the rectangle specified by the coordinates left, bottom, right, and top
 		entirely within the window both horizontally and vertically. If the required
 		horizontal and vertical magnification factors are different, use the smaller of
 		the two, centering the rectangle within the window in the other dimension.
-		
+
 		-fitb => 1
-		
-		Display the page designated by page, with its contents magnified just enough 
+
+		Display the page designated by page, with its contents magnified just enough
 		to fit its bounding box entirely within the window both horizontally and
 		vertically. If the required horizontal and vertical magnification factors are
 		different, use the smaller of the two, centering the bounding box within the
 		window in the other dimension.
-		
+
 		-fitbh => $top
-		
+
 		Display the page designated by page, with the vertical coordinate top
-		positioned at the top edge of the window and the contents of the page 
-		magnified just enough to fit the entire width of its bounding box 
+		positioned at the top edge of the window and the contents of the page
+		magnified just enough to fit the entire width of its bounding box
 		within the window.
-		
+
 		-fitbv => $left
-		
+
 		Display the page designated by page, with the horizontal coordinate
 		left positioned at the left edge of the window and the contents of the page
 		magnified just enough to fit the entire height of its bounding box within the
 		window.
-		
+
 		-xyz => [ $left, $top, $zoom ]
-		
+
 		Display the page designated by page, with the coordinates (left, top) positioned
 		at the top-left corner of the window and the contents of the page magnified by
 		the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
@@ -207,7 +210,7 @@ B<Example:>
 		-afterfullscreenoutlines => 1,
 		-firstpage => [ $pageobj , -fit => 1],
 	);
-	
+
 =cut
 
 sub preferences {
@@ -257,7 +260,7 @@ sub preferences {
 	if($opt{-righttoleft}) {
 		$self->{catalog}->{ViewerPreferences}->{Direction}=PDFName("R2L");
 	}
-	
+
 	if($opt{-afterfullscreenthumbs}) {
 		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseThumbs');
 	} elsif($opt{-afterfullscreenoutlines}) {
@@ -268,9 +271,9 @@ sub preferences {
 
 	if($opt{-firstpage}) {
 		my ($page,%o)=@{$opt{-firstpage}};
-		
+
 		$o{-fit}=1 if(scalar(keys %o)<1);
-	
+
 		if(defined $o{-fit}) {
 			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('Fit'));
 		} elsif(defined $o{-fith}) {
@@ -291,7 +294,7 @@ sub preferences {
 			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$o{-xyz}});
 		}
 	}
-	
+
 	return $self;
 }
 
@@ -342,7 +345,7 @@ sub open {
 	}
 	die "File '$file' does not exist." unless(-f $file);
 	my $fh=PDF::API2::IOString->new();
-	$fh->import($file);
+	$fh->import_from_file($file);
 	$self->{pdf}=PDF::API2::PDF::FileAPI->open($fh,1);
 
 #	$self->{pdf}=PDF::API2::PDF::FileAPI->open($file,1);
@@ -404,7 +407,7 @@ sub page {
 		splice(@{$self->{pagestack}},$index,0,$page);
 	} else {
 		splice(@{$self->{pagestack}},$index-1,0,$page);
-	}	
+	}
 	return $page;
 }
 
@@ -608,6 +611,7 @@ sub walk_obj {
 		@keys=keys(%{$tobj}) if(scalar @keys <1);
 		foreach my $k (@keys) {
 			next if($k=~/^ /);
+			next unless(defined($obj->{$k}));
 			$tobj->{$k}=walk_obj($objs,$spdf,$tpdf,$obj->{$k});
 		}
 		if($obj->{' stream'}) {
@@ -726,7 +730,7 @@ sub importpage {
 
         # copy annotations and/or form elements as well
         if (exists $s_page->{Annots} and $s_page->{Annots}) {
- 
+
                 # first set up the AcroForm, if required
                 my $AcroForm;
                 if (my $a = $s_pdf->{pdf}->{Root}->realise->{AcroForm}) {
@@ -738,10 +742,9 @@ sub importpage {
                 #                next if grep $_ eq $k , @done;
                 #                push @done,$k;
                 #                next unless defined $a->{$k};
-                #                $AcroForm->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a->{$k});
+                #                $AcroForm->{$k} = 
                 #        }
-                	# more compact
-                        $AcroForm = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a,qw(NeedAppearances SigFlags CO DR DA Q));
+                        $AcroForm = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a,qw( NeedAppearances SigFlags CO DR DA Q ));
                 }
                 my @Fields = ();
                 my @Annots = ();
@@ -970,13 +973,18 @@ sub info {
         	$self->{pdf}->new_obj($self->{'pdf'}->{'Info'});
 	}
 
-        map { $self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}) } keys %opt;
-        $self->{pdf}->out_obj($self->{pdf}->{'Info'});
+	if(scalar @_) {
+	        map { 
+	        	$self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}||'') 
+	        } qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  );
+	}
         
+        $self->{pdf}->out_obj($self->{pdf}->{'Info'});
+
 	if(defined $self->{pdf}->{'Info'}) {
-		%opt=map { 
-			($_,$self->{pdf}->{'Info'}->{$_}->val) 
-			if(defined $self->{pdf}->{'Info'}->{$_}); 
+		%opt=map {
+			($_,$self->{pdf}->{'Info'}->{$_}->val)
+			if(defined $self->{pdf}->{'Info'}->{$_});
 		} qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  );
         }
         return(%opt);
@@ -1155,7 +1163,7 @@ sub imagejpeg {
 	my $objname='IMGxJPEGx'.pdfkey($file.time());
 	my $obj=PDF::API2::PDF::ImageJPEG->new($pdf,$objname,$file);
 	$obj->{' apiname'}=$objname;
-        
+
 	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
 	$self->resource('XObject',$obj->{' apiname'},$obj,1);
@@ -1521,6 +1529,8 @@ sub resource {
 1;
 
 __END__
+
+=back
 
 =head1 AUTHOR
 
