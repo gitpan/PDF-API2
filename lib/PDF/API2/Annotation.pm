@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Annotation.pm,v 1.9 2004/06/15 09:11:37 fredo Exp $
+#   $Id: Annotation.pm,v 1.12 2004/10/13 18:30:34 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Annotation;
@@ -43,7 +43,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:37 $
+    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/10/13 18:30:34 $
 
     use utf8;
     use Encode qw(:all);
@@ -100,11 +100,18 @@ sub url {
     $self->{Subtype}=PDFName('Link');
     $self->{A}=PDFDict();
     $self->{A}->{S}=PDFName('URI');
-    if(is_utf8($url) || utf8::valid($url)) {
-        $self->{A}->{URI}=PDFUtf($url);
-    } else {
-        $self->{A}->{URI}=PDFStr($url);
+    if(is_utf8($url)) {
+        # URI must be 7-bit ascii
+        utf8::downgrade($url);
     }
+    $self->{A}->{URI}=PDFStr($url);
+    # this will come again -- since the utf8 urls are coming !
+    # -- fredo
+    #if(is_utf8($url) || utf8::valid($url)) {
+    #    $self->{A}->{URI}=PDFUtf($url);
+    #} else {
+    #    $self->{A}->{URI}=PDFStr($url);
+    #}
     $self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
     $self->border(@{$opts{-border}}) if(defined $opts{-border});
     return($self);
@@ -122,11 +129,18 @@ sub file {
     $self->{Subtype}=PDFName('Link');
     $self->{A}=PDFDict();
     $self->{A}->{S}=PDFName('Launch');
-    if(is_utf8($url) || utf8::valid($url)) {
-        $self->{A}->{F}=PDFUtf($url);
-    } else {
-        $self->{A}->{F}=PDFStr($url);
+    if(is_utf8($url)) {
+        # URI must be 7-bit ascii
+        utf8::downgrade($url);
     }
+    $self->{A}->{F}=PDFStr($url);
+    # this will come again -- since the utf8 urls are coming !
+    # -- fredo
+    #if(is_utf8($url) || utf8::valid($url)) {
+    #    $self->{A}->{F}=PDFUtf($url);
+    #} else {
+    #    $self->{A}->{F}=PDFStr($url);
+    #}
     $self->rect(@{$opts{-rect}}) if(defined $opts{-rect});
     $self->border(@{$opts{-border}}) if(defined $opts{-border});
     return($self);
@@ -144,11 +158,18 @@ sub pdfile {
     $self->{Subtype}=PDFName('Link');
     $self->{A}=PDFDict();
     $self->{A}->{S}=PDFName('GoToR');
-    if(is_utf8($url) || utf8::valid($url)) {
-        $self->{A}->{F}=PDFUtf($url);
-    } else {
-        $self->{A}->{F}=PDFStr($url);
+    if(is_utf8($url)) {
+        # URI must be 7-bit ascii
+        utf8::downgrade($url);
     }
+    $self->{A}->{F}=PDFStr($url);
+    # this will come again -- since the utf8 urls are coming !
+    # -- fredo
+    #if(is_utf8($url) || utf8::valid($url)) {
+    #    $self->{A}->{F}=PDFUtf($url);
+    #} else {
+    #    $self->{A}->{F}=PDFStr($url);
+    #}
     if(defined $opts{-fit}) {
         $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('Fit'));
     } elsif(defined $opts{-fith}) {
@@ -347,6 +368,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Annotation.pm,v $
+    Revision 1.12  2004/10/13 18:30:34  fredo
+    fixed pdfile method from utf8 back to ascii
+
+    Revision 1.11  2004/10/11 07:54:24  fredo
+    fixed file method from utf8 back to ascii
+
+    Revision 1.10  2004/10/01 01:20:35  fredo
+    fixed url link annotation to 7-bit ascii as per pdf-spec-1.5
+
     Revision 1.9  2004/06/15 09:11:37  fredo
     removed cr+lf
 

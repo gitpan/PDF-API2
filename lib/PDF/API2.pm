@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.60 2004/09/20 11:22:18 fredo Exp $
+#   $Id: API2.pm,v 1.64 2004/10/01 01:39:24 fredo Exp $
 #
 #=======================================================================
 
@@ -37,8 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.60 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
-    # $Date: 2004/09/20 11:22:18 $
+    ($VERSION) = ('$Revision: 1.64 $' =~ /Revision: (\S+)\s/)[0];  # $Date: 2004/10/01 01:39:24 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -56,6 +55,8 @@ BEGIN {
     use PDF::API2::IOString;
 
     use PDF::API2::Outlines;
+
+    use PDF::API2::Version;
 
     use PDF::API2::Resource::ExtGState;
     use PDF::API2::Resource::Pattern;
@@ -167,7 +168,7 @@ sub new {
         $self->{pdf}->create_file($opt{-file});
     }
     $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
-    $self->info( 'Producer' => "PDF::API2 v=$VERSION os=$^O" );
+    $self->info( 'Producer' => $PDF::API2::Version::CVersion{vFredo}." [$^O]" );
     return $self;
 }
 
@@ -1058,14 +1059,13 @@ sub importpage {
 
     # copy annotations and/or form elements as well
     if (exists $s_page->{Annots} and $s_page->{Annots} and $self->{copyannots}) {
-      my %cache;
 
             # first set up the AcroForm, if required
             my $AcroForm;
             if (my $a = $s_pdf->{pdf}->{Root}->realise->{AcroForm}) {
                     $a->realise;
 
-                    $AcroForm = walk_obj(\%cache,$s_pdf->{pdf},$self->{pdf},$a,qw( NeedAppearances SigFlags CO DR DA Q ));
+                    $AcroForm = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a,qw( NeedAppearances SigFlags CO DR DA Q ));
             }
             my @Fields = ();
             my @Annots = ();
@@ -1111,7 +1111,7 @@ sub importpage {
                     foreach my $k (keys %ky) {
                             next unless defined $a->{$k};
                             $a->{$k}->realise;
-                            $t_a->{$k} = walk_obj(\%cache,$s_pdf->{pdf},$self->{pdf},$a->{$k});
+                            $t_a->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$a->{$k});
                     }
                     $t_a->{P} = $t_page;
                     push @Annots, $t_a;
@@ -2033,6 +2033,18 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.64  2004/10/01 01:39:24  fredo
+    reverted annotations import fix
+
+    Revision 1.63  2004/09/30 23:57:26  fredo
+    versioning beautify
+
+    Revision 1.62  2004/09/30 22:40:41  fredo
+    fixed pdf-producer to include OS
+
+    Revision 1.61  2004/09/30 21:18:21  fredo
+    changed file version back to cvs
+
     Revision 1.60  2004/09/20 11:22:18  fredo
     added default param to fix import-rotation
     added default param to fix annotation-import

@@ -1,3 +1,68 @@
+2004-10-13 20:30  fredo
+
+	* lib/PDF/API2/Annotation.pm: fixed pdfile method from utf8 back to
+	  ascii
+
+2004-10-11 09:54  fredo
+
+	* lib/PDF/API2/Annotation.pm: fixed file method from utf8 back to
+	  ascii
+
+2004-10-01 03:39  fredo
+
+	* lib/PDF/API2.pm: reverted annotations import fix
+
+2004-10-01 03:20  fredo
+
+	* lib/PDF/API2/Annotation.pm: fixed url link annotation to 7-bit
+	  ascii as per pdf-spec-1.5
+
+2004-10-01 03:06  fredo
+
+	* Makefile.PL: fixed versioning
+
+2004-10-01 02:37  fredo
+
+	* Makefile.PL: modded version hex schema
+
+2004-10-01 01:57  fredo
+
+	* Makefile.PL: implemented devel options
+
+2004-10-01 01:57  fredo
+
+	* lib/PDF/API2.pm: versioning beautify
+
+2004-10-01 00:41  fredo
+
+	* lib/PDF/API2/Version.pm: updated to current state
+
+2004-10-01 00:40  fredo
+
+	* lib/PDF/API2.pm: fixed pdf-producer to include OS
+
+2004-10-01 00:37  fredo
+
+	* MANIFEST: added back Version.pm removed tests
+
+2004-10-01 00:36  fredo
+
+	* Makefile.PL: changed versioning back to version.pm
+
+2004-09-30 23:18  fredo
+
+	* lib/PDF/API2.pm: changed file version back to cvs
+
+2004-09-22 16:12  fredo
+
+	* lib/PDF/API2/Basic/PDF/Dict.pm: fixed stream length calculation
+	  for acrobat 6
+
+2004-09-20 14:01  fredo
+
+	* lib/PDF/API2/Basic/PDF/File.pm: worked around broken dict-key by
+	  acrobat 5
+
 2004-09-20 13:22  fredo
 
 	* lib/PDF/API2.pm: added default param to fix import-rotation added

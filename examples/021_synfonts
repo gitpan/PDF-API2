@@ -149,6 +149,7 @@ foreach $fn (qw(
     
     $pdf->saveas("$0.$fn.pdf");
     $pdf->end();
+    last;
 }
 exit;
 
