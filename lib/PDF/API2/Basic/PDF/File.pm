@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.13 2004/09/20 12:01:59 fredo Exp $
+#   $Id: File.pm,v 1.14 2004/11/25 15:30:36 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -391,6 +391,7 @@ sub release
 {
     my ($self,$explicitDestruct) = @_;
 
+    return($self) unless(ref $self);
     my @tofree = values %{$self};
     map { $self->{$_}=undef; delete $self->{$_}; } keys %{$self};
     while (my $item = shift @tofree)

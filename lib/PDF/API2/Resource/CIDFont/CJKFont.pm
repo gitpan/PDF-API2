@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CJKFont.pm,v 1.11 2004/11/22 21:07:55 fredo Exp $
+#   $Id: CJKFont.pm,v 1.12 2004/11/25 15:07:21 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::CJKFont;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/22 21:07:55 $
+    ( $VERSION ) = '$Revision: 1.12 $' =~ /Revision: (\S+)\s/; # $Date: 2004/11/25 15:07:21 $
 
     $fonts = { };
     $cmap = { };
@@ -66,7 +66,7 @@ Defined Options:
 
 =cut
 
-sub _look_for_font ($) {
+sub _look_for_font {
     my $fname=lc(shift);
     $fname=~s/[^a-z0-9]+//gi;
     $fname=$alias->{$fname} if(defined $alias->{$fname});
@@ -389,6 +389,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CJKFont.pm,v $
+    Revision 1.12  2004/11/25 15:07:21  fredo
+    fixed prototype warning
+
     Revision 1.11  2004/11/22 21:07:55  fredo
     fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
 

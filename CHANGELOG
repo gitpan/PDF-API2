@@ -1,3 +1,13 @@
+2004-11-25 16:30  fredo
+
+	* lib/PDF/API2/Basic/: PDF/File.pm, PDF/Filter.pm, PDF/Objind.pm,
+	  TTF/Coverage.pm, TTF/Font.pm, TTF/Table.pm: fixed explicit
+	  release on scalar
+
+2004-11-25 16:07  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/CJKFont.pm: fixed prototype warning
+
 2004-11-24 21:13  fredo
 
 	* MANIFEST: added unifont

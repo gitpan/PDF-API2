@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Font.pm,v 1.5 2004/06/15 09:13:37 fredo Exp $
+#   $Id: Font.pm,v 1.6 2004/11/25 15:30:37 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Font;
@@ -686,6 +686,7 @@ sub release
 {
     my ($self) = @_;
 
+    return($self) unless(ref $self);
 # delete stuff that we know we can, here
 
     my @tofree = map { delete $self->{$_} } keys %{$self};
