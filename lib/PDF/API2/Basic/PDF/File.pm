@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 1.3 2003/12/08 13:05:20 Administrator Exp $
+#   $Id: File.pm,v 1.7 2004/01/19 14:09:56 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -576,7 +576,7 @@ sub readval
         {
         if ($str =~ s|^/($reg_char+)||o)
             {
-        $k = PDF::API2::Basic::PDF::Name::name_to_string ($1, $self);
+                $k = PDF::API2::Basic::PDF::Name::name_to_string ($1, $self);
                 ($value, $str) = $self->readval($str, %opts);
                 $res->{$k} = $value;
             }
@@ -727,7 +727,8 @@ sub readval
         $res = PDF::API2::Basic::PDF::Null->new;
     } else
     {
-    die "Can't parse `$str' near " . ($fh->tell()) . " length " . length($str) . ".";
+        # finally give up
+        die "Can't parse `$str' near " . ($fh->tell()) . " length " . length($str) . ".";
     }
 
     $str =~ s/^$ws_char*//os;
@@ -1077,7 +1078,7 @@ sub update
     while ($str =~ m/^\%/o) # restructured by fredo/2003-03-23
     {
         $fh->read($str, 314, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
-        $str =~ s/^\%(.*)$cr$ws_char*//so;
+        $str =~ s/^\%[^\015\012]+$ws_char*//so; # fixed for reportlab -- fredo
     }
 
     return $str;

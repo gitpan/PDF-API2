@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.11 2004/01/14 18:25:41 fredo Exp $
+#   $Id: API2.pm,v 1.13 2004/01/19 14:16:32 fredo Exp $
 #
 #=======================================================================
 
@@ -37,9 +37,9 @@ BEGIN {
 
     use vars qw( $VERSION $RELEASEVERSION $seq );
 
-    ( $VERSION ) = '$Revision: 1.11 $' =~ /Revision: (\S+)\s/; # $Date: 2004/01/14 18:25:41 $
+    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/01/19 14:16:32 $
 
-    $RELEASEVERSION = '0.40_15';
+    $RELEASEVERSION = '0.40_16';
 
     $seq="AA";
 
@@ -1126,7 +1126,7 @@ Returns a new adobe core font object.
 
 =pod
 
-See L<PDF::API2::Resource::Font::CoreFont|PDF_API2_Resource_Font_CoreFont.pm.html> for an explanation.
+See L<PDF::API2::Resource::Font::CoreFont> for an explanation.
 
 
 B<Examples:>
@@ -1159,7 +1159,7 @@ Returns a new adobe type1 font object.
 
 =pod
 
-See L<PDF::API2::Resource::Font::Postscript|PDF_API2_Resource_Font_Postscript.pm.html> for an explanation.
+See L<PDF::API2::Resource::Font::Postscript> for an explanation.
 
 B<Examples:>
 
@@ -1198,7 +1198,7 @@ Returns a new truetype or opentype font object.
 
 =pod
 
-See L<PDF::API2::Resource::CIDFont::TrueType|PDF_API2_Resource_CIDFont_TrueType.pm.html> for an explanation.
+See L<PDF::API2::Resource::CIDFont::TrueType> for an explanation.
 
 B<Examples:>
 
@@ -1230,7 +1230,7 @@ Returns a new cjk font object.
 
 =pod
 
-See L<PDF::API2::Resource::CIDFont::CJKFont|PDF_API2_Resource_CIDFont_CJKFont.pm.html> for an explanation.
+See L<PDF::API2::Resource::CIDFont::CJKFont> for an explanation.
 
 B<Examples:>
 
@@ -1398,7 +1398,7 @@ Returns a new colorspace-object based on a adobe-color-table file.
 
 =pod
 
-See L<PDF::API2::Resource::ColorSpace::Indexed::ACTFile|PDF_API2_Resource_ColorSpace_Indexed_ACTFile.pm.html> for an explanation of the file format.
+See L<PDF::API2::Resource::ColorSpace::Indexed::ACTFile> for an explanation of the file format.
 
 =cut
 
@@ -1421,7 +1421,7 @@ Returns a new colorspace-object based on the web color palette.
 
 =pod
 
-See L<PDF::API2::Resource::ColorSpace::Indexed::WebColor|PDF_API2_Resource_ColorSpace_Indexed_WebColor.pm.html> for an explanation.
+See L<PDF::API2::Resource::ColorSpace::Indexed::WebColor> for an explanation.
 
 =cut
 
@@ -1444,7 +1444,7 @@ Returns a new colorspace-object based on the hue color palette.
 
 =pod
 
-See L<PDF::API2::Resource::ColorSpace::Indexed::Hue|PDF_API2_Resource_ColorSpace_Indexed_Hue.pm.html> for an explanation.
+See L<PDF::API2::Resource::ColorSpace::Indexed::Hue> for an explanation.
 
 =cut
 
@@ -1677,6 +1677,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.13  2004/01/19 14:16:32  fredo
+    update for 0.40_16
+
+    Revision 1.12  2004/01/15 21:26:04  fredo
+    docbug: fixed inconsistent links
+
     Revision 1.11  2004/01/14 18:25:41  fredo
     release update 0.40_15
 
