@@ -69,6 +69,28 @@ $fnt=$pdf->corefont('Verdana-Bold');
         }
         $y++;
     }
+
+
+    my $csp=$pdf->colorspace_separation('All','#000');
+    $gfx->textlabel($cx,$cy+($y*$cs),$fnt,8,'All',-color=>'#000',-hspace=>85,-right=>1);
+    foreach my $x (0 .. 0xf) {
+        $gfx->fillcolor($csp,sprintf('%0.4f',$x/0xf));
+        $gfx->circle($cx+($x+1)*$cs,$cy+($y+0.5)*$cs,$cr);
+        $gfx->fillstroke;
+        $gfx->textlabel($cx+($x+1)*$cs,$cy+($y+0.5)*$cs,$fnt,8,sprintf('%0.4f',$x/0xf),-color=>'#000',-hspace=>85,-center=>1);
+    }
+    $y++;
+
+    $csp=$pdf->colorspace_separation('None','#000');
+    $gfx->textlabel($cx,$cy+($y*$cs),$fnt,8,'None',-color=>'#000',-hspace=>85,-right=>1);
+    foreach my $x (0 .. 0xf) {
+        $gfx->fillcolor($csp,sprintf('%0.4f',$x/0xf));
+        $gfx->circle($cx+($x+1)*$cs,$cy+($y+0.5)*$cs,$cr);
+        $gfx->fillstroke;
+        $gfx->textlabel($cx+($x+1)*$cs,$cy+($y+0.5)*$cs,$fnt,8,sprintf('%0.4f',$x/0xf),-color=>'#000',-hspace=>85,-center=>1);
+    }
+    $y++;
+
     delete $gfx->{Filter};
 
 $pdf->saveas("$0.pdf");

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Utils.pm,v 1.7 2004/06/15 09:13:13 fredo Exp $
+#   $Id: Utils.pm,v 1.8 2004/07/29 10:48:10 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Utils;
@@ -44,6 +44,7 @@ use PDF::API2::Basic::PDF::Array;
 use PDF::API2::Basic::PDF::Bool;
 use PDF::API2::Basic::PDF::Dict;
 use PDF::API2::Basic::PDF::Name;
+use PDF::API2::Basic::PDF::Null;
 use PDF::API2::Basic::PDF::Number;
 use PDF::API2::Basic::PDF::String;
 use PDF::API2::Basic::PDF::Literal;
@@ -51,7 +52,7 @@ use PDF::API2::Basic::PDF::Literal;
 use Exporter;
 use vars qw(@EXPORT @ISA);
 @ISA = qw(Exporter);
-@EXPORT = qw(PDFBool PDFArray PDFDict PDFName PDFNum PDFStr PDFUtf
+@EXPORT = qw(PDFBool PDFArray PDFDict PDFLiteral PDFName PDFNull PDFNum PDFStr PDFUtf
              asPDFBool asPDFName asPDFNum asPDFStr);
 # no warnings qw(uninitialized);
 
@@ -96,6 +97,16 @@ sub PDFName
 { PDF::API2::Basic::PDF::Name->new(@_); }
 
 
+=head2 PDFNull
+
+Creates a null via PDF::API2::Basic::PDF::Null->new
+
+=cut
+
+sub PDFNull
+{ PDF::API2::Basic::PDF::Null->new(@_); }
+
+
 =head2 PDFNum
 
 Creates a number via PDF::API2::Basic::PDF::Number->new
@@ -135,7 +146,7 @@ sub PDFLiteral
 
 =head2 asPDFBool
 
-Returns a boolean value in PDF output form
+Returns a literal value in PDF output form
 
 =cut
 
@@ -185,32 +196,6 @@ sub unpacku
     my (@res);
 
     return (unpack("U*", $str));
-#    return (unpack("U*", $str)) if ($^V && $^V ge v5.6.0);
-#    return (unpack("U*", $str)) if ($] >= 5.006);       # so much for $^V!
-#
-#    $str = "$str";              # copy $str
-#    while (length($str))        # Thanks to Gisle Aas for some of his old code
-#    {
-#        $str =~ s/^[\x80-\xBF]+//o;
-#        if ($str =~ s/^([\x00-\x7F]+)//o)
-#        { push(@res, unpack("C*", $1)); }
-#        elsif ($str =~ s/^([\xC0-\xDF])([\x80-\xBF])//o)
-#        { push(@res, ((ord($1) & 0x1F) << 6) | (ord($2) & 0x3F)); }
-#        elsif ($str =~ s/^([\0xE0-\xEF])([\x80-\xBF])([\x80-\xBF])//o)
-#        { push(@res, ((ord($1) & 0x0F) << 12)
-#                          | ((ord($2) & 0x3F) << 6)
-#                          | (ord($3) & 0x3F)); }
-#        elsif ($str =~ s/^([\xF0-\xF7])([\x80-\xBF])([\x80-\xBF])([\x80-\xBF])//o)
-#        {
-#            my ($b1, $b2, $b3, $b4) = (ord($1), ord($2), ord($3), ord($4));
-#            push(@res, ((($b1 & 0x07) << 8) | (($b2 & 0x3F) << 2)
-#                            | (($b3 & 0x30) >> 4)) + 0xD600);  # account for offset
-#            push(@res, ((($b3 & 0x0F) << 6) | ($b4 & 0x3F)) + 0xDC00);
-#        }
-#        elsif ($str =~ s/^[\xF8-\xFF][\x80-\xBF]*//o)
-#        { }
-#    }
-#    @res;
 }
 
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: int2of5.pm,v 1.6 2004/06/15 09:14:54 fredo Exp $
+#   $Id: int2of5.pm,v 1.7 2004/07/29 11:06:19 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Form::BarCode::int2of5;
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Form::BarCode );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:54 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/29 11:06:19 $
 
 }
 
@@ -84,6 +84,7 @@ my @bar25interleaved=qw(
 );
 
 sub encode {
+    my $self=shift @_;
     my $string=shift @_;
     $string=~ tr/0123456789//cd;
     my ($enc,@bar);
@@ -120,6 +121,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: int2of5.pm,v $
+    Revision 1.7  2004/07/29 11:06:19  fredo
+    fixed encode
+
     Revision 1.6  2004/06/15 09:14:54  fredo
     removed cr+lf
 

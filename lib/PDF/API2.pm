@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.55 2004/07/23 13:41:11 fredo Exp $
+#   $Id: API2.pm,v 1.58 2004/08/25 02:59:25 fredo Exp $
 #
 #=======================================================================
 
@@ -37,8 +37,8 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.55 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
-    # $Date: 2004/07/23 13:41:11 $
+    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.58 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
+    # $Date: 2004/08/25 02:59:25 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -63,6 +63,7 @@ BEGIN {
 
     use PDF::API2::Resource::Font::CoreFont;
     use PDF::API2::Resource::Font::Postscript;
+    use PDF::API2::Resource::Font::BdFont;
     use PDF::API2::Resource::Font::SynFont;
     use PDF::API2::Resource::CIDFont::TrueType;
     use PDF::API2::Resource::CIDFont::CJKFont;
@@ -101,11 +102,12 @@ BEGIN {
     use Memoize;
 }
 
-memoize('PDF::API2::corefont');
-memoize('PDF::API2::psfont');
-memoize('PDF::API2::ttfont');
-memoize('PDF::API2::synfont');
-memoize('PDF::API2::cjkfont');
+# memoize('PDF::API2::corefont');
+# memoize('PDF::API2::psfont');
+# memoize('PDF::API2::ttfont');
+# memoize('PDF::API2::bdfont');
+# memoize('PDF::API2::synfont');
+# memoize('PDF::API2::cjkfont');
 
 
 =head1 NAME
@@ -1387,6 +1389,17 @@ sub synfont {
     return($obj);
 }
 
+sub bdfont {
+    my ($self,@opts)=@_;
+
+    my $obj=PDF::API2::Resource::Font::BdFont->new_api($self,@opts);
+
+    $self->resource('Font',$obj->name,$obj,$self->{reopened});
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
 =back
 
 =head1 IMAGE METHODS
@@ -2011,6 +2024,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.58  2004/08/25 02:59:25  fredo
+    disabled memoize since long-running scripts bug from reused adresses
+
+    Revision 1.57  2004/07/24 23:10:55  fredo
+    fixed memoize bug for bdf fonts
+
+    Revision 1.56  2004/07/24 23:09:26  fredo
+    added bdf fonts
+
     Revision 1.55  2004/07/23 13:41:11  fredo
     fixed in decoding info dictionary
 

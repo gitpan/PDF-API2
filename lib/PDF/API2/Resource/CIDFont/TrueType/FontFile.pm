@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: FontFile.pm,v 1.6 2004/06/15 09:14:52 fredo Exp $
+#   $Id: FontFile.pm,v 1.7 2004/08/25 03:03:27 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -49,7 +49,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:52 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/08/25 03:03:27 $
 
 }
 
@@ -71,7 +71,6 @@ sub new {
     $data->{iscff} = (defined $font->{'CFF '}) ? 1 : 0;
 
     $self->{Subtype}=PDFName('Type1C') if($data->{iscff});
-#    $self->{Subtype}=PDFName('CIDFontType0C') if($data->{iscff});
 
     $data->{fontname}=$font->{'name'}->read->find_name(4);
     $data->{apiname}=$data->{fontname};
@@ -241,6 +240,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: FontFile.pm,v $
+    Revision 1.7  2004/08/25 03:03:27  fredo
+    removed fuss
+
     Revision 1.6  2004/06/15 09:14:52  fredo
     removed cr+lf
 

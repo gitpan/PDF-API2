@@ -46,15 +46,10 @@ print STDERR <<'EOT';
 |_|  |_|_|_|  |_|   |____/|_|     /_/   \_\_|  |___| |_____|
 EOT
 
-eval { require $versionfile; };
-
-print <<EOT;
-                                        VERSION $PDF::API2::VERSION
-EOT
 
 WriteMakefile (
     NAME         =>  "PDF::API2",
-    VERSION      =>  $PDF::API2::VERSION,
+    VERSION_FROM =>  $versionfile,
     AUTHOR       =>  "areibens\@cpan.org",
     ABSTRACT     =>  "TheNextGen PDF Create/Modify API",
     dist         =>  {

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Outline.pm,v 1.7 2004/06/15 09:11:38 fredo Exp $
+#   $Id: Outline.pm,v 1.8 2004/07/29 10:47:39 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:11:38 $
+    ( $VERSION ) = '$Revision: 1.8 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/29 10:47:39 $
 
 }
 
@@ -254,7 +254,7 @@ sub dest {
         $self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
     } elsif(defined $opts{-xyz}) {
         die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-xyz}} == 3);
-        $self->{Dest}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
+        $self->{Dest}=PDFArray($page,PDFName('XYZ'),map { $_==0 ? PDFNull():PDFNum($_)} @{$opts{-xyz}});
     }
     return($self);
 }
@@ -356,6 +356,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Outline.pm,v $
+    Revision 1.8  2004/07/29 10:47:39  fredo
+    fixed "null vs. 0" bug of -xyz option
+
     Revision 1.7  2004/06/15 09:11:38  fredo
     removed cr+lf
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: PNM.pm,v 1.5 2004/06/15 09:14:54 fredo Exp $
+#   $Id: PNM.pm,v 1.6 2004/07/24 23:38:47 fredo Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::PNM;
@@ -42,7 +42,7 @@ BEGIN {
 
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:54 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/24 23:38:47 $
 }
 
 =item $res = PDF::API2::Resource::XObject::Image::PNM->new $pdf, $file [, $name]
@@ -84,6 +84,81 @@ sub new_api {
     return($obj);
 }
 
+# READPPMHEADER 
+# taken from Image::PBMLib
+# Copyright by Benjamin Elijah Griffin (28 Feb 2003)
+#
+sub readppmheader($) {
+  my $gr = shift; # input file glob ref
+  my $in = '';
+  my $no_comments;
+  my %info;
+  my $rc;
+  $info{error} = undef;
+  
+  $rc = read($gr, $in, 3);
+
+  if (!defined($rc) or $rc != 3) {
+    $info{error} = 'Read error or EOF';
+    return \%info;
+  }
+
+  if ($in =~ /^P([123456])\s/) {
+    $info{type} = $1;
+    if ($info{type} > 3) {
+      $info{raw} = 1;
+    } else {
+      $info{raw} = 0;
+    }
+
+    if ($info{type} == 1 or $info{type} == 4) {
+      $info{max} = 1;
+      $info{bgp} = 'b';
+    } elsif ($info{type} == 2 or $info{type} == 5) {
+      $info{bgp} = 'g';
+    } else {
+      $info{bgp} = 'p';
+    }
+
+    while(1) {
+      $rc = read($gr, $in, 1, length($in));
+      if (!defined($rc) or $rc != 1) {
+        $info{error} = 'Read error or EOF';
+        return \%info;
+      }
+
+      $no_comments = $in;
+      $info{comments} = '';
+      while ($no_comments =~ /#.*\n/) {
+        $no_comments =~ s/#(.*\n)/ /;
+        $info{comments} .= $1;
+      }
+
+      if ($info{bgp} eq 'b') {
+        if ($no_comments =~ /^P\d\s+(\d+)\s+(\d+)\s/) {
+            $info{width}  = $1;
+            $info{height} = $2;
+            last;
+        }
+      } else {
+        if ($no_comments =~ /^P\d\s+(\d+)\s+(\d+)\s+(\d+)\s/) {
+            $info{width}  = $1;
+            $info{height} = $2;
+            $info{max}    = $3;
+            last;
+        }
+      }
+    } # while reading header
+
+    $info{fullheader} = $in;
+
+  } else {
+    $info{error} = 'Wrong magic number';
+  }
+
+  return \%info;
+}
+
 sub read_pnm {
     my $self = shift @_;
     my $pdf = shift @_;
@@ -93,70 +168,59 @@ sub read_pnm {
     my ($w,$h,$bpc,$cs,$img,@img)=(0,0,'','','');
     open(INF,$file);
     binmode(INF,':raw');
-    $buf=<INF>;
-    $buf.=<INF>;
-    ($t)=($buf=~/^(P\d+)\s+/);
-    if($t eq 'P4') {
-        ($t,$w,$h)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+/);
+    my $info=readppmheader(INF);
+    if($info->{type} == 4) {
         $bpc=1;
-        $s=0;
-        for($line=($w*$h/8);$line>0;$line--) {
-            read(INF,$buf,1);
-            push(@img,$buf);
-        }
+        read(INF,$self->{' stream'},($info->{width}*$info->{height}/8));
         $cs='DeviceGray';
-    } elsif($t eq 'P5') {
+    } elsif($info->{type} == 5) {
         $buf.=<INF>;
-        ($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
-        if($bpc==255){
+        if($info->{max}==255){
             $s=0;
         } else {
-            $s=255/$bpc;
-        }
-        $bpc=8;
-        for($line=($w*$h);$line>0;$line--) {
-            read(INF,$buf,1);
-            if($s>0) {
-                $buf=pack('C',(unpack('C',$buf)*$s));
-            }
-            push(@img,$buf);
-        }
-        $cs='DeviceGray';
-    } elsif($t eq 'P6') {
-        $buf.=<INF>;
-        ($t,$w,$h,$bpc)=($buf=~/^(P\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+/);
-        if($bpc==255){
-            $s=0;
-        } else {
-            $s=255/$bpc;
+            $s=255/$info->{max};
         }
         $bpc=8;
         if($s>0) {
-            for($line=($w*$h);$line>0;$line--) {
+            for($line=($info->{width}*$info->{height});$line>0;$line--) {
                 read(INF,$buf,1);
-                push(@img,pack('C',(unpack('C',$buf)*$s)));
-                read(INF,$buf,1);
-                push(@img,pack('C',(unpack('C',$buf)*$s)));
-                read(INF,$buf,1);
-                push(@img,pack('C',(unpack('C',$buf)*$s)));
+                $self->{' stream'}.=pack('C',(unpack('C',$buf)*$s));
             }
         } else {
-            @img=<INF>;
+            read(INF,$self->{' stream'},$info->{width}*$info->{height});
+        }
+        $cs='DeviceGray';
+    } elsif($info->{type} == 6) {
+        if($info->{max}==255){
+            $s=0;
+        } else {
+            $s=255/$info->{max};
+        }
+        $bpc=8;
+        if($s>0) {
+            for($line=($info->{width}*$info->{height});$line>0;$line--) {
+                read(INF,$buf,1);
+                $self->{' stream'}.=pack('C',(unpack('C',$buf)*$s));
+                read(INF,$buf,1);
+                $self->{' stream'}.=pack('C',(unpack('C',$buf)*$s));
+                read(INF,$buf,1);
+                $self->{' stream'}.=pack('C',(unpack('C',$buf)*$s));
+            }
+        } else {
+            read(INF,$self->{' stream'},$info->{width}*$info->{height}*3);
         }
         $cs='DeviceRGB';
     }
     close(INF);
 
-    $self->width($w);
-    $self->height($h);
+    $self->width($info->{width});
+    $self->height($info->{height});
 
     $self->bpc($bpc);
 
     $self->filters('FlateDecode');
 
     $self->colorspace($cs);
-
-    $self->{' stream'}=join('',@img);
 
     return($self);
 }
@@ -172,6 +236,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: PNM.pm,v $
+    Revision 1.6  2004/07/24 23:38:47  fredo
+    added new headerparser and simplified loading
+
     Revision 1.5  2004/06/15 09:14:54  fredo
     removed cr+lf
 

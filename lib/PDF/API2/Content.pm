@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.13 2004/06/21 22:33:36 fredo Exp $
+#   $Id: Content.pm,v 1.14 2004/07/29 10:46:37 fredo Exp $
 #
 #=======================================================================
 
@@ -45,7 +45,7 @@ BEGIN {
     use Encode;
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
 
-    ( $VERSION ) = '$Revision: 1.13 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/21 22:33:36 $
+    ( $VERSION ) = '$Revision: 1.14 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/29 10:46:37 $
 
 }
 
@@ -1327,80 +1327,6 @@ sub text {
   return($wd);
 }
 
-#sub _text_fancy {
-#  my ($self,$text,%opt)=@_;
-#  my %state1=();
-#  my %state2=();
-#  my $wd=0;
-#  my @txt;
-#  if(! $opt{-ucs2}) {
-#    @txt=split(/\s+/,$text);
-#    $text=join(' ',@txt);
-#  }
-#  if((defined $opt{-font})
-#    || (defined $opt{-size})
-#    || (defined $opt{-color})
-#    || (defined $opt{-underline})
-#  ) {
-#    %state1=$self->textstate;
-#
-#    # look into font options
-#    if(defined $opt{-font} && defined $opt{-size}) {
-#      $self->font($opt{-font},$opt{-size});
-#    } elsif(defined $opt{-font}) {
-#      $self->font($opt{-font},$self->{' fontsize'});
-#    } elsif(defined $opt{-size}) {
-#      $self->font($self->{' font'},$opt{-size});
-#    }
-#
-#    $self->fillcolor(@{$opt{-color}}) if(defined $opt{-color});
-#
-#    %state2=$self->textstate;
-#
-#    if(defined $opt{-underline}) {
-#      if(defined $opt{-indent}) {
-#        $self->matrix_update($opt{-indent},0);
-#      }
-#      my $wd=$self->advancewidth($text,%opt);
-#      if($wd) {
-#        my ($x1,$y1)=$self->textpos;
-#        $self->matrix_update($wd,0);
-#        my ($x2,$y2)=$self->textpos;
-#
-#        my $x3=$x1+(($y2-$y1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
-#        my $y3=$y1+(($x2-$x1)/$wd)*($self->{' font'}->underlineposition*$self->{' fontsize'}/1000);
-#
-#        my $x4=$x3+($x2-$x1);
-#        my $y4=$y3+($y2-$y1);
-#        $self->add('ET');
-#        PDF::API2::Content::save($self);
-#        PDF::API2::Content::linewidth($self,$opt{-underline});
-#        PDF::API2::Content::strokecolor($self,@{$state2{fillcolor}});
-#        PDF::API2::Gfx::move($self,$x3,$y3);
-#        PDF::API2::Gfx::line($self,$x4,$y4);
-#        PDF::API2::Gfx::stroke($self);
-#        PDF::API2::Content::restore($self);
-#        $self->add('BT');
-#        $self->textstate(%state2);
-#      }
-#    }
-#  }
-#  $wd=$self->text($text,%opt);
-#  if((defined $opt{-font})
-#    || (defined $opt{-size})
-#    || (defined $opt{-color})
-#    || (defined $opt{-underline})
-#  ) {
-#    delete $state1{matrix};
-#    delete $state1{rotate};
-#    delete $state1{scale};
-#    delete $state1{skew};
-#    delete $state1{translate};
-#    $self->textstate(%state1);
-#  }
-#  return($wd);
-#}
-
 =item $txt->text_center $text
 
 =cut
@@ -1421,136 +1347,118 @@ sub text_right {
   return $self->text($text,-indent=>-$width);
 }
 
-#=item ($width, $overflow) = $txt->text_justify $text , -width => $width [, %options ]
-#
-#If -overflow is given, $overflow will contain any text, which wont
-#fit into width without exessive scaling.
-#
-#If -underflow is given, and $text is smaller than $width
-#the text will be typeset using $txt->text.
-#
-#if -less is given, text overflow will be calculated using minimal number of words.
-#
-#You can use the -utf8 option to give the text in utf8.
-#
-#The returned width is that of the typeset text.
-#
-#=cut
+=item $width = $txt->text_justified $text, $width
 
-sub _text_justify {
-  my ($self,$text,%opts)=@_;
+** DEVELOPER METHOD **
 
-  my @texts;
-  my $spacer;
+=cut
 
-  if($opts{-ucs2}) {
-    @texts=split(/\x00\x20/,$text);
-    $spacer="\x00\x20";
-  } else {
-    @texts=split(/\s+/,$text);
-    $spacer=" ";
-  }
-
-  $text=join($spacer,@texts);
-  my ($overflow,$ofw);
-  my $indent=$opts{-indent}||0;
-  if($opts{-overflow}) {
-    my @linetext=();
-    while(($self->advancewidth(join($spacer,@linetext),%opts) < ($opts{-width}-$indent)) && scalar @texts){
-      push @linetext, shift @texts;
-    }
-    if($opts{-less} && (scalar @linetext > 1) && ($self->advancewidth(join($spacer,@linetext),%opts) > ($opts{-width}-$indent))) {
-      unshift @texts, pop @linetext;
-    }
-    $overflow=join($spacer,@texts);
-    $text=join($spacer,@linetext);
-  } else {
-    $overflow='';
-    $text=join($spacer,@texts);
-  }
-
-  if($opts{-test}) {
-    if($opts{-underflow}
-      && ($self->advancewidth($text,%opts) < ($opts{-width}-$indent))
-      && (length($overflow)==0)
-    ) {
-      $ofw=$indent+$self->advancewidth($text,%opts);
-    } else {
-      $ofw=$opts{-width};
-    }
-  } else {
-    if($opts{-underflow}
-      && ($self->advancewidth($text,%opts) < ($opts{-width}-$indent))
-      && (length($overflow)==0)
-    ) {
-      $ofw=$indent+$self->advancewidth($text,%opts);
-      $self->text($text,%opts);
-      return ($ofw,'');
-    } else {
-      $ofw=$opts{-width};
-    }
-
-    my @wds=$self->{' font'}->width_array($text,%opts);
-    my $swt=$self->{' font'}->width(' ');
-    my $wth=$self->advancewidth($text,%opts);
-
+sub text_justified {
+    my ($self,$text,$width)=@_;
     my $hs=$self->hspace;
-    $self->hspace($hs*($opts{-width}-$indent)/$wth) unless($opts{-left});
-    $ofw=$self->text($text,%opts);
+    $self->hspace($hs*($width/$self->advancewidth($text)));
+    $self->text($text);
     $self->hspace($hs);
-  }
-  return ($ofw,$overflow);
+    return($width);
 }
 
-#=item ($w,$y,$text) = $txt->paragraph  $text, %options,
-#-x => $xorg,
-#-y => $yorg,
-#-w => $width,
-#-h => $height,
-#-flindent => $firstlineindent,
-#-lead => $lead
-#
-#You can use the -utf8 option to give the text in utf8.
-#
-#  $w ... witdth of the text on the last line.
-#  $y ... y-coord of the last line.
-#  $text ... any left-over text which did not fit into the paragraph
-#
-#You must give the -rel option if you require awareness of previously
-#set relative transformations.
-#
-#=cut
+=item ($width,$chunktext) = $txt->text_fill_left $text, $width
 
-sub _paragraph {
-  my ($self,$text,%opt)=@_;
-  my $x=$opt{-x}||0;
-  my $y=$opt{-y}||0;
-  my $ht=$opt{-h}||0;
-  my $wd=$opt{-w}||0;
-  my $flidt=$opt{-flindent}||0;
-  my $idt=$flidt;
-  my $h=$ht;
-  my $sz=$self->{' fontsize'};
-  my @txt;
-  my $spacer;
+** DEVELOPER METHOD **
 
-  $self->lead($opt{-lead} || $self->lead() || -$sz);
+=cut
 
-  if($opt{-rel}) {
-    $self->transform_rel(-translate=>[$x,$y]);
-  } else {
-    $self->translate($x,$y);
-  }
-  $ht+=$self->lead();
-  my $ofw=0;
-  my $first=1;
-  while( ($ht>0) && (length($text)>0) ) {
-    ($ofw,$text)=$self->text_justify($text,-width=>$wd,-indent=>($first?$flidt:0),-overflow=>1,-less=>1,-underflow=>1,%opt);
-    $self->transform_rel(-translate=>[-$ofw,$self->lead()]) if(length($text)>0);
-    $ht+=$self->lead() if(length($text)>0);
-    $first=0;
-  }
-  return( $ofw,$y+$ht-$h,$text);
+sub text_fill_left {
+    my ($self,$text,$width)=@_;
+    my @txt=split(/\s/,$text);
+    my @line=();
+    my $save=$";
+    $"=' ';
+    while($self->advancewidth("@line")<$width) {
+        push @line,(shift @txt);
+    }
+    if((scalar @line > 1) && ($self->advancewidth("@line") > $width)) {
+        unshift @txt,pop @line;
+    }
+    $width=$self->text("@line");
+    my $ret="@txt";
+    $"=$save;
+    return($width,$ret);
+}
+
+=item ($width,$chunktext) = $txt->text_fill_right $text, $width
+
+** DEVELOPER METHOD **
+
+=cut
+
+sub text_fill_right {
+    my ($self,$text,$width)=@_;
+    my @txt=split(/\s/,$text);
+    my @line=();
+    my $save=$";
+    $"=' ';
+    while($self->advancewidth("@line")<$width) {
+        push @line,(shift @txt);
+    }
+    if((scalar @line > 1) && ($self->advancewidth("@line") > $width)) {
+        unshift @txt,pop @line;
+    }
+    $width=$self->text_right("@line");
+    my $ret="@txt";
+    $"=$save;
+    return($width,$ret);
+}
+
+=item ($width,$chunktext) = $txt->text_fill_justified $text, $width
+
+** DEVELOPER METHOD **
+
+=cut
+
+sub text_fill_justified {
+    my ($self,$text,$width)=@_;
+    my @txt=split(/\s/,$text);
+    my @line=();
+    my $hs=$self->hspace;
+    my $save=$";
+    $"=' ';
+    while($self->advancewidth("@line")<$width) {
+        push @line,(shift @txt);
+    }
+    if((scalar @txt > 0) || ($self->advancewidth("@line") > $width)) {
+        $self->hspace($hs*($width/$self->advancewidth("@line")));
+    }
+    $width=$self->text("@line");
+    $self->hspace($hs);
+    my $ret="@txt";
+    $"=$save;
+    return($width,$ret);
+}
+
+=item $txt->paragraph $text, $width
+
+** DEVELOPER METHOD **
+
+B<Example:>
+
+    $txt->font($fnt,24);
+    $txt->lead(-30);
+    $txt->translate(100,700);
+    $txt->paragraph('long paragraph here ...',400);
+
+=cut
+
+sub paragraph {
+    my ($self,$text,$width)=@_;
+    my @line=();
+    my $nwidth=0;
+    while(length($text)>0) {
+        ($nwidth,$text)=$self->text_fill_justified($text,$width);
+        $self->nl;
+    }    
+    
+    return($self);
 }
 
 =item $hyb->textend
@@ -1665,6 +1573,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 1.14  2004/07/29 10:46:37  fredo
+    added new text_fill_* methods and a simple paragraph
+
     Revision 1.13  2004/06/21 22:33:36  fredo
     added basic pattern/shading handling
 

@@ -1,3 +1,56 @@
+2004-08-25 05:03  fredo
+
+	* lib/PDF/API2/Resource/CIDFont/TrueType/FontFile.pm: removed fuss
+
+2004-08-25 04:59  fredo
+
+	* lib/PDF/API2.pm: disabled memoize since long-running scripts bug
+	  from reused adresses
+
+2004-07-29 13:06  fredo
+
+	* lib/PDF/API2/Resource/XObject/Form/BarCode/int2of5.pm: fixed
+	  encode
+
+2004-07-29 12:48  fredo
+
+	* lib/PDF/API2/Basic/PDF/Utils.pm: added PDFLiteral and PDFNull
+	  methods
+
+2004-07-29 12:47  fredo
+
+	* lib/PDF/API2/Outline.pm: fixed "null vs. 0" bug of -xyz option
+
+2004-07-29 12:46  fredo
+
+	* lib/PDF/API2/Content.pm: added new text_fill_* methods and a
+	  simple paragraph
+
+2004-07-25 01:38  fredo
+
+	* lib/PDF/API2/Resource/XObject/Image/PNM.pm: added new
+	  headerparser and simplified loading
+
+2004-07-25 01:38  fredo
+
+	* lib/PDF/API2/Basic/PDF/Filter.pm: some
+
+2004-07-25 01:33  fredo
+
+	* lib/PDF/API2/Resource/Font/BdFont.pm: added compression
+
+2004-07-25 01:10  fredo
+
+	* lib/PDF/API2.pm: fixed memoize bug for bdf fonts
+
+2004-07-25 01:09  fredo
+
+	* lib/PDF/API2.pm: added bdf fonts
+
+2004-07-25 01:08  fredo
+
+	* lib/PDF/API2/Resource/Font/BdFont.pm: genesis
+
 2004-07-23 15:41  fredo
 
 	* lib/PDF/API2.pm: fixed in decoding info dictionary
