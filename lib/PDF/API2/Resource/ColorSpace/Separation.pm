@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Separation.pm,v 1.4 2004/06/15 09:14:52 fredo Exp $
+#   $Id: Separation.pm,v 1.6 2004/07/20 20:28:45 fredo Exp $
 #
 #=======================================================================
 
@@ -43,7 +43,7 @@ BEGIN {
     use Math::Trig;
 
     @ISA = qw( PDF::API2::Resource::ColorSpace );
-    ( $VERSION ) = '$Revision: 1.4 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:52 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/20 20:28:45 $
 
 }
 
@@ -66,6 +66,7 @@ sub new {
 
     my $csname='DeviceRGB';
     $clr[0]=lc($clr[0]);
+    $self->color(@clr);
     if($clr[0]=~/^[a-z\#\!]+/) {
         # colorname or #! specifier
         # with rgb target colorspace
@@ -127,10 +128,10 @@ sub new {
     } else {
         die 'invalid color specification.';
     }
-
+    $self->type($csname);
     $pdf->new_obj($fct);
     $self->add_elements(PDFName('Separation'), PDFName($name), PDFName($csname), $fct);
-
+    $self->tintname($name);
     return($self);
 }
 
@@ -150,6 +151,35 @@ sub new_api {
     return($obj);
 }
 
+=item @color = $res->color
+
+Returns the base-color of the Separation-Colorspace.
+
+=cut
+
+sub color {
+    my $self=shift @_;
+    if(scalar @_ >0 && defined($_[0])) {
+        $self->{' color'}=[@_];
+    }
+    return(@{$self->{' color'}});
+}
+
+=item $tintname = $res->tintname $tintname
+
+Returns the tint-name of the Separation-Colorspace.
+
+=cut
+
+sub tintname {
+    my $self=shift @_;
+    if(scalar @_ >0 && defined($_[0])) {
+        $self->{' tintname'}=[@_];
+    }
+    return(@{$self->{' tintname'}});
+}
+
+
 sub param {
     my $self=shift @_;
     return($_[0]);
@@ -163,6 +193,12 @@ __END__
 =head1 HISTORY
 
     $Log: Separation.pm,v $
+    Revision 1.6  2004/07/20 20:28:45  fredo
+    added tintname accessor
+
+    Revision 1.5  2004/07/15 14:14:16  fredo
+    added type and color accessor
+
     Revision 1.4  2004/06/15 09:14:52  fredo
     removed cr+lf
 

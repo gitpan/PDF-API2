@@ -1,6 +1,5 @@
 AUTHORS
 CHANGELOG
-CHANGELOG.PRE
 CONTACT
 COPYING
 INSTALL
@@ -82,6 +81,7 @@ lib/PDF/API2/Resource/ColorSpace/Indexed/ACTFile.pm
 lib/PDF/API2/Resource/ColorSpace/Indexed/Hue.pm
 lib/PDF/API2/Resource/ColorSpace/Indexed/WebColor.pm
 lib/PDF/API2/Resource/ColorSpace/Separation.pm
+lib/PDF/API2/Resource/ColorSpace/DeviceN.pm
 lib/PDF/API2/Resource/CIDFont/CJKFont.pm
 lib/PDF/API2/Resource/CIDFont/TrueType.pm
 lib/PDF/API2/Resource/CIDFont/TrueType/FontFile.pm

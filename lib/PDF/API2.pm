@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.52 2004/06/22 01:33:43 fredo Exp $
+#   $Id: API2.pm,v 1.54 2004/07/21 08:07:17 fredo Exp $
 #
 #=======================================================================
 
@@ -37,8 +37,8 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.52 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
-    # $Date: 2004/06/22 01:33:43 $
+    ($VERSION) = map { my $base=0.40; my $rev=('$Revision: 1.54 $' =~ /Revision: (\S+)\s/)[0]; my $revf=($rev=~m|^(\d+)\.|)[0]-1; my $revp=($rev=~m|\.(\d+)$|)[0]; my $revx=($revp=~m|^(\d+)\d\d$|)[0] || 0; my $rev0=($revp=~m|(\d?\d)$|)[0] || 0; $base+=$revf/100; $base=sprintf('%0.2f%s%02i',$base,($revf%2==1?sprintf('%01i',$revx):($revx==0?'_':chr(96+$revx))),$rev0); $base; } (1);
+    # $Date: 2004/07/21 08:07:17 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw( /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ) );
@@ -87,6 +87,7 @@ BEGIN {
     use PDF::API2::Resource::ColorSpace::Indexed::WebColor;
 
     use PDF::API2::Resource::ColorSpace::Separation;
+    use PDF::API2::Resource::ColorSpace::DeviceN;
     
     use Compress::Zlib;
 
@@ -1496,6 +1497,120 @@ sub image_gd {
     return($obj);
 }
 
+#=item $img = $pdf->image_rgb $file_or_ref, %options
+#
+#Returns a new image object from a raw RGB image.
+#
+#B<Options:> C<-width>, C<-height>, C<-bits> (required).
+#
+#=cut
+#
+#sub image_rgb {
+#    my ($self,$rgb,@opts)=@_;
+#
+#    my $obj=PDF::API2::Resource::XObject::Image::RGBA->new_api($self,$rgb,-alpha=>0,@opts);
+#
+#    $self->resource('XObject',$obj->name,$obj);
+#
+#    $self->{pdf}->out_obj($self->{pages});
+#    return($obj);
+#}
+
+#=item $img = $pdf->image_rgba $file_or_ref, %options
+#
+#Returns a new image object from a raw RGBA image.
+#
+#B<Options:> C<-width>, C<-height>, C<-bits> (required).
+#
+#=cut
+#
+#sub image_rgba {
+#    my ($self,$rgb,@opts)=@_;
+#
+#    my $obj=PDF::API2::Resource::XObject::Image::RGBA->new_api($self,$rgb,-alpha=>1,@opts);
+#
+#    $self->resource('XObject',$obj->name,$obj);
+#
+#    $self->{pdf}->out_obj($self->{pages});
+#    return($obj);
+#}
+
+#=item $img = $pdf->image_cmyk $file_or_ref, %options
+#
+#Returns a new image object from a raw CMYK image.
+#
+#B<Options:> C<-width>, C<-height>, C<-bits> (required).
+#
+#=cut
+#
+#sub image_cmyk {
+#    my ($self,$rgb,@opts)=@_;
+#
+#    my $obj=PDF::API2::Resource::XObject::Image::CMYKA->new_api($self,$rgb,-alpha=>0,@opts);
+#
+#    $self->resource('XObject',$obj->name,$obj);
+#
+#    $self->{pdf}->out_obj($self->{pages});
+#    return($obj);
+#}
+
+#=item $img = $pdf->image_cmyka $file_or_ref, %options
+#
+#Returns a new image object from a raw CMYKA image.
+#
+#B<Options:> C<-width>, C<-height>, C<-bits> (required).
+#
+#=cut
+#
+#sub image_cmyka {
+#    my ($self,$rgb,@opts)=@_;
+#
+#    my $obj=PDF::API2::Resource::XObject::Image::CMYKA->new_api($self,$rgb,-alpha=>1,@opts);
+#
+#    $self->resource('XObject',$obj->name,$obj);
+#
+#    $self->{pdf}->out_obj($self->{pages});
+#    return($obj);
+#}
+
+#=item $img = $pdf->image_indexed $file_or_ref, %options
+#
+#Returns a new image object from a raw indexed image.
+#
+#B<Options:> C<-width>, C<-height>, C<-bits>, C<-colorspace> (required).
+#
+#=cut
+#
+#sub image_indexed {
+#    my ($self,$rgb,@opts)=@_;
+#
+#    my $obj=PDF::API2::Resource::XObject::Image::Indexed->new_api($self,$rgb,-alpha=>0,@opts);
+#
+#    $self->resource('XObject',$obj->name,$obj);
+#
+#    $self->{pdf}->out_obj($self->{pages});
+#    return($obj);
+#}
+
+#=item $img = $pdf->image_indexedalpha $file_or_ref, %options
+#
+#Returns a new image object from a raw indexed-alpha image.
+#
+#B<Options:> C<-width>, C<-height>, C<-bits>, C<-colorspace> (required).
+#
+#=cut
+#
+#sub image_indexedalpha {
+#    my ($self,$rgb,@opts)=@_;
+#
+#    my $obj=PDF::API2::Resource::XObject::Image::Indexed->new_api($self,$rgb,-alpha=>1,@opts);
+#
+#    $self->resource('XObject',$obj->name,$obj);
+#
+#    $self->{pdf}->out_obj($self->{pages});
+#    return($obj);
+#}
+
 =pod
 
 B<Examples:>
@@ -1584,7 +1699,7 @@ sub colorspace_hue {
 
 =item $cs = $pdf->colorspace_separation $tint, $color
 
-Returns a new limited separation colorspace-object based on the parameters.
+Returns a new separation colorspace-object based on the parameters.
 
 =cut
 
@@ -1598,14 +1713,45 @@ I<$color> must be a valid color-specification limited to:
 
 The colorspace model for will be automatically chosen based on the specified color.
 
-B<WARNING:> this is NOT YET a full colorspace object, so it can only be used 
-for gray-level bitmap-images.
-
 =cut
 
 sub colorspace_separation {
     my ($self,$name,@clr)=@_;
     my $obj=PDF::API2::Resource::ColorSpace::Separation->new_api($self,$name,@clr);
+
+    $self->resource('ColorSpace',$obj->name,$obj);
+
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
+}
+
+=item $cs = $pdf->colorspace_devicen \@tintCSx [, $samples]
+
+Returns a new DeviceN colorspace-object based on the parameters.
+
+B<Example:> 
+
+    $cy = $pdf->colorspace_separation('Cyan',    '%f000');
+    $ma = $pdf->colorspace_separation('Magenta', '%0f00');
+    $ye = $pdf->colorspace_separation('Yellow',  '%00f0');
+    $bk = $pdf->colorspace_separation('Black',   '%000f');
+    $pms023 = $pdf->colorspace_separation('PANTONE 032CV', '%0ff0');
+
+    $dncs = $pdf->colorspace_devicen( [ $cy,$ma,$ye,$bk,$pms023 ] );
+    
+=cut
+
+=pod
+
+The colorspace model for will be automatically chosen based on the first colorspace specified.
+
+=cut
+
+sub colorspace_devicen {
+    my ($self,$clrs,$samples)=@_;
+    $samples||=2;
+    
+    my $obj=PDF::API2::Resource::ColorSpace::DeviceN->new_api($self,$clrs,$samples);
 
     $self->resource('ColorSpace',$obj->name,$obj);
 
@@ -1865,6 +2011,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 1.54  2004/07/21 08:07:17  fredo
+    added devicen colorspace
+
+    Revision 1.53  2004/07/15 14:28:21  fredo
+    added devicen colorspace
+
     Revision 1.52  2004/06/22 01:33:43  fredo
     corrected spelling
 

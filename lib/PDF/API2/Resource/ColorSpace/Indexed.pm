@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Indexed.pm,v 1.5 2004/06/15 09:14:52 fredo Exp $
+#   $Id: Indexed.pm,v 1.6 2004/07/15 14:13:46 fredo Exp $
 #
 #=======================================================================
 
@@ -43,7 +43,7 @@ BEGIN {
     use Math::Trig;
 
     @ISA = qw( PDF::API2::Resource::ColorSpace );
-    ( $VERSION ) = '$Revision: 1.5 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:52 $
+    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/15 14:13:46 $
 
 }
 
@@ -62,7 +62,8 @@ sub new {
     $self->{' apipdf'}=$pdf;
 
     $self->add_elements(PDFName('Indexed'));
-
+	$self->type('Indexed');
+	
     return($self);
 }
 
@@ -120,6 +121,9 @@ __END__
 =head1 HISTORY
 
     $Log: Indexed.pm,v $
+    Revision 1.6  2004/07/15 14:13:46  fredo
+    added type accessor
+
     Revision 1.5  2004/06/15 09:14:52  fredo
     removed cr+lf
 

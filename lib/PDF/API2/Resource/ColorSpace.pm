@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: ColorSpace.pm,v 1.6 2004/06/15 09:14:41 fredo Exp $
+#   $Id: ColorSpace.pm,v 1.7 2004/07/15 14:35:14 fredo Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Array);
 
-    ( $VERSION ) = '$Revision: 1.6 $' =~ /Revision: (\S+)\s/; # $Date: 2004/06/15 09:14:41 $
+    ( $VERSION ) = '$Revision: 1.7 $' =~ /Revision: (\S+)\s/; # $Date: 2004/07/15 14:35:14 $
 
 }
 
@@ -95,6 +95,13 @@ sub name {
     }
     return($self->{' name'});
 }
+sub type {
+    my $self=shift @_;
+    if(scalar @_ >0 && defined($_[0])) {
+        $self->{' type'}=$_[0];
+    }
+    return($self->{' type'});
+}
 
 =item @param = $cs->param @param
 
@@ -127,6 +134,9 @@ alfred reibenschuh
 =head1
 
     $Log: ColorSpace.pm,v $
+    Revision 1.7  2004/07/15 14:35:14  fredo
+    added type accessor
+
     Revision 1.6  2004/06/15 09:14:41  fredo
     removed cr+lf
 
