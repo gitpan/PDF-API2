@@ -10,7 +10,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 20020226.201611 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 20020314.221451 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -37,7 +37,7 @@ PDF::API2 - The Next Generation API for creating and modifing PDFs.
 
 =cut
 
-use Text::PDF::File;
+use Text::PDF::FileAPI;
 use Text::PDF::AFont;
 use Text::PDF::Page;
 use Text::PDF::Utils;
@@ -61,7 +61,7 @@ sub new {
 	my %opt=@_;
 	my $self={};
 	bless($self,$class);
-	$self->{pdf}=Text::PDF::File->new();
+	$self->{pdf}=Text::PDF::FileAPI->new();
 	$self->{time}='_'.pdfkey(time());
 	foreach my $para (keys(%opt)) {
 		$self->{$para}=$opt{$para};
@@ -130,7 +130,7 @@ sub open {
 	my $fh=PDF::API2::IOString->new();
 	$fh->import($file);
 
-	$self->{pdf}=Text::PDF::File->open($fh,1);
+	$self->{pdf}=Text::PDF::FileAPI->open($fh,1);
 	$self->{pdf}->{' fname'}=$file;
 	$self->{pdf}->{'Root'}->realise;
 	$self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
@@ -2235,18 +2235,18 @@ sub new {
 	$class = ref $class if ref $class;
 	my $self = $class->SUPER::new($pdf,$file,$name, -subset => 1);
 
-	my $ttf=$self->{' font'};
-	$ttf->{'cmap'}->read;
-	$ttf->{'hmtx'}->read;
-	$ttf->{'post'}->read;
-	my $upem = $ttf->{'head'}->read->{'unitsPerEm'};
+	my $font=$self->{' font'};
+	$font->{'cmap'}->read;
+	$font->{'hmtx'}->read;
+	$font->{'post'}->read;
+	my $upem = $font->{'head'}->read->{'unitsPerEm'};
 
 	$self->{' unicid'}=();
 	$self->{' uniwidth'}=();
-	my @map=$ttf->{'cmap'}->reverse;
+	my @map=$font->{'cmap'}->reverse;
 	foreach my $x (0..scalar(@map)) {
 		$self->{' unicid'}{$map[$x]||0}=$x;
-		$self->{' uniwidth'}{$map[$x]||0}=$ttf->{'hmtx'}{'advance'}[$x]*1000/$upem;
+		$self->{' uniwidth'}{$map[$x]||0}=$font->{'hmtx'}{'advance'}[$x]*1000/$upem;
 	}
 	$self->{' encoding'}='latin1';
 	$self->{' chrcid'}={};
@@ -2255,8 +2255,40 @@ sub new {
 	$self->{' chrwidth'}->{'latin1'}=();
 	foreach my $x (0..255) {
 		$self->{' chrcid'}->{'latin1'}{$x}=$self->{' unicid'}{$x}||$self->{' unicid'}{32};
-		$self->{' chrwidth'}->{'latin1'}{$x}=$ttf->{'hmtx'}{'advance'}[$self->{' unicid'}{$x}||$self->{' unicid'}{32}]*1000/$upem;
+		$self->{' chrwidth'}->{'latin1'}{$x}=$font->{'hmtx'}{'advance'}[$self->{' unicid'}{$x}||$self->{' unicid'}{32}]*1000/$upem;
 	}
+    
+    $self->{' ascent'}=int($font->{'hhea'}->read->{'Ascender'} * 1000 / $upem);
+    $self->{' descent'}=int($font->{'hhea'}{'Descender'} * 1000 / $upem);
+
+	eval {
+		$self->{' capheight'}=int(
+			$font->{'loca'}->read->{'glyphs'}[
+				$font->{'post'}{'STRINGS'}{"H"}||0
+			]->read->{'yMax'}
+			* 1000 / $upem
+		);
+	};
+	$self->{' capheight'}||=0;
+	
+	eval {
+		$self->{' xheight'}=int(
+			$font->{'loca'}->read->{'glyphs'}[
+				$font->{'post'}{'STRINGS'}{"x"}||0
+			]->read->{'yMax'}
+			* 1000 / $upem
+		);
+	};
+	$self->{' xheight'}||=0;
+
+	$self->{' italicangle'}=$font->{'post'}->read->{'italicAngle'};
+
+	$self->{' fontbbox'}=[
+		int($font->{'head'}{'xMin'} * 1000 / $upem),
+	        int($font->{'head'}{'yMin'} * 1000 / $upem),
+	        int($font->{'head'}{'xMax'} * 1000 / $upem),
+		int($font->{'head'}{'yMax'} * 1000 / $upem)
+	];
 
 	$self->{' apiname'}=$name;
 	$self->{' apipdf'}=$pdf;
@@ -4390,6 +4422,10 @@ use vars qw(
 	$bar128Sb
 	$bar128Sc
 	$bar128St
+
+	@ean_code_odd
+	@ean_code_even
+
 );
 
 @ISA=qw( PDF::API2::Hybrid );
@@ -4426,153 +4462,6 @@ use PDF::API2::Util;
 	'G' => 7,
 	'H' => 8,
 	'I' => 9,
-);
-
-$code3of9=q|1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*|;
-
-@bar3of9=qw/
-	2112111121	1122111121	2122111111	1112211121
-	2112211111	1122211111	1112112121	2112112111
-	1122112111	1112212111	2111121121	1121121121
-	2121121111	1111221121	2111221111	1121221111
-	1111122121	2111122111	1121122111	1111222111
-	2111111221	1121111221	2121111211	1111211221
-	2111211211	1121211211	1111112221	2111112211
-	1121112211	1111212211	2211111121	1221111121
-	2221111111	1211211121	2211211111	1221211111
-	1211112121	2211112111	1221112111	1212121111
-	1212111211	1211121211	1112121211	abaababaa1
-/;
-
-%bar3of9ext=(
-	"\x00" => '%U',
-	"\x01" => '$A',
-	"\x02" => '$B',
-	"\x03" => '$C',
-	"\x04" => '$D',
-	"\x05" => '$E',
-	"\x06" => '$F',
-	"\x07" => '$G',
-	"\x08" => '$H',
-	"\x09" => '$I',
-	"\x0a" => '$J',
-	"\x0b" => '$K',
-	"\x0c" => '$L',
-	"\x0d" => '$M',
-	"\x0e" => '$N',
-	"\x0f" => '$O',
-	"\x10" => '$P',
-	"\x11" => '$Q',
-	"\x12" => '$R',
-	"\x13" => '$S',
-	"\x14" => '$T',
-	"\x15" => '$U',
-	"\x16" => '$V',
-	"\x17" => '$W',
-	"\x18" => '$X',
-	"\x19" => '$Y',
-	"\x1a" => '$Z',
-	"\x1b" => '%A',
-	"\x1c" => '%B',
-	"\x1d" => '%C',
-	"\x1e" => '%D',
-	"\x1f" => '$E',
-	"\x20" => ' ',
-	"!" => '/A',
-	'"' => '/B',
-	"#" => '/C',
-	'$' => '/D',
-	'%' => '/E',
-	'&' => '/F',
-	"'" => '/G',
-	'(' => '/H',
-	')' => '/I',
-	'*' => '/J',
-	'+' => '/K',
-	',' => '/L',
-	'-' => '-',
-	'.' => '.',
-	'/' => '/O',
-	'0' => '0',
-	'1' => '1',
-	'2' => '2',
-	'3' => '3',
-	'4' => '4',
-	'5' => '5',
-	'6' => '6',
-	'7' => '7',
-	'8' => '8',
-	'9' => '9',
-	':' => '/Z',
-	';' => '%F',
-	'<' => '%G',
-	'=' => '%H',
-	'>' => '%I',
-	'?' => '%J',
-	'@' => '%V',
-	'A' => 'A',
-	'B' => 'B',
-	'C' => 'C',
-	'D' => 'D',
-	'E' => 'E',
-	'F' => 'F',
-	'G' => 'G',
-	'H' => 'H',
-	'I' => 'I',
-	'J' => 'J',
-	'K' => 'K',
-	'L' => 'L',
-	'M' => 'M',
-	'N' => 'N',
-	'O' => 'O',
-	'P' => 'P',
-	'Q' => 'Q',
-	'R' => 'R',
-	'S' => 'S',
-	'T' => 'T',
-	'U' => 'U',
-	'V' => 'V',
-	'W' => 'W',
-	'X' => 'X',
-	'Y' => 'Y',
-	'Z' => 'Z',
-	'[' => '%K',
-	'\\' => '%L',
-	']' => '%M',
-	'^' => '%N',
-	'_' => '%O',
-	'`' => '%W',
-	'a' => '+A',
-	'b' => '+B',
-	'c' => '+C',
-	'd' => '+D',
-	'e' => '+E',
-	'f' => '+F',
-	'g' => '+G',
-	'h' => '+H',
-	'i' => '+I',
-	'j' => '+J',
-	'k' => '+K',
-	'l' => '+L',
-	'm' => '+M',
-	'n' => '+N',
-	'o' => '+O',
-	'p' => '+P',
-	'q' => '+Q',
-	'r' => '+R',
-	's' => '+S',
-	't' => '+T',
-	'u' => '+U',
-	'v' => '+V',
-	'w' => '+W',
-	'x' => '+X',
-	'y' => '+Y',
-	'z' => '+Z',
-	'{' => '%P',
-	'|' => '%Q',
-	'}' => '%R',
-	'~' => '%S',
-	"\x7f" => '%T'
 );
 
 $code128a=q| !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_|.join('',map{chr($_)}(0..31)).qq/\xf3\xf2\x80\xcc\xcb\xf4\xf1\x8a\x8b\x8c\xff/;
@@ -4729,6 +4618,154 @@ sub encode_ean128 {
 	return(encode_128('c',"\xf1$str"));
 }
 
+$code3of9=q|1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*|;
+
+@bar3of9=qw/
+	2112111121	1122111121	2122111111	1112211121
+	2112211111	1122211111	1112112121	2112112111
+	1122112111	1112212111	2111121121	1121121121
+	2121121111	1111221121	2111221111	1121221111
+	1111122121	2111122111	1121122111	1111222111
+	2111111221	1121111221	2121111211	1111211221
+	2111211211	1121211211	1111112221	2111112211
+	1121112211	1111212211	2211111121	1221111121
+	2221111111	1211211121	2211211111	1221211111
+	1211112121	2211112111	1221112111	1212121111
+	1212111211	1211121211	1112121211	abaababaa1
+/;
+
+
+%bar3of9ext=(
+	"\x00" => '%U',
+	"\x01" => '$A',
+	"\x02" => '$B',
+	"\x03" => '$C',
+	"\x04" => '$D',
+	"\x05" => '$E',
+	"\x06" => '$F',
+	"\x07" => '$G',
+	"\x08" => '$H',
+	"\x09" => '$I',
+	"\x0a" => '$J',
+	"\x0b" => '$K',
+	"\x0c" => '$L',
+	"\x0d" => '$M',
+	"\x0e" => '$N',
+	"\x0f" => '$O',
+	"\x10" => '$P',
+	"\x11" => '$Q',
+	"\x12" => '$R',
+	"\x13" => '$S',
+	"\x14" => '$T',
+	"\x15" => '$U',
+	"\x16" => '$V',
+	"\x17" => '$W',
+	"\x18" => '$X',
+	"\x19" => '$Y',
+	"\x1a" => '$Z',
+	"\x1b" => '%A',
+	"\x1c" => '%B',
+	"\x1d" => '%C',
+	"\x1e" => '%D',
+	"\x1f" => '$E',
+	"\x20" => ' ',
+	"!" => '/A',
+	'"' => '/B',
+	"#" => '/C',
+	'$' => '/D',
+	'%' => '/E',
+	'&' => '/F',
+	"'" => '/G',
+	'(' => '/H',
+	')' => '/I',
+	'*' => '/J',
+	'+' => '/K',
+	',' => '/L',
+	'-' => '-',
+	'.' => '.',
+	'/' => '/O',
+	'0' => '0',
+	'1' => '1',
+	'2' => '2',
+	'3' => '3',
+	'4' => '4',
+	'5' => '5',
+	'6' => '6',
+	'7' => '7',
+	'8' => '8',
+	'9' => '9',
+	':' => '/Z',
+	';' => '%F',
+	'<' => '%G',
+	'=' => '%H',
+	'>' => '%I',
+	'?' => '%J',
+	'@' => '%V',
+	'A' => 'A',
+	'B' => 'B',
+	'C' => 'C',
+	'D' => 'D',
+	'E' => 'E',
+	'F' => 'F',
+	'G' => 'G',
+	'H' => 'H',
+	'I' => 'I',
+	'J' => 'J',
+	'K' => 'K',
+	'L' => 'L',
+	'M' => 'M',
+	'N' => 'N',
+	'O' => 'O',
+	'P' => 'P',
+	'Q' => 'Q',
+	'R' => 'R',
+	'S' => 'S',
+	'T' => 'T',
+	'U' => 'U',
+	'V' => 'V',
+	'W' => 'W',
+	'X' => 'X',
+	'Y' => 'Y',
+	'Z' => 'Z',
+	'[' => '%K',
+	'\\' => '%L',
+	']' => '%M',
+	'^' => '%N',
+	'_' => '%O',
+	'`' => '%W',
+	'a' => '+A',
+	'b' => '+B',
+	'c' => '+C',
+	'd' => '+D',
+	'e' => '+E',
+	'f' => '+F',
+	'g' => '+G',
+	'h' => '+H',
+	'i' => '+I',
+	'j' => '+J',
+	'k' => '+K',
+	'l' => '+L',
+	'm' => '+M',
+	'n' => '+N',
+	'o' => '+O',
+	'p' => '+P',
+	'q' => '+Q',
+	'r' => '+R',
+	's' => '+S',
+	't' => '+T',
+	'u' => '+U',
+	'v' => '+V',
+	'w' => '+W',
+	'x' => '+X',
+	'y' => '+Y',
+	'z' => '+Z',
+	'{' => '%P',
+	'|' => '%Q',
+	'}' => '%R',
+	'~' => '%S',
+	"\x7f" => '%T'
+);
+
 sub encode_3of9_char {
 	my $char=shift @_;
 	return($bar3of9[index($code3of9,$char)]);
@@ -4813,6 +4850,104 @@ sub encode_3of9_ext_w_chk {
 	return(@bar);
 }
 
+
+@ean_code_odd =qw( 3211 2221 2122 1411 1132 1231 1114 1312 1213 3112 );
+@ean_code_even=qw( 1123 1222 2212 1141 2311 1321 4111 2131 3121 2113 );
+
+sub encode_ean13 {
+	my $string=shift @_;
+	my @c=split(//,$string);
+	my ($enc,@bar);
+	my $v=shift @c;
+	push(@bar,['07',"$v"]);
+	push(@bar,'a1a');
+	if($v==0) {
+		foreach(0..5) {
+			my $f=shift @c;
+			push(@bar,[$ean_code_odd[$f],"$f"]);
+		}
+	} elsif($v==1) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+	} elsif($v==2) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+	} elsif($v==3) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+	} elsif($v==4) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+	} elsif($v==5) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+	} elsif($v==6) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+	} elsif($v==7) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+	} elsif($v==8) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+	} elsif($v==9) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_even[$f],"$f"]);
+		$f=shift @c; push(@bar,[$ean_code_odd[$f],"$f"]);
+	}
+	push(@bar,'1a1a1');
+	foreach(0..5) {
+		my $f=shift @c;
+		push(@bar,[$ean_code_odd[$f],"$f"]);
+	}
+	push(@bar,'a1a');
+	return @bar;
+}
+
 =head2 PDF::API2::Barcode
 
 Subclassed from PDF::API2::Hybrid.
@@ -4842,7 +4977,8 @@ B<Example:>
 B<Note:> There is currently only support for the following barcodes:
 
 	3of9, 3of9ext, 3of9chk, 3of9extchk,
-	code128a, code128b, code128c, ean128
+	code128a, code128b, code128c, ean128,
+	ean13
 
 =cut
 
@@ -4891,6 +5027,8 @@ sub new {
 		}
 	} elsif( $opts{-type}=~/^ean128/ ) {
 		@bar = encode_ean128($opts{-code});
+	} elsif( $opts{-type}=~/^ean13/ ) {
+		@bar = encode_ean13($opts{-code});
 	}
 
 	if(scalar @ext < 1) {
@@ -4913,6 +5051,7 @@ sub drawbar {
 	$self->fillcolorbyname('black');
 	$self->strokecolorbyname('black');
 
+	my $bw=1;
 	foreach my $b (@bar) {
 		if(ref($b)) {
 			($code,$str)=@{$b};
@@ -4920,7 +5059,6 @@ sub drawbar {
 			$code=$b;
 			$str=undef;
 		}
-		$bw=1;
 		$xo=0;
 		foreach my $c (split(//,$code)) {
 			my $w=$bar_wdt{$c};
@@ -4947,10 +5085,12 @@ sub drawbar {
 				$f=$self->{' fnsz'}||$self->{' lmzn'};
 			}
 			if($bw) {
-				$self->linewidth($w-$self->{' ofwt'});
-				$self->move($x+$xo,$l);
-				$self->line($x+$xo,$h);
-				$self->stroke;
+				if($c ne '0') {
+					$self->linewidth($w-$self->{' ofwt'});
+					$self->move($x+$xo,$l);
+					$self->line($x+$xo,$h);
+					$self->stroke;
+				}
 				$bw=0;
 			} else {
 				$bw=1;

@@ -48,6 +48,8 @@ WriteMakefile (
 	MAN3PODS	=>	{},
 	PREREQ_PM	=>	{
 					'Compress::Zlib'	=> 1.03,
+					'Text::PDF::File'	=> 0.19,
+					'Font::TTF::Font'	=> 0.28,
 				},
 );
 

@@ -7,18 +7,6 @@ This module is 'The Next Generation' of Text::PDF::API which initially
 provided a nice API around the Text::PDF::* modules created by Martin Hosken.
 
 
-WARNING
-	
-	Sorry but this release of PDF::API2 comes bundled
-	with fixed versions of Text::PDF and Font::TTF because of 
-	the various changes in that module-distributions !!!!!
-
-
-FIXES IN 0.1.x 
-
-	.  *TODO*
-
-
 FEATURES
 
 	.  Works with more than one PDF file open at once
@@ -26,7 +14,7 @@ FEATURES
 	.  Supports the 14 base PDF Core Fonts 
 	.  Supports TrueType fonts 
 	.  Supports Adobe-Type1 Fonts (pfb/pfa/afm) 
-	.  Supports native Embedding of bitmap images (jpeg,ppm,png,gif)
+	.  Supports native Embedding of bitmap images (jpeg,ppm,png)
 	.  Supports modification of existing pdfs
 		and import/cloning of pages
 
@@ -45,6 +33,8 @@ This module set requires you to have installed the following other perl modules:
 	Module		Required for
 	------------------------------------------------------
 	Compress::Zlib	 - Compression of PDF object streams
+	Text::PDF-0.19	 - Low-level Pdf-Object Handling
+	Font::TTF	 - Truetype Handling
 
 
 NOTES
