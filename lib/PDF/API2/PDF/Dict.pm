@@ -165,7 +165,7 @@ sub outobjdeep
             }
         }
         $fh->print("\n") unless ($str =~ m/$cr$/o);
-        $fh->print("endstream");
+        $fh->print("\nendstream\n");
 #        $self->{'Length'}->outobjdeep($fh);
     } elsif (defined $self->{' streamfile'})
     {
@@ -199,7 +199,7 @@ sub outobjdeep
         }
         
         $fh->print("\n") unless ($str =~ m/$cr$/o);
-        $fh->print("endstream\n");
+        $fh->print("\nendstream\n");
 #        $self->{'Length'}->outobjdeep($fh);
     }
 }

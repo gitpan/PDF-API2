@@ -1,10 +1,10 @@
 package PDF::API2::PDF::AFont;
 
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 # use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $VERSION );
 @ISA = qw(PDF::API2::PDF::Dict);
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 use PDF::API2::PDF::Utils;

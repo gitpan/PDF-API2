@@ -21,7 +21,7 @@ package PDF::API2::IOString;
 
 require 5.005_03;
 use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Symbol ();
 
@@ -35,8 +35,8 @@ sub new
 }
 
 sub import {
-	my $self = shift;
-	my $file = shift;
+	my $self = shift @_;
+	my $file = shift @_||0;
 	my $buf = "";
 	*$self->{buf} = \$buf;
 	*$self->{pos} = 0;

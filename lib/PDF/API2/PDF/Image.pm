@@ -6,10 +6,10 @@ package PDF::API2::PDF::Image;
 use strict;
 use PDF::API2::PDF::Dict;
 use PDF::API2::PDF::Utils;
-use vars qw(@ISA);
+use vars qw(@ISA $VERSION );
 
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head2 PDF::API2::PDF::Image
 

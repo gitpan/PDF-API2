@@ -9,9 +9,9 @@ use POSIX;
 use PDF::API2::PDF::Utils;
 use PDF::API2::PDF::Image;
 use Compress::Zlib;
-use vars qw(@ISA);
+use vars qw(@ISA $VERSION);
 
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 @ISA = qw(PDF::API2::PDF::Image);
 

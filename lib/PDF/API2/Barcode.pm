@@ -50,7 +50,7 @@ use vars qw(
 	$VERSION
 );
 
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Utils;
 use PDF::API2::PDF::Dict;
@@ -623,7 +623,7 @@ sub new {
 	$self->{' lmzn'}=$opts{-lmzn};		# (l)ower (m)ending (z)o(n)e
 	$self->{' zone'}=$opts{-zone};
 	$self->{' quzn'}=$opts{-quzn};		# (qu)iet (z)o(n)e
-	$self->{' ofwt'}=$opts{-ofwt};		# (o)ver(f)low (w)id(t)h
+	$self->{' ofwt'}=$opts{-ofwt}||0.01;		# (o)ver(f)low (w)id(t)h
 	$self->{' fnsz'}=$opts{-fnsz};		# (f)o(n)t(s)i(z)e
 	$self->{' spcr'}=$opts{-spcr}||'';
 

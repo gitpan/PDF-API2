@@ -14,10 +14,11 @@
 package PDF::API2;
 
 BEGIN {
-	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	use vars qw( $VERSION $hasWeakRef $seq);
+	( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
+	$seq="AA";
 }
 
 
@@ -429,6 +430,9 @@ B<Note:> on $index
 	-1,0 ... returns the last page
 	1 ... returns page number 1
 
+B<Note:> you can specify a page object instead as $targetindex
+so that the contents of the sourcepage will be 'merged into'.
+
 =cut
 
 sub unfilter {
@@ -459,68 +463,80 @@ sub importpage {
 	my $s_pdf=shift @_;
 	my $s_idx=shift @_||0;
 	my $t_idx=shift @_||0;
-	$t_idx=0 if($self->pages<$t_idx);
 	my ($s_page,$t_page);
 
-	$s_page=$s_pdf->openpage($s_idx);
-	$t_page=$self->page($t_idx);
+	if(ref($s_idx) eq 'PDF::API2::Page') {
+		$s_page=$s_idx;
+	} else {
+		$s_page=$s_pdf->openpage($s_idx);
+	}
 
-#	$t_page->gfx()->save();
+	if(ref($t_idx) eq 'PDF::API2::Page') {
+		$t_page=$t_idx;
+	} else {
+		$t_idx=0 if($self->pages<$t_idx);
+		$t_page=$self->page($t_idx);
+	}
 
 	$self->{apiimportcache}=$self->{apiimportcache}||{};
 	$self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
 
-	foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
-		next unless(defined $s_page->{$k});
-		$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+	if($t_page!=$t_idx) {
+		foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
+			next unless(defined $s_page->{$k});
+			$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+		}
 	}
 
 
-	foreach my $k (qw( Thumb )) {
-		next unless(defined $s_page->{$k});
-		$t_page->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
-	}
+#	foreach my $k (qw( Thumb )) {
+#		next unless(defined $s_page->{$k});
+#		$t_page->{$k} = walk_obj({},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+#	}
 
+	my %resmod=();
 	foreach my $k (qw( Resources )) {
 		$s_page->{$k}=$s_page->find_prop($k);
 		next unless(defined $s_page->{$k});
 		$s_page->{$k}->realise if(ref($s_page->{$k})=~/Objind$/);
 
-		$t_page->{$k}=PDFDict();
+		$t_page->{$k}||=PDFDict();
 		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
 			next unless(defined $s_page->{$k}->{$sk});
 			$s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
-			$t_page->{$k}->{$sk}=PDFDict();
+			$t_page->{$k}->{$sk}||=PDFDict();
 			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
 				next if($ssk=~/^ /);
-				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+				my $nssk="$seq+$ssk";
+				$resmod{$ssk}=$nssk;
+				$t_page->{$k}->{$sk}->{$nssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+				$seq++;
 			}
 		}
 	}
 
+	my $content=$t_page->hybrid();
 	if(defined $s_page->{Contents}) {
 		$s_page->fixcontents;
-		$t_page->{Contents}=PDFArray();
 
 		foreach my $k ($s_page->{Contents}->elementsof) {
-			my $content=PDFDict();
-			$self->{pdf}->new_obj($content);
-			$t_page->{Contents}->add_elements($content);
-
 			$k->realise;
-
-			delete $content->{' nofilt'};
-			$content->{' stream'}=" q ".unfilter($k->{Filter}, $k->{' stream'})." Q ";
-			delete $content->{Filter};
-			$content->{Filter}=PDFArray(PDFName('FlateDecode'));
+			my $stream=unfilter($k->{Filter}, $k->{' stream'});
+			foreach my $r (keys %resmod) {
+				$stream=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
+			}
+			$content->add("q",$stream,"Q");
 		}
+		$content->compress;
 	}
-
-#	$t_page->gfx()->restore();
 
 	$self->{pdf}->out_obj($t_page);
 	$self->{pdf}->out_obj($self->{pages});
-	return($t_page);
+	if(wantarray) {
+		return($content,$t_page);
+	} else {
+		return($t_page);
+	}
 }
 
 =item $pagenumber = $pdf->pages

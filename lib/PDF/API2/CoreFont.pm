@@ -19,7 +19,7 @@ package PDF::API2::CoreFont;
 
 BEGIN {
 	use vars qw( @ISA $fonts $alias $subs @latin1 @macroman @winansi @adobestd $VERSION );
-	( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 use strict;
@@ -223,6 +223,10 @@ sub text {
 		foreach my $x (0..(length($text)>>1)-1) {
 			$newtext.=pack("C",vec($text,$x,16) & 0xff);
 		}
+	} elsif($opts{-ucs2}) {
+		foreach my $x (0..(length($text)>>1)-1) {
+			$newtext.=pack("C",vec($text,$x,16) & 0xff);
+		}
 	} else {
 		foreach my $g (0..length($text)-1) {
 			$newtext.=
@@ -254,6 +258,10 @@ sub text_hex {
 		foreach my $x (0..(length($text)>>1)-1) {
 			$newtext.=sprintf('%02X',vec($text,$x,16) & 0xff);
 		}
+	} elsif($opts{-ucs2}) {
+		foreach my $x (0..(length($text)>>1)-1) {
+			$newtext.=sprintf('%02X',vec($text,$x,16) & 0xff);
+		}
 	} else {
 		foreach (unpack("C*", $text)) {
 			$newtext.= sprintf('%02X',$_);
@@ -273,6 +281,11 @@ sub width {
 	my $width=0;
 	if($opts{-utf8}) {
 		$text=utf8_to_ucs2($text);
+		foreach my $x (0..(length($text)>>1)-1) {
+			my $ch=vec($text,$x,16) & 0xff;
+			$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$ch] || 'space'} || $self->{' data'}{'wx'}{space};
+		}
+	} elsif($opts{-ucs2}) {
 		foreach my $x (0..(length($text)>>1)-1) {
 			my $ch=vec($text,$x,16) & 0xff;
 			$width += $self->{' data'}{'wx'}{$self->{' data'}{'char'}[$ch] || 'space'} || $self->{' data'}{'wx'}{space};

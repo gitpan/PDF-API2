@@ -20,7 +20,11 @@ use strict;
 use PDF::API2::Util;
 use PDF::API2::PDF::Utils;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
+use PDF::API2::PDF::ImageGD;
+use PDF::API2::PDF::ImageJPEG;
+use PDF::API2::PDF::ImagePPM;
 
 =head2 PDF::API2::Image
 
@@ -35,8 +39,6 @@ sub new {
 	my ($obj,$buf);
 	if(ref $file) {
 		if(UNIVERSAL::isa($file,'GD::Image')) {
-			eval ' use PDF::API2::PDF::ImageGD; ';
-			die "unable to load PDF::API2::PDF::ImageGD (did you install correctly?) " if($@);
 			$obj=PDF::API2::PDF::ImageGD->new($pdf,'IMGxGDx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxGDx'.pdfkey($file);
 	#	} elsif(UNIVERSAL::isa($file,'Image::Base')) {
@@ -51,8 +53,6 @@ sub new {
 		read(INF,$buf,10,0);
 		close(INF);
 		if ($buf=~/^\xFF\xD8/) {
-			eval ' use PDF::API2::PDF::ImageJPEG; ';
-			die "unable to load PDF::API2::PDF::ImageJPEG (did you install correctly?) " if($@);
 			$obj=PDF::API2::PDF::ImageJPEG->new($pdf,'IMGxJPEGx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxJPEGx'.pdfkey($file);
 		} elsif ($buf=~/^\x89PNG/) {
@@ -61,8 +61,6 @@ sub new {
 			$obj=PDF::API2::PDF::ImagePNG->new($pdf,'IMGxPNGx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxPNGx'.pdfkey($file);
 		} elsif ($buf=~/^P[456][\s\n]/) {
-			eval ' use PDF::API2::PDF::ImagePPM; ';
-			die "unable to load PDF::API2::PDF::ImagePPM (did you install correctly?) " if($@);
 			$obj=PDF::API2::PDF::ImagePPM->new($pdf,'IMGxPPMx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxPPMx'.pdfkey($file);
 		} else {

@@ -20,7 +20,7 @@ use Font::TTF::Font 0.28;
 
 @ISA=qw( PDF::API2::PDF::File );
 
-( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a15 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 BEGIN
 {
@@ -153,7 +153,7 @@ sub append_file
     { $tdict->{$t} = $self->{$t} unless defined $tdict->{$t}; }
 
     $fh->seek($self->{' epos'}, 0);
-    $self->out_trailer($tdict);
+    $self->out_trailer($tdict,$self->{' update'});
     close($self->{' OUTFILE'});
 }
 

@@ -79,7 +79,10 @@ sub release
 
 # check that everything has gone - it better had!
     foreach my $key (keys %{$self})
-    { warn ref($self) . " still has '$key' key left after release.\n"; }
+    { # warn ref($self) . " still has '$key' key left after release.\n"; 
+    	$self->{$key}=undef;
+    	delete($self->{$key});
+    }
 }
 
 
