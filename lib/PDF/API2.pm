@@ -1,24 +1,24 @@
 #=======================================================================
-#	 ____  ____  _____              _    ____ ___   ____
-#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#    ____  ____  _____              _    ____ ___   ____
+#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-#	This library is free software; you can redistribute it
-#	and/or modify it under the same terms as Perl itself.
+#   This library is free software; you can redistribute it
+#   and/or modify it under the same terms as Perl itself.
 #
 #=======================================================================
 package PDF::API2;
 
 BEGIN {
-	use vars qw( $VERSION $hasWeakRef $seq);
-	( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
-	eval " use WeakRef; ";
-	$hasWeakRef= $@ ? 0 : 1;
-	$seq="AA";
+    use vars qw( $VERSION $hasWeakRef $seq);
+    ( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+    eval " use WeakRef; ";
+    $hasWeakRef= $@ ? 0 : 1;
+    $seq="AA";
 }
 
 
@@ -30,16 +30,16 @@ PDF::API2 - The Next Generation API for creating and modifing PDFs.
 
 =head1 SYNOPSIS
 
-	use PDF::API2;
+    use PDF::API2;
 
-	$pdf = PDF::API2->new;
-	$pdf = PDF::API2->open('some.pdf');
-	$page = $pdf->page;
-	$page = $pdf->openpage($pagenum);
-	$img = $pdf->image('some.jpg');
-	$font = $pdf->corefont('Times-Roman');
-	$font = $pdf->psfont('Times-Roman.pfb','Times-Roman.afm');
-	$font = $pdf->ttfont('TimesNewRoman.ttf');
+    $pdf = PDF::API2->new;
+    $pdf = PDF::API2->open('some.pdf');
+    $page = $pdf->page;
+    $page = $pdf->openpage($pagenum);
+    $img = $pdf->image('some.jpg');
+    $font = $pdf->corefont('Times-Roman');
+    $font = $pdf->psfont('Times-Roman.pfb','Times-Roman.afm');
+    $font = $pdf->ttfont('TimesNewRoman.ttf');
 
 =cut
 
@@ -84,39 +84,42 @@ to minimize possible memory requirements.
 
 B<Example:>
 
-	$pdf = PDF::API2->new();
+    $pdf = PDF::API2->new();
 
-	$pdf = PDF::API2->new(-file => 'ournew.pdf');
+    $pdf = PDF::API2->new(-file => 'ournew.pdf');
 
 =cut
 
 sub new {
-	my $class=shift(@_);
-	my %opt=@_;
-	my $self={};
-	bless($self,$class);
-	$self->{pdf}=PDF::API2::PDF::FileAPI->new();
-	$self->{time}='_'.pdfkey(time());
-#	foreach my $para (keys(%opt)) {
-#		$self->{$para}=$opt{$para};
-#	}
-	$self->{pdf}->{' version'} = 4;
-	$self->{pages} = PDF::API2::PDF::Pages->new($self->{pdf});
-	weaken($self->{pages}) if($hasWeakRef);
-	$self->{pages}->proc_set(qw( PDF Text ImageB ImageC ImageI ));
-	$self->{catalog}=$self->{pdf}->{Root};
-	weaken($self->{catalog}) if($hasWeakRef);
-	$self->{pagestack}=[];
-	my $dig=digest16(digest32($class,$self,%opt));
-       	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
-       	$self->{pdf}->{' id'}=$dig;
-       	$self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
-       	$self->preferences(%opt);
-	if($opt{-file}) {
-		$self->{' filed'}=$opt{-file};
-		$self->{pdf}->create_file($opt{-file});
-	}
-	return $self;
+    my $class=shift(@_);
+    my %opt=@_;
+    my $self={};
+    bless($self,$class);
+    $self->{pdf}=PDF::API2::PDF::FileAPI->new();
+    $self->{time}='_'.pdfkey(time());
+#   foreach my $para (keys(%opt)) {
+#       $self->{$para}=$opt{$para};
+#   }
+    $self->{pdf}->{' version'} = 4;
+    $self->{pages} = PDF::API2::PDF::Pages->new($self->{pdf});
+    weaken($self->{pages}) if($hasWeakRef);
+    $self->{pages}->proc_set(qw( PDF Text ImageB ImageC ImageI ));
+    $self->{pages}->{Resources}||=PDFDict();
+    $self->{pdf}->new_obj($self->{pages}->{Resources}) unless($self->{pages}->{Resources}->is_obj($self->{pdf}));
+    $self->{catalog}=$self->{pdf}->{Root};
+    weaken($self->{catalog}) if($hasWeakRef);
+    $self->{pagestack}=[];
+    my $dig=digest16(digest32($class,$self,%opt));
+        $self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
+        $self->{pdf}->{' id'}=$dig;
+        $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
+        $self->preferences(%opt);
+    if($opt{-file}) {
+        $self->{' filed'}=$opt{-file};
+        $self->{pdf}->create_file($opt{-file});
+    }
+    $self->info( 'Producer' => "PDF::API2 incarnation=$VERSION OS=$^O" );
+    return $self;
 }
 
 =item $pdf->preferences %opts
@@ -125,206 +128,207 @@ Controls viewing=preferences for the pdf.
 
 B<Options:>
 
-	-fullscreen ... Full-screen mode, with no menu bar, window controls, or any other window visible.
-	-thumbs ... Thumbnail images visible.
-	-outlines ... Document outline visible.
-	-singlepage ... Display one page at a time.
-	-onecolumn ... Display the pages in one column.
-	-twocolumnleft ... Display the pages in two columns, with oddnumbered pages on the left.
-	-twocolumnrigth ... Display the pages in two columns, with oddnumbered pages on the right.
-	-hidetoolbar ... Specifying whether to hide tool bars.
-	-hidemenubar ... Specifying whether to hide menu bars.
-	-hidewindowui ... Specifying whether to hide user interface elements.
-	-fitwindow ... Specifying whether to resize the document’s window to the size of the displayed page.
-	-centerwindow ... Specifying whether to position the document’s window in the center of the screen.
-	-displaytitle ... Specifying whether the window’s title bar should display the document title
-			taken from the Title entry of the document information dictionary.
-	-afterfullscreenthumbs ... Thumbnail images visible after Full-screen mode.
-	-afterfullscreenoutlines ... Document outline visible after Full-screen mode.
+    -fullscreen ... Full-screen mode, with no menu bar, window controls, or any other window visible.
+    -thumbs ... Thumbnail images visible.
+    -outlines ... Document outline visible.
+    -singlepage ... Display one page at a time.
+    -onecolumn ... Display the pages in one column.
+    -twocolumnleft ... Display the pages in two columns, with oddnumbered pages on the left.
+    -twocolumnrigth ... Display the pages in two columns, with oddnumbered pages on the right.
+    -hidetoolbar ... Specifying whether to hide tool bars.
+    -hidemenubar ... Specifying whether to hide menu bars.
+    -hidewindowui ... Specifying whether to hide user interface elements.
+    -fitwindow ... Specifying whether to resize the document’s window to the size of the displayed page.
+    -centerwindow ... Specifying whether to position the document’s window in the center of the screen.
+    -displaytitle ... Specifying whether the window’s title bar should display the document title
+            taken from the Title entry of the document information dictionary.
+    -afterfullscreenthumbs ... Thumbnail images visible after Full-screen mode.
+    -afterfullscreenoutlines ... Document outline visible after Full-screen mode.
 
-	-firstpage => [ $pageobj, %opts] ... Specifying the page to be displayed,
-			plus one of the following options:
+    -firstpage => [ $pageobj, %opts] ... Specifying the page to be displayed,
+            plus one of the following options:
 
-		-fit => 1
+        -fit => 1
 
-		Display the page designated by page, with its contents magnified just enough to
-		fit the entire page within the window both horizontally and vertically. If the
-		required horizontal and vertical magnification factors are different, use the
-		smaller of the two, centering the page within the window in the other dimension.
+        Display the page designated by page, with its contents magnified just enough to
+        fit the entire page within the window both horizontally and vertically. If the
+        required horizontal and vertical magnification factors are different, use the
+        smaller of the two, centering the page within the window in the other dimension.
 
-		-fith => $top
+        -fith => $top
 
-		Display the page designated by page, with the vertical coordinate top positioned
-		at the top edge of the window and the contents of the page magnified just enough
-		to fit the entire width of the page within the window.
+        Display the page designated by page, with the vertical coordinate top positioned
+        at the top edge of the window and the contents of the page magnified just enough
+        to fit the entire width of the page within the window.
 
-		-fitv => $left
+        -fitv => $left
 
-		Display the page designated by page, with the horizontal coordinate left positioned
-		at the left edge of the window and the contents of the page magnified just enough
-		to fit the entire height of the page within the window.
+        Display the page designated by page, with the horizontal coordinate left positioned
+        at the left edge of the window and the contents of the page magnified just enough
+        to fit the entire height of the page within the window.
 
-		-fitr => [ $left, $bottom, $right, $top ]
+        -fitr => [ $left, $bottom, $right, $top ]
 
-		Display the page designated by page, with its contents magnified just enough to
-		fit the rectangle specified by the coordinates left, bottom, right, and top
-		entirely within the window both horizontally and vertically. If the required
-		horizontal and vertical magnification factors are different, use the smaller of
-		the two, centering the rectangle within the window in the other dimension.
+        Display the page designated by page, with its contents magnified just enough to
+        fit the rectangle specified by the coordinates left, bottom, right, and top
+        entirely within the window both horizontally and vertically. If the required
+        horizontal and vertical magnification factors are different, use the smaller of
+        the two, centering the rectangle within the window in the other dimension.
 
-		-fitb => 1
+        -fitb => 1
 
-		Display the page designated by page, with its contents magnified just enough
-		to fit its bounding box entirely within the window both horizontally and
-		vertically. If the required horizontal and vertical magnification factors are
-		different, use the smaller of the two, centering the bounding box within the
-		window in the other dimension.
+        Display the page designated by page, with its contents magnified just enough
+        to fit its bounding box entirely within the window both horizontally and
+        vertically. If the required horizontal and vertical magnification factors are
+        different, use the smaller of the two, centering the bounding box within the
+        window in the other dimension.
 
-		-fitbh => $top
+        -fitbh => $top
 
-		Display the page designated by page, with the vertical coordinate top
-		positioned at the top edge of the window and the contents of the page
-		magnified just enough to fit the entire width of its bounding box
-		within the window.
+        Display the page designated by page, with the vertical coordinate top
+        positioned at the top edge of the window and the contents of the page
+        magnified just enough to fit the entire width of its bounding box
+        within the window.
 
-		-fitbv => $left
+        -fitbv => $left
 
-		Display the page designated by page, with the horizontal coordinate
-		left positioned at the left edge of the window and the contents of the page
-		magnified just enough to fit the entire height of its bounding box within the
-		window.
+        Display the page designated by page, with the horizontal coordinate
+        left positioned at the left edge of the window and the contents of the page
+        magnified just enough to fit the entire height of its bounding box within the
+        window.
 
-		-xyz => [ $left, $top, $zoom ]
+        -xyz => [ $left, $top, $zoom ]
 
-		Display the page designated by page, with the coordinates (left, top) positioned
-		at the top-left corner of the window and the contents of the page magnified by
-		the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
-		specifies that the current value of that parameter is to be retained unchanged.
+        Display the page designated by page, with the coordinates (left, top) positioned
+        at the top-left corner of the window and the contents of the page magnified by
+        the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
+        specifies that the current value of that parameter is to be retained unchanged.
 
 
 B<Example:>
 
-	$pdf->preferences(
-		-fullscreen => 1,
-		-onecolumn => 1,
-		-afterfullscreenoutlines => 1,
-		-firstpage => [ $pageobj , -fit => 1],
-	);
+    $pdf->preferences(
+        -fullscreen => 1,
+        -onecolumn => 1,
+        -afterfullscreenoutlines => 1,
+        -firstpage => [ $pageobj , -fit => 1],
+    );
 
 =cut
 
 sub preferences {
-	my $self=shift @_;
-	my %opt=@_;
-	if($opt{-fullscreen}) {
-		$self->{catalog}->{PageMode}=PDFName('FullScreen');
-	} elsif($opt{-thumbs}) {
-		$self->{catalog}->{PageMode}=PDFName('UseThumbs');
-	} elsif($opt{-outlines}) {
-		$self->{catalog}->{PageMode}=PDFName('UseOutlines');
-	} else {
-		$self->{catalog}->{PageMode}=PDFName('UseNone');
-	}
-	if($opt{-singlepage}) {
-		$self->{catalog}->{PageLayout}=PDFName('SinglePage');
-	} elsif($opt{-onecolumn}) {
-		$self->{catalog}->{PageLayout}=PDFName('OneColumn');
-	} elsif($opt{-twocolumnleft}) {
-		$self->{catalog}->{PageLayout}=PDFName('TwoColumnLeft');
-	} elsif($opt{-twocolumnrigth}) {
-		$self->{catalog}->{PageLayout}=PDFName('TwoColumnRight');
-	} else {
-		$self->{catalog}->{PageLayout}=PDFName('SinglePage');
-	}
+    my $self=shift @_;
+    my %opt=@_;
+    if($opt{-fullscreen}) {
+        $self->{catalog}->{PageMode}=PDFName('FullScreen');
+    } elsif($opt{-thumbs}) {
+        $self->{catalog}->{PageMode}=PDFName('UseThumbs');
+    } elsif($opt{-outlines}) {
+        $self->{catalog}->{PageMode}=PDFName('UseOutlines');
+    } else {
+        $self->{catalog}->{PageMode}=PDFName('UseNone');
+    }
+    if($opt{-singlepage}) {
+        $self->{catalog}->{PageLayout}=PDFName('SinglePage');
+    } elsif($opt{-onecolumn}) {
+        $self->{catalog}->{PageLayout}=PDFName('OneColumn');
+    } elsif($opt{-twocolumnleft}) {
+        $self->{catalog}->{PageLayout}=PDFName('TwoColumnLeft');
+    } elsif($opt{-twocolumnrigth}) {
+        $self->{catalog}->{PageLayout}=PDFName('TwoColumnRight');
+    } else {
+        $self->{catalog}->{PageLayout}=PDFName('SinglePage');
+    }
 
-	$self->{catalog}->{ViewerPreferences}||=PDFDict();
-	$self->{catalog}->{ViewerPreferences}->realise;
+    $self->{catalog}->{ViewerPreferences}||=PDFDict();
+    $self->{catalog}->{ViewerPreferences}->realise;
 
-	if($opt{-hidetoolbar}) {
-		$self->{catalog}->{ViewerPreferences}->{HideToolbar}=PDFBool(1);
-	}
-	if($opt{-hidemenubar}) {
-		$self->{catalog}->{ViewerPreferences}->{HideMenubar}=PDFBool(1);
-	}
-	if($opt{-hidewindowui}) {
-		$self->{catalog}->{ViewerPreferences}->{HideWindowUI}=PDFBool(1);
-	}
-	if($opt{-fitwindow}) {
-		$self->{catalog}->{ViewerPreferences}->{FitWindow}=PDFBool(1);
-	}
-	if($opt{-centerwindow}) {
-		$self->{catalog}->{ViewerPreferences}->{CenterWindow}=PDFBool(1);
-	}
-	if($opt{-displaytitle}) {
-		$self->{catalog}->{ViewerPreferences}->{DisplayDocTitle}=PDFBool(1);
-	}
-	if($opt{-righttoleft}) {
-		$self->{catalog}->{ViewerPreferences}->{Direction}=PDFName("R2L");
-	}
+    if($opt{-hidetoolbar}) {
+        $self->{catalog}->{ViewerPreferences}->{HideToolbar}=PDFBool(1);
+    }
+    if($opt{-hidemenubar}) {
+        $self->{catalog}->{ViewerPreferences}->{HideMenubar}=PDFBool(1);
+    }
+    if($opt{-hidewindowui}) {
+        $self->{catalog}->{ViewerPreferences}->{HideWindowUI}=PDFBool(1);
+    }
+    if($opt{-fitwindow}) {
+        $self->{catalog}->{ViewerPreferences}->{FitWindow}=PDFBool(1);
+    }
+    if($opt{-centerwindow}) {
+        $self->{catalog}->{ViewerPreferences}->{CenterWindow}=PDFBool(1);
+    }
+    if($opt{-displaytitle}) {
+        $self->{catalog}->{ViewerPreferences}->{DisplayDocTitle}=PDFBool(1);
+    }
+    if($opt{-righttoleft}) {
+        $self->{catalog}->{ViewerPreferences}->{Direction}=PDFName("R2L");
+    }
 
-	if($opt{-afterfullscreenthumbs}) {
-		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseThumbs');
-	} elsif($opt{-afterfullscreenoutlines}) {
-		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseOutlines');
-	} else {
-		$self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseNone');
-	}
+    if($opt{-afterfullscreenthumbs}) {
+        $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseThumbs');
+    } elsif($opt{-afterfullscreenoutlines}) {
+        $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseOutlines');
+    } else {
+        $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseNone');
+    }
 
-	if($opt{-firstpage}) {
-		my ($page,%o)=@{$opt{-firstpage}};
+    if($opt{-firstpage}) {
+        my ($page,%o)=@{$opt{-firstpage}};
 
-		$o{-fit}=1 if(scalar(keys %o)<1);
+        $o{-fit}=1 if(scalar(keys %o)<1);
 
-		if(defined $o{-fit}) {
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('Fit'));
-		} elsif(defined $o{-fith}) {
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitH'),PDFNum($o{-fith}));
-		} elsif(defined $o{-fitb}) {
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitB'));
-		} elsif(defined $o{-fitbh}) {
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBH'),PDFNum($o{-fitbh}));
-		} elsif(defined $o{-fitv}) {
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitV'),PDFNum($o{-fitv}));
-		} elsif(defined $o{-fitbv}) {
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBV'),PDFNum($o{-fitbv}));
-		} elsif(defined $o{-fitr}) {
-			die "insufficient parameters to -fitr => [] " unless(scalar @{$o{-fitr}} == 4);
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$o{-fitr}});
-		} elsif(defined $o{-xyz}) {
-			die "insufficient parameters to -xyz => [] " unless(scalar @{$o{-xyz}} == 3);
-			$self->{catalog}->{OpenAction}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$o{-xyz}});
-		}
-	}
-	$self->{pdf}->out_obj($self->{catalog});
+        if(defined $o{-fit}) {
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('Fit'));
+        } elsif(defined $o{-fith}) {
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitH'),PDFNum($o{-fith}));
+        } elsif(defined $o{-fitb}) {
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitB'));
+        } elsif(defined $o{-fitbh}) {
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBH'),PDFNum($o{-fitbh}));
+        } elsif(defined $o{-fitv}) {
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitV'),PDFNum($o{-fitv}));
+        } elsif(defined $o{-fitbv}) {
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBV'),PDFNum($o{-fitbv}));
+        } elsif(defined $o{-fitr}) {
+            die "insufficient parameters to -fitr => [] " unless(scalar @{$o{-fitr}} == 4);
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$o{-fitr}});
+        } elsif(defined $o{-xyz}) {
+            die "insufficient parameters to -xyz => [] " unless(scalar @{$o{-xyz}} == 3);
+            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$o{-xyz}});
+        }
+    }
+    $self->{pdf}->out_obj($self->{catalog});
 
-	return $self;
+    return $self;
 }
 
 sub proc_pages {
-	my ($pdf, $pgs) = @_;
-	my ($pg, $pgref, @pglist);
+    my ($pdf, $pgs) = @_;
+    my ($pg, $pgref, @pglist);
 
-	if(defined($pgs->{Resources})) {
-		eval {
-			$pgs->{Resources}->realise;
-		};
-	}
-	foreach $pgref ($pgs->{'Kids'}->elementsof) {
-		$pg = $pdf->read_obj($pgref);
-		if ($pg->{'Type'}->val =~ m/^Pages$/o) {
-			push(@pglist, proc_pages($pdf, $pg));
-		} else {
-			$pgref->{' pnum'} = $pcount++;
-			if(defined($pg->{Resources})) {
-				eval {
-					$pg->{Resources}->realise;
-				};
-			}
-			weaken($pgref) if($hasWeakRef);
-			push (@pglist, $pgref);
-		}
-	}
-	return(@pglist);
+    if(defined($pgs->{Resources})) {
+        eval {
+            $pgs->{Resources}->realise;
+        };
+    }
+    foreach $pgref ($pgs->{'Kids'}->elementsof) {
+        $pg = $pdf->read_obj($pgref);
+        if ($pg->{'Type'}->val =~ m/^Pages$/o) {
+            push(@pglist, proc_pages($pdf, $pg));
+        } else {
+            $pdf->{' apipagecount'}++;
+            $pgref->{' pnum'} = $pdf->{' apipagecount'};
+            if(defined($pg->{Resources})) {
+                eval {
+                    $pg->{Resources}->realise;
+                };
+            }
+            weaken($pgref) if($hasWeakRef);
+            push (@pglist, $pgref);
+        }
+    }
+    return(@pglist);
 }
 
 =item $pdf = PDF::API->open $pdffile
@@ -334,45 +338,46 @@ Opens an existing PDF.
 =cut
 
 sub open {
-	my $class=shift(@_);
-	my $file=shift(@_);
-	my %opt=@_;
-	my $self={};
-	bless($self,$class);
-	$self->default('Compression',1);
-	$self->default('subset',1);
-	$self->default('update',1);
-	foreach my $para (keys(%opt)) {
-		$self->default($para,$opt{$para});
-	}
-	die "File '$file' does not exist." unless(-f $file);
-	my $fh=PDF::API2::IOString->new();
-	$fh->import_from_file($file);
-	$self->{pdf}=PDF::API2::PDF::FileAPI->open($fh,1);
+    my $class=shift(@_);
+    my $file=shift(@_);
+    my %opt=@_;
+    my $self={};
+    bless($self,$class);
+    $self->default('Compression',1);
+    $self->default('subset',1);
+    $self->default('update',1);
+    foreach my $para (keys(%opt)) {
+        $self->default($para,$opt{$para});
+    }
+    die "File '$file' does not exist." unless(-f $file);
+    my $fh=PDF::API2::IOString->new();
+    $fh->import_from_file($file);
+    $self->{pdf}=PDF::API2::PDF::FileAPI->open($fh,1);
 
-#	$self->{pdf}=PDF::API2::PDF::FileAPI->open($file,1);
+#   $self->{pdf}=PDF::API2::PDF::FileAPI->open($file,1);
 
-	$self->{pdf}->{' fname'}=$file;
-	$self->{pdf}->{'Root'}->realise;
-	$self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
-	weaken($self->{pages}) if($hasWeakRef);
-	$self->{pdf}->{' version'} = 3;
-	my @pages=proc_pages($self->{pdf},$self->{pages});
-	$self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
-	$self->{catalog}=$self->{pdf}->{Root};
-	$self->{reopened}=1;
-	$self->{time}='_'.pdfkey(time());
-	my $dig=digest16(digest32($class,$file,%opt));
-	if(defined $self->{pdf}->{'ID'}){
-		$self->{pdf}->{'ID'}->realise;
-		$self->{pdf}->{' id'}=$self->{pdf}->{'ID'}->val->[0]->val;
-		$self->{pdf}->{'ID'}=PDFArray(PDFStr($self->{pdf}->{' id'}),PDFStr($dig));
-	} else {
-		$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
-		$self->{pdf}->{' id'}=$dig;
-	}
-       	$self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
-	return $self;
+    $self->{pdf}->{' fname'}=$file;
+    $self->{pdf}->{'Root'}->realise;
+    $self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
+    weaken($self->{pages}) if($hasWeakRef);
+    $self->{pdf}->{' version'} = 3;
+    $self->{pdf}->{' apipagecount'} = 0;
+    my @pages=proc_pages($self->{pdf},$self->{pages});
+    $self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
+    $self->{catalog}=$self->{pdf}->{Root};
+    $self->{reopened}=1;
+    $self->{time}='_'.pdfkey(time());
+    my $dig=digest16(digest32($class,$file,%opt));
+    if(defined $self->{pdf}->{'ID'}){
+        $self->{pdf}->{'ID'}->realise;
+        $self->{pdf}->{' id'}=$self->{pdf}->{'ID'}->val->[0]->val;
+        $self->{pdf}->{'ID'}=PDFArray(PDFStr($self->{pdf}->{' id'}),PDFStr($dig));
+    } else {
+        $self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
+        $self->{pdf}->{' id'}=$dig;
+    }
+        $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
+    return $self;
 }
 
 =item $page = $pdf->page
@@ -383,35 +388,36 @@ Returns a new page object or inserts-and-returns a new page at $index.
 
 B<Note:> on $index
 
-	-1 ... is inserted before the last page
-	1 ... is inserted before page number 1
-	0 ... is simply appended
+    -1 ... is inserted before the last page
+    1 ... is inserted before page number 1
+    0 ... is simply appended
 
 =cut
 
 sub page {
-	my $self=shift;
-	my $index=shift || 0;
-	my $page;
-	if($index==0) {
-		$page=PDF::API2::Page->new($self->{pdf},$self->{pages});
-	} else {
-		$page=PDF::API2::Page->new($self->{pdf},$self->{pages},$index);
-	}
-	$page->{' apipdf'}=$self->{pdf};
-	weaken($page->{' apipdf'}) if($hasWeakRef);
-	$page->{' api'}=$self;
-	weaken($page->{' api'}) if($hasWeakRef);
-	$self->{pdf}->out_obj($page);
-	$self->{pdf}->out_obj($self->{pages});
-	if($index==0) {
-		push(@{$self->{pagestack}},$page);
-	} elsif($index<0) {
-		splice(@{$self->{pagestack}},$index,0,$page);
-	} else {
-		splice(@{$self->{pagestack}},$index-1,0,$page);
-	}
-	return $page;
+    my $self=shift;
+    my $index=shift || 0;
+    my $page;
+    if($index==0) {
+        $page=PDF::API2::Page->new($self->{pdf},$self->{pages});
+    } else {
+        $page=PDF::API2::Page->new($self->{pdf},$self->{pages},$index);
+    }
+    $page->{' apipdf'}=$self->{pdf};
+    weaken($page->{' apipdf'}) if($hasWeakRef);
+    $page->{' api'}=$self;
+    weaken($page->{' api'}) if($hasWeakRef);
+    $self->{pdf}->out_obj($page);
+    $self->{pdf}->out_obj($self->{pages});
+    if($index==0) {
+        push(@{$self->{pagestack}},$page);
+    } elsif($index<0) {
+        splice(@{$self->{pagestack}},$index,0,$page);
+    } else {
+        splice(@{$self->{pagestack}},$index-1,0,$page);
+    }
+    $page->{Resources}=$self->{pages}->{Resources};
+    return $page;
 }
 
 =item $pageobj = $pdf->openpage $index
@@ -420,109 +426,143 @@ Returns the pageobject of page $index.
 
 B<Note:> on $index
 
-	-1,0 ... returns the last page
-	1 ... returns page number 1
+    -1,0 ... returns the last page
+    1 ... returns page number 1
 
 =cut
 
 sub unfilter {
-	my ($filter,$stream)=@_;
+    my ($filter,$stream)=@_;
 
-	if((defined $filter) ) {
-		# we need to fix filter because it MAY be
-		# an array BUT IT COULD BE only a name
-		if(ref($filter)!~/Array$/) {
-		       $filter = PDFArray($filter);
-		}
-		use PDF::API2::PDF::Filter;
-		my @filts;
-		my ($hasflate) = -1;
-		my ($temp, $i, $temp1);
+    if((defined $filter) ) {
+        # we need to fix filter because it MAY be
+        # an array BUT IT COULD BE only a name
+        if(ref($filter)!~/Array$/) {
+               $filter = PDFArray($filter);
+        }
+        use PDF::API2::PDF::Filter;
+        my @filts;
+        my ($hasflate) = -1;
+        my ($temp, $i, $temp1);
 
-		@filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
+        @filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
 
-		foreach my $f (@filts) {
-			$stream = $f->infilt($stream, 1);
-		}
-	}
-	return($stream);
+        foreach my $f (@filts) {
+            $stream = $f->infilt($stream, 1);
+        }
+    }
+    return($stream);
 }
 
 sub dofilter {
-	my ($filter,$stream)=@_;
+    my ($filter,$stream)=@_;
 
-	if((defined $filter) ) {
-		# we need to fix filter because it MAY be
-		# an array BUT IT COULD BE only a name
-		if(ref($filter)!~/Array$/) {
-		       $filter = PDFArray($filter);
-		}
-		use PDF::API2::PDF::Filter;
-		my @filts;
-		my ($hasflate) = -1;
-		my ($temp, $i, $temp1);
+    if((defined $filter) ) {
+        # we need to fix filter because it MAY be
+        # an array BUT IT COULD BE only a name
+        if(ref($filter)!~/Array$/) {
+               $filter = PDFArray($filter);
+        }
+        use PDF::API2::PDF::Filter;
+        my @filts;
+        my ($hasflate) = -1;
+        my ($temp, $i, $temp1);
 
-		@filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
+        @filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
 
-		foreach my $f (@filts) {
-			$stream = $f->outfilt($stream, 1);
-		}
-	}
-	return($stream);
+        foreach my $f (@filts) {
+            $stream = $f->outfilt($stream, 1);
+        }
+    }
+    return($stream);
 }
 
 sub openpage {
-	my $self=shift @_;
-	my $index=shift @_||0;
-	my $page;
+    my $self=shift @_;
+    my $index=shift @_||0;
+    my ($page,$rotate,$media,$trans);
 
-	if($index==0) {
-		$page=$self->{pagestack}->[-1];
-	} elsif($index<0) {
-		$page=$self->{pagestack}->[$index];
-	} else {
-		$page=$self->{pagestack}->[$index-1];
-	}
-	if(ref($page) ne 'PDF::API2::Page') {
-		$page=PDF::API2::Page->coerce($self->{pdf},$page);
-		if($index==0) {
-			$self->{pagestack}->[-1]=$page;
-		} elsif($index<0) {
-			$self->{pagestack}->[$index]=$page;
-		} else {
-			$self->{pagestack}->[$index-1]=$page;
-		}
-		if(defined $page->{Contents} && (!defined($page->{' fixed'}) || $page->{' fixed'}<1) ) {
-			$page->fixcontents;
-			my $uncontent=$page->{Contents};
-			delete $page->{Contents};
-			my $content=$page->hybrid();
-			# we already have a 'q' in the hybrid stream ## $content->{' stream'}="\n q \n";
-			foreach my $k ($uncontent->elementsof) {
-				$k->realise;
-				$content->{' stream'}.=" ".unfilter($k->{Filter}, $k->{' stream'})." ";
-			}
-			## $content->{Length}=PDFNum(length($content->{' stream'}));
-			# this  will be fixed by the following code or content or filters 
-			
-			## if we like compress we will do it now to do quicker saves
-			if($self->{forcecompress}>0){
-  			$content->{' stream'}.="\n Q \n";
-				$content->compress;
-				$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
-				$content->{' nofilt'}=1;
-				$content->{Length}=PDFNum(length($content->{' stream'}));
-			}
-			$page->{' fixed'}=1;
-		}
-	}
+    if($index==0) {
+        $page=$self->{pagestack}->[-1];
+    } elsif($index<0) {
+        $page=$self->{pagestack}->[$index];
+    } else {
+        $page=$self->{pagestack}->[$index-1];
+    }
+    if(ref($page) ne 'PDF::API2::Page') {
+        $page=PDF::API2::Page->coerce($self->{pdf},$page);
+        $self->{pdf}->out_obj($page);
+        if($index==0) {
+            $self->{pagestack}->[-1]=$page;
+        } elsif($index<0) {
+            $self->{pagestack}->[$index]=$page;
+        } else {
+            $self->{pagestack}->[$index-1]=$page;
+        }
+        if(($rotate=$page->find_prop('Rotate')) && (!defined($page->{' fixed'}) || $page->{' fixed'}<1)) {
+          $rotate=($rotate->val+360)%360;
 
-#        $self->{pdf}->out_obj($page);
-#        $self->{pdf}->out_obj($self->{pages});
-	$page->{' api'}=$self;
-	weaken($page->{' api'}) if($hasWeakRef);
-	$page->{' reopened'}=1;
-	return($page);
+      if($rotate!=0) {
+        $page->{Rotate}=PDFNum(0);
+        foreach my $mediatype (qw( MediaBox CropBox BleedBox TrimBox ArtBox )) {
+            if($media=$page->find_prop($mediatype)) {
+              $media=[ map{ $_->val } $media->elementsof ];
+            } else {
+            $media=[0,0,612,792];
+            next if($mediatype ne 'MediaBox');
+            }
+              if($rotate==90) {
+                $trans="0 -1 1 0 0 $media->[2] cm" if($mediatype eq 'MediaBox');
+                $media=[$media->[1],$media->[0],$media->[3],$media->[2]];
+              } elsif($rotate==180) {
+                $trans="-1 0 0 -1 $media->[2] $media->[3] cm" if($mediatype eq 'MediaBox');
+              } elsif($rotate==270) {
+                $trans="-1 0 0 -1 $media->[3] 0 cm" if($mediatype eq 'MediaBox');
+                $media=[$media->[1],$media->[0],$media->[3],$media->[2]];
+              }
+            $page->{$mediatype}=PDFArray(map { PDFNum($_) } @{$media});
+        }
+
+      } else {
+            $trans="";
+        }
+          
+      } else {
+        $trans="";
+      }
+
+        if(defined $page->{Contents} && (!defined($page->{' fixed'}) || $page->{' fixed'}<1) ) {
+            $page->fixcontents;
+            my $uncontent=$page->{Contents};
+            delete $page->{Contents};
+            my $content=$page->hybrid();
+            $content->add(" $trans ");
+            # we already have a 'q' in the hybrid stream ## $content->{' stream'}="\n q \n";
+            foreach my $k ($uncontent->elementsof) {
+                $k->realise;
+                $content->{' stream'}.=" ".unfilter($k->{Filter}, $k->{' stream'})." ";
+            }
+            ## $content->{Length}=PDFNum(length($content->{' stream'}));
+            # this  will be fixed by the following code or content or filters 
+            
+            ## if we like compress we will do it now to do quicker saves
+            if($self->{forcecompress}>0){
+            $content->{' stream'}.="\n Q \n";
+                $content->compress;
+                $content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+                $content->{' nofilt'}=1;
+                $content->{Length}=PDFNum(length($content->{' stream'}));
+            }
+            $page->{' fixed'}=1;
+        }
+    }
+
+  $self->{pdf}->out_obj($page);
+  $self->{pdf}->out_obj($self->{pages});
+    $page->{' api'}=$self;
+    weaken($page->{' api'}) if($hasWeakRef);
+    $page->{' reopened'}=1;
+    return($page);
 }
 
 =item $pageobj = $pdf->clonepage $sourceindex, $targetindex
@@ -531,8 +571,8 @@ Returns the pageobject of page $targetindex, cloned from $sourceindex.
 
 B<Note:> on $index
 
-	-1,0 ... returns the last page
-	1 ... returns page number 1
+    -1,0 ... returns the last page
+    1 ... returns page number 1
 
 B<Beware:>
 
@@ -543,16 +583,16 @@ via API2 remain unaffected so far.
 =cut
 
 sub clonepage {
-	my $self=shift @_;
-	my $s_idx=shift @_||0;
-	my $t_idx=shift @_||0;
-	$t_idx=0 if($self->pages<$t_idx);
-	my ($s_page,$t_page);
+    my $self=shift @_;
+    my $s_idx=shift @_||0;
+    my $t_idx=shift @_||0;
+    $t_idx=0 if($self->pages<$t_idx);
+    my ($s_page,$t_page);
 
-	$s_page=$self->openpage($s_idx);
-	$t_page=$self->page($t_idx);
+    $s_page=$self->openpage($s_idx);
+    $t_page=$self->page($t_idx);
 
-	$s_page->copy($self->{pdf},$t_page);
+    $s_page->copy($self->{pdf},$t_page);
 
 ####################################################################
         if(defined($t_page->{Resources})) {
@@ -563,78 +603,78 @@ sub clonepage {
         }
 
         if(defined($t_page->{Contents})) {
-		$t_page->fixcontents;
-		$s_page->fixcontents;
-	#	foreach my $content ($t_page->{Contents}->elementsof) {
-	#		$content->realise;
-	#	}
-	#
-	#	my $tempobj=$t_page->{Contents};
-	#
+        $t_page->fixcontents;
+        $s_page->fixcontents;
+    #   foreach my $content ($t_page->{Contents}->elementsof) {
+    #       $content->realise;
+    #   }
+    #
+    #   my $tempobj=$t_page->{Contents};
+    #
         #        $t_page->{Contents}=$t_page->{Contents}->copy;
-	#	$self->{pdf}->remove_obj($tempobj);
+    #   $self->{pdf}->remove_obj($tempobj);
 
         #        foreach my $content ($t_page->{Contents}->elementsof) {
         #                $self->{pdf}->new_obj($content);
         #        }
 
-		$t_page->{Contents}->{' val'}=[];
-		$t_page->{Contents}->add_elements($s_page->{Contents}->elementsof);
+        $t_page->{Contents}->{' val'}=[];
+        $t_page->{Contents}->add_elements($s_page->{Contents}->elementsof);
         }
 ####################################################################
-	delete $t_page->{' reopened'};
+    delete $t_page->{' reopened'};
 
         $self->{pdf}->out_obj($t_page);
         $self->{pdf}->out_obj($self->{pages});
-	return($t_page);
+    return($t_page);
 }
 
 # $target_object = walk_obj $obj_cache, $source_pdf, $target_pdf, $source_object [, @keys_to_copy ]
 
 sub walk_obj {
-	my ($objs,$spdf,$tpdf,$obj,@keys)=@_;
+    my ($objs,$spdf,$tpdf,$obj,@keys)=@_;
 
-	my $tobj;
+    my $tobj;
 
 
-	if(ref($obj)=~/Objind$/) {
-		$obj->realise;
-	}
+    if(ref($obj)=~/Objind$/) {
+        $obj->realise;
+    }
 
-	return($objs->{scalar $obj}) if(defined $objs->{scalar $obj});
+    return($objs->{scalar $obj}) if(defined $objs->{scalar $obj});
 ##  die "infinite loop while copying objects" if($obj->{' copied'});
-	$tobj=$obj->copy;
-##	$obj->{' copied'}=1;
-	$tpdf->new_obj($tobj) if($obj->is_obj($spdf));
+    $tobj=$obj->copy;
+##  $obj->{' copied'}=1;
+    $tpdf->new_obj($tobj) if($obj->is_obj($spdf));
 
-	$objs->{scalar $obj}=$tobj;
+    $objs->{scalar $obj}=$tobj;
 
-	if(ref($obj)=~/Array$/) {
-		$tobj->{' val'}=[];
-		foreach my $k ($obj->elementsof) {
-			$k->realise if(ref($k)=~/Objind$/);
-			$tobj->add_elements(walk_obj($objs,$spdf,$tpdf,$k));
-		}
-	} elsif(ref($obj)=~/Dict$/) {
-		@keys=keys(%{$tobj}) if(scalar @keys <1);
-		foreach my $k (@keys) {
-			next if($k=~/^ /);
-			next unless(defined($obj->{$k}));
-			$tobj->{$k}=walk_obj($objs,$spdf,$tpdf,$obj->{$k});
-		}
-		if($obj->{' stream'}) {
-			if($tobj->{Filter}) {
-				$tobj->{' nofilt'}=1;
-			} else {
-				delete $tobj->{' nofilt'};
-				$tobj->{Filter}=PDFArray(PDFName('FlateDecode'));
-			}
-			$tobj->{' stream'}=$obj->{' stream'};
-		}
-	}
-	delete $tobj->{' streamloc'};
-	delete $tobj->{' streamsrc'};
-	return($tobj);
+    if(ref($obj)=~/Array$/) {
+        $tobj->{' val'}=[];
+        foreach my $k ($obj->elementsof) {
+            $k->realise if(ref($k)=~/Objind$/);
+            $tobj->add_elements(walk_obj($objs,$spdf,$tpdf,$k));
+        }
+    } elsif(ref($obj)=~/Dict$/) {
+        @keys=keys(%{$tobj}) if(scalar @keys <1);
+        foreach my $k (@keys) {
+            next if($k=~/^ /);
+            next unless(defined($obj->{$k}));
+            $tobj->{$k}=walk_obj($objs,$spdf,$tpdf,$obj->{$k});
+        }
+        if($obj->{' stream'}) {
+            if($tobj->{Filter}) {
+                $tobj->{' nofilt'}=1;
+            } else {
+                delete $tobj->{' nofilt'};
+                $tobj->{Filter}=PDFArray(PDFName('FlateDecode'));
+            }
+            $tobj->{' stream'}=$obj->{' stream'};
+        }
+    }
+    delete $tobj->{' streamloc'};
+    delete $tobj->{' streamsrc'};
+    return($tobj);
 }
 
 =item $pageobj = $pdf->importpage $sourcepdf, $sourceindex, $targetindex
@@ -643,8 +683,8 @@ Returns the pageobject of page $targetindex, imported from $sourcepdf,$sourceind
 
 B<Note:> on $index
 
-	-1,0 ... returns the last page
-	1 ... returns page number 1
+    -1,0 ... returns the last page
+    1 ... returns page number 1
 
 B<Note:> you can specify a page object instead as $targetindex
 so that the contents of the sourcepage will be 'merged into'.
@@ -652,126 +692,123 @@ so that the contents of the sourcepage will be 'merged into'.
 =cut
 
 sub importpage {
-	my $self=shift @_;
-	my $s_pdf=shift @_;
-	my $s_idx=shift @_||0;
-	my $t_idx=shift @_||0;
-	my ($s_page,$t_page);
+    my $self=shift @_;
+    my $s_pdf=shift @_;
+    my $s_idx=shift @_||0;
+    my $t_idx=shift @_||0;
+    my ($s_page,$t_page);
 
-	if(ref($s_idx) eq 'PDF::API2::Page') {
-		$s_page=$s_idx;
-	} else {
-		$s_page=$s_pdf->openpage($s_idx);
-	}
+    if(ref($s_idx) eq 'PDF::API2::Page') {
+        $s_page=$s_idx;
+    } else {
+        $s_page=$s_pdf->openpage($s_idx);
+    }
 
-	if(ref($t_idx) eq 'PDF::API2::Page') {
-		$t_page=$t_idx;
-	} else {
-		$t_idx=0 if($self->pages<$t_idx);
-		$t_page=$self->page($t_idx);
-	}
+    if(ref($t_idx) eq 'PDF::API2::Page') {
+        $t_page=$t_idx;
+    } else {
+        $t_idx=0 if($self->pages<$t_idx);
+        $t_page=$self->page($t_idx);
+    }
 
-	$self->{apiimportcache}=$self->{apiimportcache}||{};
-	$self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
+    $self->{apiimportcache}=$self->{apiimportcache}||{};
+    $self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
 
-	foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate )) {
-		next unless(defined $s_page->{$k});
-		$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
-	}
-	if($t_page!=$t_idx) {
-		foreach my $k (qw( B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
-			next unless(defined $s_page->{$k});
-			$t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
-		}
-	}
+    foreach my $k (qw( MediaBox ArtBox TrimBox BleedBox CropBox Rotate )) {
+        next unless(defined $s_page->{$k});
+        $t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+    }
+    if($t_page!=$t_idx) {
+        foreach my $k (qw( B Dur Hid Trans AA PieceInfo LastModified SeparationInfo ID PZ )) {
+            next unless(defined $s_page->{$k});
+            $t_page->{$k} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k});
+        }
+    }
 
-	my %resmod=();
-	foreach my $k (qw( Resources )) {
-		$s_page->{$k}=$s_page->find_prop($k);
-		next unless(defined $s_page->{$k});
-		$s_page->{$k}->realise if(ref($s_page->{$k})=~/Objind$/);
+    my %resmod=();
+    foreach my $k (qw( Resources )) {
+        $s_page->{$k}=$s_page->find_prop($k);
+        next unless(defined $s_page->{$k});
+        $s_page->{$k}->realise if(ref($s_page->{$k})=~/Objind$/);
 
-		$t_page->{$k}||=PDFDict();
-		foreach my $sk (qw( XObject ExtGState Font ProcSet Properties )) {
-			next unless(defined $s_page->{$k}->{$sk});
-			$s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
-			$t_page->{$k}->{$sk}||=PDFDict();
-			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
-				next if($ssk=~/^ /);
-				my $nssk="$seq+$ssk";
-				$resmod{$ssk}=$nssk;
-				$t_page->{$k}->{$sk}->{$nssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
-				$seq++;
-			}
-		}
-		foreach my $sk (qw( ColorSpace Pattern Shading )) {
-			next unless(defined $s_page->{$k}->{$sk});
-			$s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
-			$t_page->{$k}->{$sk}||=PDFDict();
-			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
-				next if($ssk=~/^ /);
-				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
-			}
-		}
-	}
+        $t_page->{$k}||=PDFDict();
+        foreach my $sk (qw( XObject ExtGState Font ProcSet Properties )) {
+            next unless(defined $s_page->{$k}->{$sk});
+            $s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
+            $t_page->{$k}->{$sk}||=PDFDict();
+            foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
+                next if($ssk=~/^ /);
+                my $nssk=$PDF::API2::seq."+$ssk";
+                $resmod{$ssk}=$nssk;
+                $t_page->{$k}->{$sk}->{$nssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+                $PDF::API2::seq++;
+            }
+        }
+        foreach my $sk (qw( ColorSpace Pattern Shading )) {
+            next unless(defined $s_page->{$k}->{$sk});
+            $s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
+            $t_page->{$k}->{$sk}||=PDFDict();
+            foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
+                next if($ssk=~/^ /);
+                $t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+            }
+        }
+    }
 
-	# create a whole content stream
-	## tecnically it is possible to submit an unfinished 
-	## (eg. newly created) source-page, but thats non-sense,
-	## so we expect a page fixed by openpage and die otherwise
-	die "page not processed via openpage ... " unless($s_page->{' fixed'}==1);
-	my $content=$t_page->hybrid();
+    # create a whole content stream
+    ## technically it is possible to submit an unfinished 
+    ## (eg. newly created) source-page, but thats non-sense,
+    ## so we expect a page fixed by openpage and die otherwise
+    die "page not processed via openpage ... " unless($s_page->{' fixed'}==1);
+    my $content=$t_page->hybrid();
 
   # since the source page comes from openpage it may already 
-  # contain the required starting 'q' without the final 'Q'
+  # contains the required starting 'q' without the final 'Q'
   # if forcecompress is in effect
-	if(defined $s_page->{Contents}) {
-		$s_page->fixcontents;
-		
-    $content->{' stream'}='';
+    if(defined $s_page->{Contents}) {
+        $s_page->fixcontents;
+        
+    $content->{' stream'}="q\n";
     # openpage pages only contain one stream
-		my ($k)=$s_page->{Contents}->elementsof;
-		$k->realise;
-		if($k->{' nofilt'}) {
-		  # we have a finished stream here 
-		  # so we unfilter
-		  $content->{' stream'}=unfilter($k->{Filter}, $k->{' stream'});
-		} else {
-		  # stream is an unfinished/unfiltered hybrid
-		  # so we just copy it
-			$content->{' stream'}=$k->{' stream'};
-		}
-	  # and modify resources
-		foreach my $r (keys %resmod) {
-			$content->{' stream'}=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
-		}
-		if($k->{' nofilt'} && $self->{forcecompress}>0) {
-	    # standardize filters and refilter
-  	  # since forcecompress was in effect
-			$content->compress;
-		  $content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
-		  $content->{' nofilt'}=1;
+        my ($k)=$s_page->{Contents}->elementsof;
+        $k->realise;
+        if($k->{' nofilt'}) {
+          # we have a finished stream here 
+          # so we unfilter
+          $content->{' stream'}.=unfilter($k->{Filter}, $k->{' stream'});
+        } else {
+          # stream is an unfinished/unfiltered hybrid
+          # so we just copy it
+            $content->{' stream'}=$k->{' stream'};
+        }
+      # and modify resources
+        foreach my $r (keys %resmod) {
+            $content->{' stream'}=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
+        }
+        if($k->{' nofilt'} && $self->{forcecompress}>0) {
+        # standardize filters and refilter
+      # since forcecompress was in effect
+            $content->add('Q');
+            $content->compress;
+          $content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+          $content->{' nofilt'}=1;
       $content->{Length}=PDFNum(length($content->{' stream'}));
-		} elsif($k->{' nofilt'} && $self->{forcecompress}<1) {
-		  # this means that the terminal "Q" will be added so we
-		  # have to add a 'q' to balance things
-			$content->{' stream'}.=' q ';
-		} else {
-		  # unfinished hybrid (do nothing)
-		}
-	}
-	## if we like compress we will do it now to do quicker saves
-	if($self->{forcecompress}>0 && $content->{' nofilt'}<0){
-		# since we compress the stream without
-		# calling back at the content/.. methods
-		# which corrrect the streams Q's we have 
-		# to add them here
-		$content->compress;
-		$content->add(' Q ');
-		$content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
-		$content->{' nofilt'}=1;
-		$content->{Length}=PDFNum(length($content->{' stream'}));
-	}
+        } else {
+          # unfinished hybrid (do nothing)
+        }
+    }
+    ## if we like compress we will do it now to do quicker saves
+    if($self->{forcecompress}>0 && $content->{' nofilt'}<0){
+        # since we compress the stream without
+        # calling back at the content/.. methods
+        # which corrrect the streams Q's we have 
+        # to add them here
+        $content->compress;
+        $content->add('Q');
+        $content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
+        $content->{' nofilt'}=1;
+        $content->{Length}=PDFNum(length($content->{' stream'}));
+    }
 
         # copy annotations and/or form elements as well
         if (exists $s_page->{Annots} and $s_page->{Annots}) {
@@ -847,13 +884,14 @@ sub importpage {
 
         $t_page->{' imported'} = 1;
 
-	$self->{pdf}->out_obj($t_page);
-	$self->{pdf}->out_obj($self->{pages});
-	if(wantarray) {
-		return($content,$t_page);
-	} else {
-		return($t_page);
-	}
+    $self->{pdf}->out_obj($t_page);
+    $self->{pdf}->out_obj($self->{pages});
+    $self->{pdf}->out_obj($content);
+    if(wantarray) {
+        return($content,$t_page);
+    } else {
+        return($t_page);
+    }
 }
 
 =item $pagenumber = $pdf->pages
@@ -863,8 +901,8 @@ Returns the number of pages in the document.
 =cut
 
 sub pages {
-	my $self=shift @_;
-	return scalar @{$self->{pagestack}};
+    my $self=shift @_;
+    return scalar @{$self->{pagestack}};
 }
 
 =item $pdf->mediabox $w, $h
@@ -876,17 +914,17 @@ Sets the global mediabox.
 =cut
 
 sub mediabox {
-	my ($self,$x1,$y1,$x2,$y2) = @_;
-	if(defined $x2) {
-		$self->{pages}->{'MediaBox'}=PDFArray(
-			map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
-		);
-	} else {
-		$self->{pages}->{'MediaBox'}=PDFArray(
-			map { PDFNum(float($_)) } (0,0,$x1,$y1)
-		);
-	}
-	$self;
+    my ($self,$x1,$y1,$x2,$y2) = @_;
+    if(defined $x2) {
+        $self->{pages}->{'MediaBox'}=PDFArray(
+            map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
+        );
+    } else {
+        $self->{pages}->{'MediaBox'}=PDFArray(
+            map { PDFNum(float($_)) } (0,0,$x1,$y1)
+        );
+    }
+    $self;
 }
 
 =item $pdf->update
@@ -896,8 +934,8 @@ Updates a previously "opened" document after all changes have been applied.
 =cut
 
 sub update {
-	my $self=shift @_;
-	$self->saveas($self->{pdf}->{' fname'});
+    my $self=shift @_;
+    $self->saveas($self->{pdf}->{' fname'});
 }
 
 =item $pdf->saveas $file
@@ -907,40 +945,40 @@ Saves the document.
 =cut
 
 sub saveas {
-	my ($self,$file)=@_;
-	if($self->{reopened}) {
-		$self->{pdf}->append_file;
-		CORE::open(OUTF,">$file");
-		binmode(OUTF);
-		print OUTF ${$self->{pdf}->{' OUTFILE'}->string_ref};
-		CORE::close(OUTF);
-	} elsif($self->{' filed'}) {
-		$self->{pdf}->close_file;
-	} else {
-		$self->{pdf}->out_file($file);
-	}
-	$self->end;
+    my ($self,$file)=@_;
+    if($self->{reopened}) {
+        $self->{pdf}->append_file;
+        CORE::open(OUTF,">$file");
+        binmode(OUTF);
+        print OUTF ${$self->{pdf}->{' OUTFILE'}->string_ref};
+        CORE::close(OUTF);
+    } elsif($self->{' filed'}) {
+        $self->{pdf}->close_file;
+    } else {
+        $self->{pdf}->out_file($file);
+    }
+    $self->end;
 }
 
 sub save {
-	my ($self,$file)=@_;
-	if($self->{reopened}) {
-		die "invalid method invokation: use 'saveas' instead.";
-	} elsif($self->{' filed'}) {
-		$self->{pdf}->close_file;
-	} else {
-		die "invalid method invokation: use 'saveas' instead.";
-	}
-	$self->end;
+    my ($self,$file)=@_;
+    if($self->{reopened}) {
+        die "invalid method invokation: use 'saveas' instead.";
+    } elsif($self->{' filed'}) {
+        $self->{pdf}->close_file;
+    } else {
+        die "invalid method invokation: use 'saveas' instead.";
+    }
+    $self->end;
 }
 
 sub save_xml {
-	my ($self,$file)=@_;
-	my $fh=IO::File->new;
-	$fh->open("> $file");
-	$self->{pdf}->save_xml($fh);
-	$fh->close;
-	$self->end;
+    my ($self,$file)=@_;
+    my $fh=IO::File->new;
+    $fh->open("> $file");
+    $self->{pdf}->save_xml($fh);
+    $fh->close;
+    $self->end;
 }
 
 
@@ -951,22 +989,22 @@ Returns the document in a string.
 =cut
 
 sub stringify {
-	my ($self)=@_;
-	my $str;
-	if((defined $self->{reopened}) && ($self->{reopened}==1)) {
-		$self->{pdf}->append_file;
-		$str=${$self->{pdf}->{' OUTFILE'}->string_ref};
-	} else {
-		my $fh = PDF::API2::IOString->new();
-		$fh->open();
-		eval {
-			$self->{pdf}->out_file($fh);
-		};
-		$str=${$fh->string_ref};
-		$fh->realclose;
-	}
-	$self->end;
-	return($str);
+    my ($self)=@_;
+    my $str;
+    if((defined $self->{reopened}) && ($self->{reopened}==1)) {
+        $self->{pdf}->append_file;
+        $str=${$self->{pdf}->{' OUTFILE'}->string_ref};
+    } else {
+        my $fh = PDF::API2::IOString->new();
+        $fh->open();
+        eval {
+            $self->{pdf}->out_file($fh);
+        };
+        $str=${$fh->string_ref};
+        $fh->realclose;
+    }
+    $self->end;
+    return($str);
 }
 
 sub release { $_[0]->end; return(undef);}
@@ -978,16 +1016,16 @@ Destroys the document.
 =cut
 
 sub end {
-	my $self=shift(@_);
-	$self->{pdf}->release if(defined($self->{pdf}));
+    my $self=shift(@_);
+    $self->{pdf}->release if(defined($self->{pdf}));
 
-	    foreach my $key (keys %{$self})
-	    {
-	        $self->{$key}=undef;
-	        delete ($self->{$key});
-	    }
+        foreach my $key (keys %{$self})
+        {
+            $self->{$key}=undef;
+            delete ($self->{$key});
+        }
 
-	undef;
+    undef;
 }
 
 =item %infohash $pdf->info %infohash
@@ -996,46 +1034,47 @@ Sets/Gets the info structure of the document.
 
 B<Example:>
 
-	$pdf->info(
-		'Author'       => " Alfred Reibenschuh ",
-		'CreationDate' => "D:20020911000000+01'00'",
-		'ModDate'      => "D:YYYYMMDDhhmmssOHH'mm'",
-		'Creator'      => "fredos-script.pl",
-		'Producer'     => "PDF::API2",
-		'Title'        => "some Publication",
-		'Subject'      => "perl ?",
-		'Keywords'     => "all good things are pdf"
-	);
+    $pdf->info(
+        'Author'       => " Alfred Reibenschuh ",
+        'CreationDate' => "D:20020911000000+01'00'",
+        'ModDate'      => "D:YYYYMMDDhhmmssOHH'mm'",
+        'Creator'      => "fredos-script.pl",
+        'Producer'     => "PDF::API2",
+        'Title'        => "some Publication",
+        'Subject'      => "perl ?",
+        'Keywords'     => "all good things are pdf"
+    );
 
 =cut
 
 sub info {
-	my $self=shift @_;
-	my %opt=@_;
+    my $self=shift @_;
+    my %opt=@_;
 
-	if(!defined($self->{pdf}->{'Info'})) {
-        	$self->{pdf}->{'Info'}=PDFDict();
-        	$self->{pdf}->new_obj($self->{'pdf'}->{'Info'});
-	} else {
-	    $self->{pdf}->{'Info'}->realise;
-	}
+    if(!defined($self->{pdf}->{'Info'})) {
+            $self->{pdf}->{'Info'}=PDFDict();
+            $self->{pdf}->new_obj($self->{'pdf'}->{'Info'});
+    } else {
+        $self->{pdf}->{'Info'}->realise;
+    }
 
-	if(scalar @_) {
-	        map { 
-	        	$self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}||'') 
-	        } qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  );
-
-        $self->{pdf}->out_obj($self->{pdf}->{'Info'});
-	}
+    if(scalar @_) {
+      foreach (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
+        next unless(defined $opt{$_});
+        $self->{pdf}->{'Info'}->{$_}=PDFStr($opt{$_}||'') 
+      }
+    $self->{pdf}->out_obj($self->{pdf}->{'Info'});
+    }
         
 
-	if(defined $self->{pdf}->{'Info'}) {
-		%opt=map {
-			($_,$self->{pdf}->{'Info'}->{$_}->val)
-			if(defined $self->{pdf}->{'Info'}->{$_});
-		} qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  );
-        }
-        return(%opt);
+    if(defined $self->{pdf}->{'Info'}) {
+      %opt=();
+      foreach (qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )) {
+        next unless(defined $self->{pdf}->{'Info'}->{$_});
+        $opt{$_}=$self->{pdf}->{'Info'}->{$_}->val; 
+      }
+  }
+  return(%opt);
 }
 
 =item $pdf->finishobjects @objects
@@ -1045,14 +1084,14 @@ Force objects to be written to file.
 =cut
 
 sub finishobjects {
-	my ($self,@objs)=@_;
-	if($self->{reopened}) {
-		die "invalid method invokation: no file, use 'saveas' instead.";
-	} elsif($self->{' filed'}) {
-		$self->{pdf}->ship_out(@objs);
-	} else {
-		die "invalid method invokation: no file, use 'saveas' instead.";
-	}
+    my ($self,@objs)=@_;
+    if($self->{reopened}) {
+        die "invalid method invokation: no file, use 'saveas' instead.";
+    } elsif($self->{' filed'}) {
+        $self->{pdf}->ship_out(@objs);
+    } else {
+        die "invalid method invokation: no file, use 'saveas' instead.";
+    }
 }
 
 =item $val = $pdf->default $parameter
@@ -1064,14 +1103,14 @@ Gets/Sets default values for the behaviour of ::API2.
 =cut
 
 sub default {
-	my ($self,$parameter,$var)=@_;
-	$parameter=~s/[^a-zA-Z\d]//g;
-	$parameter=lc($parameter);
-	my $temp=$self->{$parameter};
-	if(defined $var) {
-		$self->{$parameter}=$var;
-	}
-	return($temp);
+    my ($self,$parameter,$var)=@_;
+    $parameter=~s/[^a-zA-Z\d]//g;
+    $parameter=lc($parameter);
+    my $temp=$self->{$parameter};
+    if(defined $var) {
+        $self->{$parameter}=$var;
+    }
+    return($temp);
 }
 
 =item $font = $pdf->corefont $fontname [, %options]
@@ -1080,25 +1119,34 @@ Returns a new or existing adobe core font object.
 
 B<Examples:>
 
-	$font = $pdf->corefont('Times-Roman');
-	$font = $pdf->corefont('Times-Bold');
-	$font = $pdf->corefont('Helvetica');
-	$font = $pdf->corefont('ZapfDingbats');
+    $font = $pdf->corefont('Times-Roman');
+    $font = $pdf->corefont('Times-Bold');
+    $font = $pdf->corefont('Helvetica');
+    $font = $pdf->corefont('ZapfDingbats');
 
 =cut
 
 sub corefont {
-	my ($self,$name,@opts)=@_;
+    my ($self,$name,@opts)=@_;
 
-	my $obj=PDF::API2::CoreFont->new_api($self,$name,@opts);
-	my $key=$obj->{' apiname'};
+  my $pkey='cFx'.pdfkey($name).((scalar @opts >0) ? '-'.pdfkey(@opts) : '0');
 
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    my $obj;
+    
+    if($obj=$self->resource('Font',$pkey)) {
+      return($obj);
+    } else {
+      $obj=PDF::API2::CoreFont->new_api($self,$name,@opts);
+    }
+    
+    my $key=$obj->{' apiname'};
+  
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$self->resource('Font',$key,$obj);
+    $self->resource('Font',$key,$obj);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $font = $pdf->psfont $pfbfile,$afmfile
@@ -1107,29 +1155,35 @@ Returns a new or existing adobe type1 font object.
 
 B<Examples:>
 
-	$font = $pdf->psfont('Times-Book.pfb','Times-Book.afm');
-	$font = $pdf->psfont('/fonts/Synest-FB.pfb','/fonts/Synest-FB.afm');
-	$font = $pdf->psfont('../Highland-URW.pfb','../Highland-URW.afm');
+    $font = $pdf->psfont('Times-Book.pfb','Times-Book.afm');
+    $font = $pdf->psfont('/fonts/Synest-FB.pfb','/fonts/Synest-FB.afm');
+    $font = $pdf->psfont('../Highland-URW.pfb','../Highland-URW.afm');
 
 =cut
 
 sub psfont {
-	my ($self,$pfb,$afm,$encoding,@glyphs)=@_;
-	my $key='PSx'.pdfkey(($pfb||'x').($afm||'y'),$encoding);
+    my ($self,$pfb,$afm,$encoding,@glyphs)=@_;
+    my $key='PSx'.pdfkey(($pfb||'x').($afm||'y'),$encoding);
 
-	my $obj=PDF::API2::PSFont->new($self->{pdf},$pfb,$afm,$key,$encoding,@glyphs);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    my $obj;
+    
+    if($obj=$self->resource('Font',$key)) {
+      return($obj);
+    }
 
-	$obj->{' apiname'}=$key;
-	$obj->{' apipdf'}=$self->{pdf};
-	weaken($obj->{' apipdf'}) if($hasWeakRef);
+  $obj=PDF::API2::PSFont->new($self->{pdf},$pfb,$afm,$key,$encoding,@glyphs);
+  $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+
+    $obj->{' apiname'}=$key;
+    $obj->{' apipdf'}=$self->{pdf};
+    weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
-	weaken($obj->{' api'}) if($hasWeakRef);
+    weaken($obj->{' api'}) if($hasWeakRef);
 
-	$self->resource('Font',$key,$obj,$self->{reopened});
+    $self->resource('Font',$key,$obj,$self->{reopened});
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $font = $pdf->ttfont $ttfile [, %options]
@@ -1138,35 +1192,66 @@ Returns a new or existing truetype font object.
 
 B<Examples:>
 
-	$font = $pdf->ttfont('TimesNewRoman.ttf');
-	$font = $pdf->ttfont('/fonts/Univers-Bold.ttf');
-	$font = $pdf->ttfont('../Democratica-SmallCaps.ttf');
+    $font = $pdf->ttfont('TimesNewRoman.ttf');
+    $font = $pdf->ttfont('/fonts/Univers-Bold.ttf');
+    $font = $pdf->ttfont('../Democratica-SmallCaps.ttf');
 
 
 
 =cut
 
 sub ttfont {
-	my ($self,$file,@opts)=@_;
+    my ($self,$file,@opts)=@_;
 
-	my $obj=PDF::API2::TrueTypeFont->new_api($self,$file,@opts);
-	return($obj);
+    $self->{ttfonts}||={};
+    my $obj=$self->{ttfonts}->{join(':',$file,@opts)} || PDF::API2::TrueTypeFont->new_api($self,$file,@opts);
+    $self->{ttfonts}->{join(':',$file,@opts)}=$obj;
+    return($obj);
+}
 
-#	my $key='TTx'.pdfkey($file,$self->{time});
-#
-#	my $obj=PDF::API2::TTFont->new($self->{pdf},$file,$key);
-#	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
-#
-#	$obj->{' apiname'}=$key;
-#	$obj->{' apipdf'}=$self->{pdf};
-#	weaken($obj->{' apipdf'}) if($hasWeakRef);
-#        $obj->{' api'}=$self;
-#	weaken($obj->{' api'}) if($hasWeakRef);
-#
-#	$self->resource('Font',$key,$obj,$self->{reopened});
-#
-#	$self->{pdf}->out_obj($self->{pages});
-#	return($obj);
+=item $font = $pdf->synfont $fontobj [, %options]
+
+Creates a new 'synthetic variant' of the given font.
+
+Valid options are: '-slant', '-oblique' and '-bold'.
+
+Valid range for '-slant' is 0.5-1.5
+(values are width-factor).
+
+Valid range for '-oblique' is 5-25, with 12-15 yielding best results
+(values are degrees).
+
+Valid range for '-bold' is 2-6 with 4.2-5.5 yielding best results
+(values are tens of em of the design-size, which is per-mille).
+
+Whats 'synthetic variant' anyhow ? It's 'poor mans multiple-master' !
+
+B<Examples:>
+
+    $tt = $pdf->corefont('Helvetica-Bold');
+    $font = $pdf->synfont($tt, -slant => 0.65 );
+    # yields 'Helvetica-Bold' at 65% char-width
+
+    $tt = $pdf->ttfont('../Democratica-SmallCaps.ttf');
+    $font = $pdf->synfont($tt, -bold => 4.5 );
+    # yields 'Democratica-SmallCaps' 
+
+    $tt = $pdf->psfont('./HelveNew.pfb','./HelveNew.afm');
+    $font = $pdf->synfont($tt, -oblique => 13 );
+
+    $tt = $pdf->corefont('Helvetica');
+    $font = $pdf->synfont($tt, -slant => 0.65, -oblique => 15, -bold => 4.3 );
+
+
+=cut
+
+sub synfont {
+    my ($self,$font,@opts)=@_;
+
+    $self->{synfonts}||={};
+    my $obj=$self->{synfonts}->{join(':',$font,@opts)} || PDF::API2::SynFont->new_api($self,$font,@opts);
+    $self->{synfonts}->{join(':',$font,@opts)}=$obj;
+    return($obj);
 }
 
 =item $img = $pdf->image $file
@@ -1175,12 +1260,12 @@ Returns a new image object from a file or a GD::Image object.
 
 B<Examples:>
 
-	$img = $pdf->image('yetanotherfun.jpg');
-	$img = $pdf->image('truly24bitpic.png');
-	$img = $pdf->image('reallargefile.pnm');
+    $img = $pdf->image('yetanotherfun.jpg');
+    $img = $pdf->image('truly24bitpic.png');
+    $img = $pdf->image('reallargefile.pnm');
 
-	$gdimgobj=GD::Image->newFromPng('truly24bitpic.png');
-	$img = $pdf->image($gdimgobj);
+    $gdimgobj=GD::Image->newFromPng('truly24bitpic.png');
+    $img = $pdf->image($gdimgobj);
 
 B<Important Note:>
 
@@ -1190,20 +1275,20 @@ for proper support: image_jpeg, image_png, image_gd, image_pnm.
 =cut
 
 sub image {
-	my ($self,$file,@opts)=@_;
+    my ($self,$file,@opts)=@_;
         my $obj=PDF::API2::Image->new($self->{pdf},$file,$self->{time},@opts);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
-	if($obj->{SMask}) {
-		$self->{pdf}->new_obj($obj->{SMask}) unless($obj->{SMask}->is_obj($self->{pdf}));
-	}
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    if($obj->{SMask}) {
+        $self->{pdf}->new_obj($obj->{SMask}) unless($obj->{SMask}->is_obj($self->{pdf}));
+    }
 
-#	$obj->{' apipdf'}=$self->{pdf};
-#	$obj->{' api'}=$self;
+#   $obj->{' apipdf'}=$self->{pdf};
+#   $obj->{' api'}=$self;
 
-	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+    $self->resource('XObject',$obj->{' apiname'},$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $img = $pdf->image_jpeg $file
@@ -1212,22 +1297,26 @@ Returns a new image object from a jpeg-file.
 
 B<Examples:>
 
-	$img = $pdf->image_jpeg('yetanotherfun.jpg');
+    $img = $pdf->image_jpeg('yetanotherfun.jpg');
 
 =cut
 
 sub image_jpeg {
-	my ($self,$file,%opts)=@_;
-	my $objname='JPEGx'.pdfkey($file.time());
-	my $obj=PDF::API2::Image->new_jpeg($self->{pdf},$objname,$file);
-	$obj->{' apiname'}=$objname;
+    my ($self,$file,%opts)=@_;
+    my $objname='JPEGx'.pdfkey($file.time());
+    my $obj;
+    if($obj=$self->resource('XObject',$objname)) {
+      return($obj);
+    }
+    $obj=PDF::API2::Image->new_jpeg($self->{pdf},$objname,$file);
+    $obj->{' apiname'}=$objname;
 
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+    $self->resource('XObject',$obj->{' apiname'},$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $img = $pdf->image_png $file
@@ -1236,22 +1325,26 @@ Returns a new image object from a png-file.
 
 B<Examples:>
 
-	$img = $pdf->image_png('yetanotherfun.png');
+    $img = $pdf->image_png('yetanotherfun.png');
 
 =cut
 
 sub image_png {
-	my ($self,$file,%opts)=@_;
-	my $objname='PNGx'.pdfkey($file.time());
-	my $obj=PDF::API2::Image->new_png($self->{pdf},$objname,$file);
-	$obj->{' apiname'}=$objname;
+    my ($self,$file,%opts)=@_;
+    my $objname='PNGx'.pdfkey($file.time());
+    my $obj;
+    if($obj=$self->resource('XObject',$objname)) {
+      return($obj);
+    }
+    $obj=PDF::API2::Image->new_png($self->{pdf},$objname,$file);
+    $obj->{' apiname'}=$objname;
 
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+    $self->resource('XObject',$obj->{' apiname'},$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 #=item $img = $pdf->image_gif $file
@@ -1260,22 +1353,22 @@ sub image_png {
 #
 #B<Examples:>
 #
-#	$img = $pdf->image_gif('yetanotherfun.gif');
+#   $img = $pdf->image_gif('yetanotherfun.gif');
 #
 #=cut
 #
 #sub image_gif {
-#	my ($self,$file,%opts)=@_;
-#	my $objname='GIFx'.pdfkey($file.time());
-#	my $obj=PDF::API2::Image->new_gif($self->{pdf},$objname,$file);
-#	$obj->{' apiname'}=$objname;
+#   my ($self,$file,%opts)=@_;
+#   my $objname='GIFx'.pdfkey($file.time());
+#   my $obj=PDF::API2::Image->new_gif($self->{pdf},$objname,$file);
+#   $obj->{' apiname'}=$objname;
 #
-#	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+#   $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 #
-#	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+#   $self->resource('XObject',$obj->{' apiname'},$obj,1);
 #
-#	$self->{pdf}->out_obj($self->{pages});
-#	return($obj);
+#   $self->{pdf}->out_obj($self->{pages});
+#   return($obj);
 #}
 
 =item $img = $pdf->image_tiff $file
@@ -1284,7 +1377,7 @@ Returns a new image object from a tiff-file.
 
 B<Examples:>
 
-	$img = $pdf->image_tiff('yetanotherfun.TIF');
+    $img = $pdf->image_tiff('yetanotherfun.TIF');
 
 B<Please Note:>
 
@@ -1295,17 +1388,21 @@ ccittfax g4, lzw and flate, as-long-as the image is not striped !!!
 =cut
 
 sub image_tiff {
-	my ($self,$file,%opts)=@_;
-	my $objname='TIFFx'.pdfkey($file.time());
-	my $obj=PDF::API2::Image->new_tiff($self->{pdf},$objname,$file);
-	$obj->{' apiname'}=$objname;
+    my ($self,$file,%opts)=@_;
+    my $objname='TIFFx'.pdfkey($file.time());
+    my $obj;
+    if($obj=$self->resource('XObject',$objname)) {
+      return($obj);
+    }
+    $obj=PDF::API2::Image->new_tiff($self->{pdf},$objname,$file);
+    $obj->{' apiname'}=$objname;
 
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+    $self->resource('XObject',$obj->{' apiname'},$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $img = $pdf->image_pnm $file
@@ -1314,24 +1411,28 @@ Returns a new image object from a portable anymap (aka. netpbm).
 
 B<Examples:>
 
-	$img = $pdf->image_pnm('yetanotherfun.pbm');
-	$img = $pdf->image_pnm('yetanotherfun.pgm');
-	$img = $pdf->image_pnm('yetanotherfun.ppm');
+    $img = $pdf->image_pnm('yetanotherfun.pbm');
+    $img = $pdf->image_pnm('yetanotherfun.pgm');
+    $img = $pdf->image_pnm('yetanotherfun.ppm');
 
 =cut
 
 sub image_pnm {
-	my ($self,$file,%opts)=@_;
-	my $objname='PNMx'.pdfkey($file.time());
-	my $obj=PDF::API2::Image->new_pnm($self->{pdf},$objname,$file);
-	$obj->{' apiname'}=$objname;
+    my ($self,$file,%opts)=@_;
+    my $objname='PNMx'.pdfkey($file.time());
+    my $obj;
+    if($obj=$self->resource('XObject',$objname)) {
+      return($obj);
+    }
+    $obj=PDF::API2::Image->new_pnm($self->{pdf},$objname,$file);
+    $obj->{' apiname'}=$objname;
 
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$self->resource('XObject',$obj->{' apiname'},$obj,1);
+    $self->resource('XObject',$obj->{' apiname'},$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $img = $pdf->pdfimage $file, $page_number
@@ -1341,9 +1442,9 @@ which is actually a page from another pdf.
 
 B<Examples:>
 
-	$img = $pdf->pdfimage('test1.pdf',1);
-	$img = $pdf->pdfimage('another-test.pdf',2);
-	$img = $pdf->pdfimage('really-large.pdf',1000);
+    $img = $pdf->pdfimage('test1.pdf',1);
+    $img = $pdf->pdfimage('another-test.pdf',2);
+    $img = $pdf->pdfimage('really-large.pdf',1000);
 
 =item $img = $pdf->pdfimageobj $pdfobj, $page_number
 
@@ -1356,65 +1457,88 @@ resource-intensive, if you use many pages (possible the same) from one single pd
 
 
 sub pdfimageobj {
-	my $self=shift @_;
-	my $s_pdf=shift @_;
-	my $s_idx=shift @_||0;
-	my ($s_page,$t_page);
+    my $self=shift @_;
+    my $s_pdf=shift @_;
+    my $s_idx=shift @_||0;
+    my ($s_page,$t_page);
 
-	$s_page=$s_pdf->openpage($s_idx);
-	$t_page=PDF::API2::PdfImage->new();
+    $s_page=$s_pdf->openpage($s_idx);
+    $t_page=PDF::API2::PdfImage->new();
 
-	$self->{apiimportcache}=$self->{apiimportcache}||{};
+    $self->{apiimportcache}=$self->{apiimportcache}||{};
+    $self->{apiimportcache}->{$s_pdf}=$self->{apiimportcache}->{$s_pdf}||{};
 
-	my $dict = $s_page->find_prop('CropBox')||$s_page->find_prop('MediaBox');
-	if(defined $dict) {
-		my ($lx,$ly,$rx,$ry)=$dict->elementsof;
-		$t_page->{LX}=PDFNum($lx->val);
-		$t_page->{' lx'}=$lx->val;
-		$t_page->{LY}=PDFNum($ly->val);
-		$t_page->{' ly'}=$ly->val;
-		$t_page->{RX}=PDFNum($rx->val);
-		$t_page->{' rx'}=$rx->val;
-		$t_page->{RY}=PDFNum($ry->val);
-		$t_page->{' ry'}=$ry->val;
-	}
-	$k='Resources';
-	$s_page->{$k}=$s_page->find_prop($k);
-	if(defined $s_page->{$k}) {
-		$t_page->{$k}=PDFDict();
-		foreach my $sk (qw( ColorSpace XObject ExtGState Font Pattern ProcSet Properties Shading )) {
-			next unless(defined $s_page->{$k}->{$sk});
-			$t_page->{$k}->{$sk}=PDFDict();
-			foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
-				next if($ssk=~/^ /);
-				$t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
-			}
-		}
-	}
-	if(defined $s_page->{Contents}) {
-		$s_page->fixcontents;
-		foreach my $k ($s_page->{Contents}->elementsof) {
-			$k->realise if(ref($k)=~/Objind$/);
+    my $dict = $s_page->find_prop('CropBox')||$s_page->find_prop('MediaBox');
+    if(defined $dict) {
+        my ($lx,$ly,$rx,$ry)=$dict->elementsof;
+        $t_page->{LX}=PDFNum($lx->val);
+        $t_page->{' lx'}=$lx->val;
+        $t_page->{LY}=PDFNum($ly->val);
+        $t_page->{' ly'}=$ly->val;
+        $t_page->{RX}=PDFNum($rx->val);
+        $t_page->{' rx'}=$rx->val;
+        $t_page->{RY}=PDFNum($ry->val);
+        $t_page->{' ry'}=$ry->val;
+    }
+    $k='Resources';
+    $s_page->{$k}=$s_page->find_prop($k);
+    $s_page->{$k}->realise if(ref($s_page->{$k})=~/Objind$/);
+    my %resmod=();
+    if(defined $s_page->{$k}) {
+        $t_page->{$k}=PDFDict();
+        foreach my $sk (qw( XObject ExtGState Font ProcSet Properties )) {
+            next unless(defined $s_page->{$k}->{$sk});
+            $s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
+            $t_page->{$k}->{$sk}||=PDFDict();
+            foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
+                next if($ssk=~/^ /);
+                my $nssk=$PDF::API2::seq."+$ssk";
+                $resmod{$ssk}=$nssk;
+                $t_page->{$k}->{$sk}->{$nssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+                $PDF::API2::seq++;
+            }
+        }
+        foreach my $sk (qw( ColorSpace Pattern Shading )) {
+            next unless(defined $s_page->{$k}->{$sk});
+            $s_page->{$k}->{$sk}->realise if(ref($s_page->{$k}->{$sk})=~/Objind$/);
+            $t_page->{$k}->{$sk}||=PDFDict();
+            foreach my $ssk (keys %{$s_page->{$k}->{$sk}}) {
+                next if($ssk=~/^ /);
+                $t_page->{$k}->{$sk}->{$ssk} = walk_obj($self->{apiimportcache}->{$s_pdf},$s_pdf->{pdf},$self->{pdf},$s_page->{$k}->{$sk}->{$ssk});
+            }
+        }
+    }
 
-			$t_page->{' pdfimage'}.=" q ".unfilter($k->{'Filter'},$k->{' stream'})." Q ";
-		}
-	}
-        $self->{pdf}->new_obj($t_page) unless($t_page->is_obj($self->{pdf}));
-        $self->{pdf}->out_obj($self->{pages});
 
-	return($t_page);
+
+    if(defined $s_page->{Contents}) {
+        $s_page->fixcontents;
+        foreach my $k ($s_page->{Contents}->elementsof) {
+            $k->realise if(ref($k)=~/Objind$/);
+
+            $t_page->{' pdfimage'}.=" q ".unfilter($k->{'Filter'},$k->{' stream'})." Q ";
+        }
+    }
+    foreach my $r (keys %resmod) {
+        $t_page->{' pdfimage'}=~s/\/$r(\x0a|\x0d|\s+)/\/$resmod{$r}$1/gm;
+    }
+
+    $self->{pdf}->new_obj($t_page) unless($t_page->is_obj($self->{pdf}));
+    $self->{pdf}->out_obj($self->{pages});
+
+    return($t_page);
 }
 
 sub pdfimage {
-	my $self=shift @_;
-	my $s_pdf=shift @_;
-	my $s_idx=shift @_||0;
+    my $self=shift @_;
+    my $s_pdf=shift @_;
+    my $s_idx=shift @_||0;
 
-	$s_pdf=PDF::API2->open($s_pdf);
-	my $t_page=$self->pdfimageobj($s_pdf,$s_idx);
-	$s_pdf->end;
+    $s_pdf=PDF::API2->open($s_pdf);
+    my $t_page=$self->pdfimageobj($s_pdf,$s_idx);
+    $s_pdf->end;
 
-	return($t_page);
+    return($t_page);
 }
 
 =item $shadeing = $pdf->shade
@@ -1424,22 +1548,22 @@ Returns a new shading object.
 =cut
 
 sub shade {
-	my ($self,%opts)=@_;
-	my $key='SHx'.pdfkey(%opts || 'shade'.localtime() );
-	my $obj=PDFDict();
-#	my $pat=$self->pattern(-type=>2);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    my ($self,%opts)=@_;
+    my $key='SHx'.pdfkey(%opts || 'shade'.localtime() );
+    my $obj=PDFDict();
+#   my $pat=$self->pattern(-type=>2);
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$obj->{' apiname'}=$key;
-	$obj->{' apipdf'}=$self->{pdf};
-	weaken($obj->{' apipdf'}) if($hasWeakRef);
+    $obj->{' apiname'}=$key;
+    $obj->{' apipdf'}=$self->{pdf};
+    weaken($obj->{' apipdf'}) if($hasWeakRef);
         $obj->{' api'}=$self;
-	weaken($obj->{' api'}) if($hasWeakRef);
+    weaken($obj->{' api'}) if($hasWeakRef);
 
-	$self->resource('Shading',$key,$obj,1);
+    $self->resource('Shading',$key,$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $pat = $pdf->pattern
@@ -1449,18 +1573,18 @@ Returns a new pattern object.
 =cut
 
 sub pattern {
-	my ($self,%opts)=@_;
-	my $obj=PDF::API2::Pattern->new();
-	my $key=$obj->{' apiname'};
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    my ($self,%opts)=@_;
+    my $obj=PDF::API2::Pattern->new();
+    my $key=$obj->{' apiname'};
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-#	$obj->{' apipdf'}=$self->{pdf};
-#	$obj->{' api'}=$self;
+#   $obj->{' apipdf'}=$self->{pdf};
+#   $obj->{' api'}=$self;
 
-	$self->resource('Pattern',$key,$obj,1);
+    $self->resource('Pattern',$key,$obj,1);
 
-	$self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    $self->{pdf}->out_obj($self->{pages});
+    return($obj);
 }
 
 =item $cs = $pdf->colorspace %parameters
@@ -1469,71 +1593,71 @@ Returns a new colorspace object.
 
 B<Examples:>
 
-	$cs = $pdf->colorspace(
-		-type => 'CalRGB',
-		-whitepoint => [ 0.9, 1, 1.1 ],
-		-blackpoint => [ 0, 0, 0 ],
-		-gamma => [ 2.2, 2.2, 2.2 ],
-		-matrix => [
-			0.41238, 0.21259, 0.01929,
-			0.35757, 0.71519, 0.11919,
-			0.1805,  0.07217, 0.95049
-		]
-	);
+    $cs = $pdf->colorspace(
+        -type => 'CalRGB',
+        -whitepoint => [ 0.9, 1, 1.1 ],
+        -blackpoint => [ 0, 0, 0 ],
+        -gamma => [ 2.2, 2.2, 2.2 ],
+        -matrix => [
+            0.41238, 0.21259, 0.01929,
+            0.35757, 0.71519, 0.11919,
+            0.1805,  0.07217, 0.95049
+        ]
+    );
 
-	$cs = $pdf->colorspace(
-		-type => 'CalGray',
-		-whitepoint => [ 0.9, 1, 1.1 ],
-		-blackpoint => [ 0, 0, 0 ],
-		-gamma => 2.2
-	);
+    $cs = $pdf->colorspace(
+        -type => 'CalGray',
+        -whitepoint => [ 0.9, 1, 1.1 ],
+        -blackpoint => [ 0, 0, 0 ],
+        -gamma => 2.2
+    );
 
-	$cs = $pdf->colorspace(
-		-type => 'Lab',
-		-whitepoint => [ 0.9, 1, 1.1 ],
-		-blackpoint => [ 0, 0, 0 ],
-		-gamma => [ 2.2, 2.2, 2.2 ],
-		-range => [ -100, 100, -100, 100 ]
-	);
+    $cs = $pdf->colorspace(
+        -type => 'Lab',
+        -whitepoint => [ 0.9, 1, 1.1 ],
+        -blackpoint => [ 0, 0, 0 ],
+        -gamma => [ 2.2, 2.2, 2.2 ],
+        -range => [ -100, 100, -100, 100 ]
+    );
 
-	$cs = $pdf->colorspace(
-		-type => 'Indexed',
-		-base => 'DeviceRGB',
-		-maxindex => 3,
-		-whitepoint => [ 0.9, 1, 1.1 ],
-		-blackpoint => [ 0, 0, 0 ],
-		-gamma => [ 2.2, 2.2, 2.2 ],
-		-colors => [
-			[ 0,0,0 ],	# black = 0
-			[ 1,1,1 ],	# white = 1
-			[ 1,0,0 ],	# red = 2
-			[ 0,0,1 ],	# blue = 3
-		]
-	);
+    $cs = $pdf->colorspace(
+        -type => 'Indexed',
+        -base => 'DeviceRGB',
+        -maxindex => 3,
+        -whitepoint => [ 0.9, 1, 1.1 ],
+        -blackpoint => [ 0, 0, 0 ],
+        -gamma => [ 2.2, 2.2, 2.2 ],
+        -colors => [
+            [ 0,0,0 ],  # black = 0
+            [ 1,1,1 ],  # white = 1
+            [ 1,0,0 ],  # red = 2
+            [ 0,0,1 ],  # blue = 3
+        ]
+    );
 
-	$cs = $pdf->colorspace(
-		-type => 'ICCBased',
-		-base => 'DeviceRGB',
-		-components => 3,
-		-iccfile => 'codacus.icc'
-	);
+    $cs = $pdf->colorspace(
+        -type => 'ICCBased',
+        -base => 'DeviceRGB',
+        -components => 3,
+        -iccfile => 'codacus.icc'
+    );
 
 =cut
 
 sub colorspace {
-	my ($self,@opt)=@_;
-	my $key='CSx'.pdfkey('colorspace',@opt);
-	my $obj=PDF::API2::ColorSpace->new($self->{pdf},$key,@opt);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    my ($self,@opt)=@_;
+    my $key='CSx'.pdfkey('colorspace',@opt);
+    my $obj=PDF::API2::ColorSpace->new($self->{pdf},$key,@opt);
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$obj->{' apiname'}=$key;
-#	$obj->{' apipdf'}=$self->{pdf};
+    $obj->{' apiname'}=$key;
+#   $obj->{' apipdf'}=$self->{pdf};
 #       $obj->{' api'}=$self;
 
-	$self->resource('ColorSpace',$key,$obj,1);
+    $self->resource('ColorSpace',$key,$obj,1);
 
         $self->{pdf}->out_obj($self->{pages});
-	return($obj);
+    return($obj);
 }
 
 =item @color = $pdf->businesscolor $basecolor [, $lightdark ]
@@ -1545,35 +1669,35 @@ Returns a color-array suitible for use with the stroke/fillcolor methods.
 =cut
 
 sub businesscolor {
-	my $self=shift @_;
-	my @col;
-#	$self->{bccs} = $self->{bccs} || $self->colorspace(
-#		-type => 'CalRGB',
-#		-whitepoint => [ 0.9505, 1, 1.089 ],
-#		-blackpoint => [ 0, 0, 0 ],
-#		-gamma => [ 2.2, 2.2, 2.2 ],
-#		-matrix => [
-#			0.41238, 0.21259, 0.01929,
-#			0.35757, 0.71519, 0.11919,
-#			0.1805,  0.07217, 0.95049
-#		]
-#	);
-	my $color=shift @_||0;
-	my $ld=shift @_||0;
-	if($color=~/^[a-z\!\$\%\&\#]+/) {
-		@col=namecolor($color);
-		my ($hue)=RGBtoHSV( @col );
-		@col=HSLtoRGB($hue,1,0.5+($ld/10));
-	} else {
-		$color-=1;
-		if($color<0) {
-			@col=(0.5+($ld/10),0.5+($ld/10),0.5+($ld/10));
-		} else {
-			@col=HSLtoRGB($color*30,1,0.5+($ld/10));
-		}
-	}
-#	return($self->{bccs},@col);
-	return(RGBasCMYK(@col));
+    my $self=shift @_;
+    my @col;
+#   $self->{bccs} = $self->{bccs} || $self->colorspace(
+#       -type => 'CalRGB',
+#       -whitepoint => [ 0.9505, 1, 1.089 ],
+#       -blackpoint => [ 0, 0, 0 ],
+#       -gamma => [ 2.2, 2.2, 2.2 ],
+#       -matrix => [
+#           0.41238, 0.21259, 0.01929,
+#           0.35757, 0.71519, 0.11919,
+#           0.1805,  0.07217, 0.95049
+#       ]
+#   );
+    my $color=shift @_||0;
+    my $ld=shift @_||0;
+    if($color=~/^[a-z\!\$\%\&\#]+/) {
+        @col=namecolor($color);
+        my ($hue)=RGBtoHSV( @col );
+        @col=HSLtoRGB($hue,1,0.5+($ld/10));
+    } else {
+        $color-=1;
+        if($color<0) {
+            @col=(0.5+($ld/10),0.5+($ld/10),0.5+($ld/10));
+        } else {
+            @col=HSLtoRGB($color*30,1,0.5+($ld/10));
+        }
+    }
+#   return($self->{bccs},@col);
+    return(RGBasCMYK(@col));
 }
 
 =item $img = $pdf->barcode %options
@@ -1585,22 +1709,22 @@ B<Note:> refer to PDF::API2::Barcode for more details.
 =cut
 
 sub barcode {
-	my ($self,%opts)=@_;
-	my $key='BCx'.pdfkey('barcode'.time().rand(0x7fffff));
-	my $obj=PDF::API2::Barcode->new($key,%opts);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    my ($self,%opts)=@_;
+    my $key='BCx'.pdfkey('barcode'.time().rand(0x7fffff));
+    my $obj=PDF::API2::Barcode->new($key,%opts);
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
 
-	$obj->{' apiname'}=$key;
-	$obj->{' apipdf'}=$self->{pdf};
-	weaken($obj->{' apipdf'}) if($hasWeakRef);
-	$obj->{' api'}=$self;
-	weaken($obj->{' api'}) if($hasWeakRef);
+    $obj->{' apiname'}=$key;
+    $obj->{' apipdf'}=$self->{pdf};
+    weaken($obj->{' apipdf'}) if($hasWeakRef);
+    $obj->{' api'}=$self;
+    weaken($obj->{' api'}) if($hasWeakRef);
 
-	$self->resource('XObject',$key,$obj,1);
+    $self->resource('XObject',$key,$obj,1);
 
         $self->{pdf}->out_obj($self->{pages});
-	$obj->compress() if($self->{forcecompress});
-	return($obj);
+    $obj->compress() if($self->{forcecompress});
+    return($obj);
 }
 
 =item $egs = $pdf->extgstate
@@ -1610,14 +1734,14 @@ Returns a new extended-graphics-state object.
 =cut
 
 sub extgstate {
-	my ($self)=@_;
-	my $key='XTGSx'.pdfkey('extgstate'.time().rand(0x7fffff));
-	my $obj=PDF::API2::ExtGState->new($self->{pdf},$key);
-	$self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
-	$self->resource('ExtGState',$key,$obj,1);
+    my ($self)=@_;
+    my $key='XTGSx'.pdfkey('extgstate'.time().rand(0x7fffff));
+    my $obj=PDF::API2::ExtGState->new($self->{pdf},$key);
+    $self->{pdf}->new_obj($obj) unless($obj->is_obj($self->{pdf}));
+    $self->resource('ExtGState',$key,$obj,1);
         $obj->{' api'}=$self;
-	weaken($obj->{' api'}) if($hasWeakRef);
-	return($obj);
+    weaken($obj->{' api'}) if($hasWeakRef);
+    return($obj);
 }
 
 
@@ -1628,15 +1752,17 @@ Returns a new or existing outlines object.
 =cut
 
 sub outlines {
-	my ($self)=@_;
+    my ($self)=@_;
 
-	$self->{pdf}->{Root}->{Outlines}=$self->{pdf}->{Root}->{Outlines}
-		|| PDF::API2::Outlines->new($self);
-	my $obj=$self->{pdf}->{Root}->{Outlines};
+    $self->{pdf}->{Root}->{Outlines}||=PDF::API2::Outlines->new($self);
+    
+    my $obj=$self->{pdf}->{Root}->{Outlines};
 
-	$self->{pdf}->new_obj($obj) if(!$obj->is_obj($self->{pdf}));
+    $self->{pdf}->new_obj($obj) if(!$obj->is_obj($self->{pdf}));
+    $self->{pdf}->out_obj($obj);
+    $self->{pdf}->out_obj($self->{pdf}->{Root});
 
-	return($obj);
+    return($obj);
 
 }
 
@@ -1646,10 +1772,10 @@ Adds a resource to the global page-inheritance tree.
 
 B<Example:>
 
-	$pdf->resource('Font',$fontkey,$fontobj);
-	$pdf->resource('XObject',$imagekey,$imageobj);
-	$pdf->resource('Shading',$shadekey,$shadeobj);
-	$pdf->resource('ColorSpace',$spacekey,$speceobj);
+    $pdf->resource('Font',$fontkey,$fontobj);
+    $pdf->resource('XObject',$imagekey,$imageobj);
+    $pdf->resource('Shading',$shadekey,$shadeobj);
+    $pdf->resource('ColorSpace',$spacekey,$speceobj);
 
 B<Note:> You only have to add the required resources, if
 they are NOT handled by the *font*, *image*, *shade* or *space*
@@ -1658,34 +1784,40 @@ methods.
 =cut
 
 sub resource {
-	my ($self, $type, $key, $obj, $force) = @_;
+    my ($self, $type, $key, $obj, $force) = @_;
 
-	$self->{pages}->{Resources}= $self->{pages}->{Resources} || PDFDict();
+    $self->{pages}->{Resources}||=PDFDict();
 
-	my $dict=$self->{pages}->{Resources};
-	$dict->realise if(ref($dict)=~/Objind$/);
+    my $dict=$self->{pages}->{Resources};
+    $dict->realise if(ref($dict)=~/Objind$/);
+    
+    $self->{pdf}->new_obj($dict) unless($dict->is_obj($self->{pdf}));
 
-	$dict->{$type}=$dict->{$type} || PDFDict();
-	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
+    $dict->{$type}=$dict->{$type} || PDFDict();
+    $dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
 
-	if($force) {
-		$dict->{$type}->{$key}=$obj;
-	} else {
-		$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
-	}
-
-	$self->{pdf}->out_obj($dict)
-		if($dict->is_obj($self->{pdf}));
-
-	$self->{pdf}->out_obj($dict->{$type})
-		if($dict->{$type}->is_obj($self->{pdf}));
-
-	$self->{pdf}->out_obj($obj)
-		if($obj->is_obj($self->{pdf}));
-
-        $self->{pdf}->out_obj($self->{pages});
-
-	return($dict);
+  unless(defined($obj)) {
+    return($dict->{$type}->{$key} || undef);
+  } else {
+    if($force) {
+        $dict->{$type}->{$key}=$obj;
+    } else {
+        $dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
+    }
+  
+    $self->{pdf}->out_obj($dict)
+        if($dict->is_obj($self->{pdf}));
+  
+    $self->{pdf}->out_obj($dict->{$type})
+        if($dict->{$type}->is_obj($self->{pdf}));
+  
+    $self->{pdf}->out_obj($obj)
+        if($obj->is_obj($self->{pdf}));
+  
+          $self->{pdf}->out_obj($self->{pages});
+  
+    return($dict);
+  }
 }
 
 1;

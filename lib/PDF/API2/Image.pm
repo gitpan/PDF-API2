@@ -20,7 +20,7 @@ use strict;
 use PDF::API2::Util;
 use PDF::API2::PDF::Utils;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Image;
 use PDF::API2::PDF::ImageGD;
@@ -169,7 +169,7 @@ sub read_jpeg {
 		$fh->read($buf,$len-2);
 		next if ($mark == 0xFE);
 		next if ($mark >= 0xE0 && $mark <= 0xEF);
-		if (($mark >= 0xC0) && ($mark <= 0xC1)) {
+		if (($mark >= 0xC0) && ($mark <= 0xCF)) {
 			($p, $h, $w, $c) = unpack("CnnC", substr($buf, 0, 6));
 			last;
 		}
@@ -545,6 +545,10 @@ sub new_tiff {
       $obj->{' stream'}.=$buf;
     }
     delete $obj->{' nofilt'} if($tif->{filter} eq 'FlateDecode');
+	if($tif->{ccitt}==4) {
+      $obj->{DecodeParms}->{EndOfLine}=PDFBool(1); 
+      $obj->{DecodeParms}->{EncodedByteAlign}=PDFBool(1);
+	}
   } else {
     $tif->{fh}->seek($tif->{imageOffset},0);
     $tif->{fh}->read($obj->{' stream'},$tif->{imageLength});

@@ -4,7 +4,7 @@ package PDF::API2::PDF::AFont;
 # use strict;
 use vars qw(@ISA $VERSION );
 @ISA = qw(PDF::API2::PDF::Dict);
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 use PDF::API2::PDF::Utils;
@@ -362,17 +362,19 @@ sub parsePS {
 	} else {
 		die "unsupported font-format in file '$file' at marker='1'.";
 	}
+	my %h;
 	if($noFM) {
 		# now we process the portions to return a hash which makes data available
 		# if we dont have a good enough afm or pfm file to parse (especially pfm :)
-		my %h=$self->readPSF(
+		%h=$self->readPSF(
 			substr($stream,6,$l1) ,  	# this is the ascii portion of the font
 			substr($stream,12+$l1,$l2)	# this is the binary portion of the font
 		);
-		return($l1,$l2,$l3,$stream,%h);
-	} else {
-		return($l1,$l2,$l3,$stream);
-	} 
+	}
+	my $t1stream=substr($stream,6,$l1);
+	$t1stream.=substr($stream,12+$l1,$l2);
+	$t1stream.=substr($stream,18+$l1+$l2,$l3);
+	return($l1,$l2,$l3,$t1stream,%h);
 }
 
 sub encodeProper {

@@ -143,7 +143,9 @@ use PDF::API2::PDF::Page;
 use PDF::API2::PDF::Pages;
 use PDF::API2::PDF::Null;
 
-$VERSION = "0.23";      # MJPH  14-AUG-2002     Fix MANIFEST
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
+#$VERSION = "0.23";      # MJPH  14-AUG-2002     Fix MANIFEST
 #$VERSION = "0.22";      # MJPH  26-JUL-2002     Add PDF::API2::PDF::File::copy, tidy up update(), sort out out_trailer
 #                                                Fix to not remove string final CRs when reading dictionaries
 #$VERSION = "0.21";      # GJ     8-JUN-2002     Tidy up regexps, add PDF::API2::PDF::Null
@@ -501,7 +503,8 @@ sub readval
         $str =~ s/^>>//o;
         $str = update($fh, $str);
 	# streams can't be followed by a lone carriage-return.
-        if (($str =~ s/^stream(?:(?:\015\012)|\012)//o)
+	# fredo: yes they can !!! -- use the MacOS Luke.
+        if (($str =~ s/^stream(?:(?:\015\012)|\012|\015)//o)
 	    && ($res->{'Length'}->val != 0))           # stream
         {
             $k = $res->{'Length'}->val;
@@ -988,11 +991,11 @@ sub update
     {
         $fh->read($str, 255, length($str));
         $str =~ s/^$ws_char*//so;
-        while ($str =~ m/^\%/o)
-        {
-            $fh->read($str, 255, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
-            $str =~ s/^\%(.*)$cr$ws_char*//so;
-        }
+    }
+    while ($str =~ m/^\%/o) # restructured by fredo/2003-03-23
+    {
+        $fh->read($str, 255, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
+        $str =~ s/^\%(.*)$cr$ws_char*//so;
     }
 
     return $str;

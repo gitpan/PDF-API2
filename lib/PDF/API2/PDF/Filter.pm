@@ -317,7 +317,10 @@ sub new
     my ($class) = @_;
     my ($self) = {};
 
-    $self->{'outfilt'} = Compress::Zlib::deflateInit();
+    $self->{'outfilt'} = Compress::Zlib::deflateInit(
+      -Level=>9,
+      -Bufsize=>32768,
+    );
     $self->{'infilt'} = Compress::Zlib::inflateInit();
     bless $self, $class;
 }

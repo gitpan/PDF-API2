@@ -26,7 +26,7 @@ use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 
 use Math::Trig;
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 =head2 PDF::API2::Page
@@ -379,34 +379,53 @@ sub resource {
 	$dict->{$type}=$dict->{$type} || PDFDict();
 	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
 
-	if($force) {
-		$dict->{$type}->{$key}=$obj;
-	} else {
-		$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
-	}
-
-	$self->{' apipdf'}->out_obj($dict)
-		if($dict->is_obj($self->{' apipdf'}));
-
-	$self->{' apipdf'}->out_obj($dict->{$type})
-		if($dict->{$type}->is_obj($self->{' apipdf'}));
-
-	$self->{' apipdf'}->out_obj($obj)
-		if($obj->is_obj($self->{' apipdf'}));
-
-        $self->{' apipdf'}->out_obj($self);
-
-	return($dict);
+  unless(defined $obj) {
+  	return($dict->{$type}->{$key} || undef);
+  } else {
+  	if($force) {
+  		$dict->{$type}->{$key}=$obj;
+  	} else {
+  		$dict->{$type}->{$key}=$dict->{$type}->{$key} || $obj;
+  	}
+  
+  	$self->{' apipdf'}->out_obj($dict)
+  		if($dict->is_obj($self->{' apipdf'}));
+  
+  	$self->{' apipdf'}->out_obj($dict->{$type})
+  		if($dict->{$type}->is_obj($self->{' apipdf'}));
+  
+  	$self->{' apipdf'}->out_obj($obj)
+  		if($obj->is_obj($self->{' apipdf'}));
+  
+          $self->{' apipdf'}->out_obj($self);
+  
+  	return($dict);
+  }
 }
 
 sub content {
 	my ($self,$obj) = @_;
         $self->fixcontents;
         $self->{'Contents'}->add_elements($obj);
-##	$self->{' apipdf'}->new_obj($obj);
+        $self->{' apipdf'}->new_obj($obj) unless($obj->is_obj($self->{' apipdf'}));
         $obj->{' apipdf'}=$self->{' apipdf'};
         $obj->{' apipage'}=$self;
         return($obj);
+}
+
+=item $pie = $page->piechart @options
+
+Returns a pie-chart object (see PDF::API2::Chart::Pie for details).
+
+=cut
+
+sub piechart {
+	use PDF::API2::Chart::Pie;
+	my $self = shift @_;
+	my $pie=PDF::API2::Chart::Pie->new(@_);
+  $self->content($pie);
+  $pie->compress() if($self->{' api'}->{forcecompress});
+  return($pie);
 }
 
 sub ship_out

@@ -20,7 +20,7 @@ use PDF::API2::TTF::Font 0.28;
 
 @ISA=qw( PDF::API2::PDF::File );
 
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 BEGIN
 {
@@ -80,7 +80,7 @@ sub open
     $self->{' epos'} = $end;
     $fh->seek($end - 1024, 0);
     $fh->read($buf, 1024);
-    if ($buf !~ m/startxref$cr([0-9]+)$cr\%\%eof.*?$/oi)
+    if ($buf !~ m/startxref$cr\s*([0-9]+)$cr\%\%eof.*?$/oi)
     { die "Malformed PDF file $fname"; }
     $xpos = $1;
     

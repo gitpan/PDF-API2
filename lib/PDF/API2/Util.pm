@@ -1,10 +1,12 @@
 package PDF::API2::Util;
 
-use vars qw($VERSION @ISA @EXPORT %colors);
+use vars qw($VERSION @ISA @EXPORT %colors $key_var);
 use Math::Trig;
 use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 0.3b49 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/; 
+
+$key_var='AA';
 
 use Exporter;
 @ISA = qw(Exporter);
@@ -996,16 +998,20 @@ sub namecolor {
 }
 
 sub pdfkey {
-	my $ddata= (scalar @_) ? join('',@_):scalar localtime();
-	my $mdkey='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789gT';
-	my $xdata="0" x 8;
-	my $off=0;
-	foreach my $set (0..(length($ddata)<<1)) {
-		$off+=vec($ddata,$set,4);
-		$off+=vec($xdata,($set & 7),8);
-		vec($xdata,($set & 7),8)=vec($mdkey,($off & 0x3f),8);
-	}
-	return($xdata);
+  if(scalar @_>0 && defined($_[0])) {
+    my $ddata=join('',@_);
+  	my $mdkey='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789gT';
+  	my $xdata="0" x 8;
+  	my $off=0;
+  	foreach my $set (0..(length($ddata)<<1)) {
+  		$off+=vec($ddata,$set,4);
+  		$off+=vec($xdata,($set & 7),8);
+  		vec($xdata,($set & 7),8)=vec($mdkey,($off & 0x3f),8);
+  	}
+  	return($xdata);
+  } else {
+    return($key_var++);
+  }
 }
 
 sub digestx {

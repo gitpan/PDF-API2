@@ -1,29 +1,29 @@
 #=======================================================================
-#	 ____  ____  _____              _    ____ ___   ____
-#	|  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#	| |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#	|  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#	|_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
+#    ____  ____  _____              _    ____ ___   ____
+#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
+#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
+#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
+#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#	Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
+#   Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
 #
-#	This library is free software; you can redistribute it 
-#	and/or modify it under the same terms as Perl itself.
+#   This library is free software; you can redistribute it
+#   and/or modify it under the same terms as Perl itself.
 #
 #=======================================================================
 #
-#	PDF::API2::Outline
+#   PDF::API2::Outline
 #
 #=======================================================================
 package PDF::API2::Outline;
 
 BEGIN {
-	use strict;
-	use vars qw( @ISA $hasWeakRef  $VERSION);
-	eval " use WeakRef; ";
-	$hasWeakRef= $@ ? 0 : 1;
-	@ISA = qw(PDF::API2::PDF::Dict);
-	( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+    use strict;
+    use vars qw( @ISA $hasWeakRef  $VERSION);
+    eval " use WeakRef; ";
+    $hasWeakRef= $@ ? 0 : 1;
+    @ISA = qw(PDF::API2::PDF::Dict);
+    ( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 }
 
@@ -44,66 +44,66 @@ Returns a new outline object (called from $otls->outline).
 =cut
 
 sub new {
-	my ($class,$api,$parent,$prev)=@_;
-	my $self = $class->SUPER::new;
-	$self->{' apipdf'}=$api->{pdf};
-	weaken($self->{' apipdf'}) if($hasWeakRef);
-	$self->{' api'}=$api;
-	weaken($self->{' api'}) if($hasWeakRef);
-	$self->{Parent}=$parent if(defined $parent);
-	$self->{Prev}=$prev if(defined $prev);
-	return($self);
+    my ($class,$api,$parent,$prev)=@_;
+    my $self = $class->SUPER::new;
+    $self->{' apipdf'}=$api->{pdf};
+    weaken($self->{' apipdf'}) if($hasWeakRef);
+    $self->{' api'}=$api;
+    weaken($self->{' api'}) if($hasWeakRef);
+    $self->{Parent}=$parent if(defined $parent);
+    $self->{Prev}=$prev if(defined $prev);
+    return($self);
 }
 
 sub parent {
-	my $self=shift @_;
-	if(defined $_[0]) {
-		$self->{Parent}=shift @_;
-	}
-	return $self->{Parent};
+    my $self=shift @_;
+    if(defined $_[0]) {
+        $self->{Parent}=shift @_;
+    }
+    return $self->{Parent};
 }
 
 sub prev {
-	my $self=shift @_;
-	if(defined $_[0]) {
-		$self->{Prev}=shift @_;
-	}
-	return $self->{Prev};
+    my $self=shift @_;
+    if(defined $_[0]) {
+        $self->{Prev}=shift @_;
+    }
+    return $self->{Prev};
 }
 
 sub next {
-	my $self=shift @_;
-	if(defined $_[0]) {
-		$self->{Next}=shift @_;
-	}
-	return $self->{Next};
+    my $self=shift @_;
+    if(defined $_[0]) {
+        $self->{Next}=shift @_;
+    }
+    return $self->{Next};
 }
 
 sub first {
-	my $self=shift @_;
-	$self->{First}=$self->{' childs'}->[0] if(defined $self->{' childs'} && defined $self->{' childs'}->[0]);
-	return $self->{First} ;
+    my $self=shift @_;
+    $self->{First}=$self->{' childs'}->[0] if(defined $self->{' childs'} && defined $self->{' childs'}->[0]);
+    return $self->{First} ;
 }
 
 sub last {
-	my $self=shift @_;
-	$self->{Last}=$self->{' childs'}->[-1] if(defined $self->{' childs'} && defined $self->{' childs'}->[-1]);
-	return $self->{Last};
+    my $self=shift @_;
+    $self->{Last}=$self->{' childs'}->[-1] if(defined $self->{' childs'} && defined $self->{' childs'}->[-1]);
+    return $self->{Last};
 }
 
 sub count {
-	my $self=shift @_;
-	my $cnt=scalar @{$self->{' childs'}||[]};
-	map { $cnt+=$_->count();} @{$self->{' childs'}};
-	$self->{Count}=PDFNum($self->{' closed'} ? -$cnt : $cnt) if($cnt>0);
-	return $cnt;
+    my $self=shift @_;
+    my $cnt=scalar @{$self->{' childs'}||[]};
+    map { $cnt+=$_->count();} @{$self->{' childs'}};
+    $self->{Count}=PDFNum($self->{' closed'} ? -$cnt : $cnt) if($cnt>0);
+    return $cnt;
 }
 
 sub fix_outline {
-	my ($self)=@_;
-	$self->first;
-	$self->last;
-	$self->count;
+    my ($self)=@_;
+    $self->first;
+    $self->last;
+    $self->count;
 }
 
 =item $otl->title $text
@@ -113,9 +113,9 @@ Set the title of the outline.
 =cut
 
 sub title {
-	my ($self,$txt)=@_;
-	$self->{Title}=PDFStr($txt);
-	return($self);
+    my ($self,$txt)=@_;
+    $self->{Title}=PDFStr($txt);
+    return($self);
 }
 
 =item $otl->closed
@@ -125,9 +125,9 @@ Set the status of the outline to closed.
 =cut
 
 sub closed {
-	my $self=shift @_;
-	$self->{' closed'}=1;
-	return $self;
+    my $self=shift @_;
+    $self->{' closed'}=1;
+    return $self;
 }
 
 =item $otl->open
@@ -137,9 +137,9 @@ Set the status of the outline to open.
 =cut
 
 sub open {
-	my $self=shift @_;
-	delete $self->{' closed'};
-	return $self;
+    my $self=shift @_;
+    delete $self->{' closed'};
+    return $self;
 }
 
 =item $sotl=$otl->outline
@@ -149,13 +149,13 @@ Returns a new sub-outline.
 =cut
 
 sub outline {
-	my $self=shift @_;
-	my $obj=PDF::API2::Outline->new($self->{' api'},$self);
-	$obj->prev($self->{' childs'}->[-1]) if(defined $self->{' childs'});
-	$self->{' childs'}->[-1]->next($obj) if(defined $self->{' childs'});
-	push(@{$self->{' childs'}},$obj);
-	$self->{' api'}->{pdf}->new_obj($obj) if(!$obj->is_obj($self->{' api'}->{pdf}));
-	return $obj;
+    my $self=shift @_;
+    my $obj=PDF::API2::Outline->new($self->{' api'},$self);
+    $obj->prev($self->{' childs'}->[-1]) if(defined $self->{' childs'});
+    $self->{' childs'}->[-1]->next($obj) if(defined $self->{' childs'});
+    push(@{$self->{' childs'}},$obj);
+    $self->{' api'}->{pdf}->new_obj($obj) if(!$obj->is_obj($self->{' api'}->{pdf}));
+    return $obj;
 }
 
 =item $otl->dest $pageobj [, %opts]
@@ -220,53 +220,118 @@ specifies that the current value of that parameter is to be retained unchanged.
 =cut
 
 sub dest {
-	my ($self,$page,%opts)=@_;
+    my ($self,$page,%opts)=@_;
 
-	die "no valid page '$page' specified." if(!ref($page));
+    die "no valid page '$page' specified." if(!ref($page));
 
-	$opts{-fit}=1 if(scalar(keys %opts)<1);
+    $opts{-fit}=1 if(scalar(keys %opts)<1);
 
-	if(defined $opts{-fit}) {
-		$self->{Dest}=PDFArray($page,PDFName('Fit'));
-	} elsif(defined $opts{-fith}) {
-		$self->{Dest}=PDFArray($page,PDFName('FitH'),PDFNum($opts{-fith}));
-	} elsif(defined $opts{-fitb}) {
-		$self->{Dest}=PDFArray($page,PDFName('FitB'));
-	} elsif(defined $opts{-fitbh}) {
-		$self->{Dest}=PDFArray($page,PDFName('FitBH'),PDFNum($opts{-fitbh}));
-	} elsif(defined $opts{-fitv}) {
-		$self->{Dest}=PDFArray($page,PDFName('FitV'),PDFNum($opts{-fitv}));
-	} elsif(defined $opts{-fitbv}) {
-		$self->{Dest}=PDFArray($page,PDFName('FitBV'),PDFNum($opts{-fitbv}));
-	} elsif(defined $opts{-fitr}) {
-		die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
-		$self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
-	} elsif(defined $opts{-xyz}) {
-		die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-fitr}} == 3);
-		$self->{Dest}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
-	}
-	return($self);
+    if(defined $opts{-fit}) {
+        $self->{Dest}=PDFArray($page,PDFName('Fit'));
+    } elsif(defined $opts{-fith}) {
+        $self->{Dest}=PDFArray($page,PDFName('FitH'),PDFNum($opts{-fith}));
+    } elsif(defined $opts{-fitb}) {
+        $self->{Dest}=PDFArray($page,PDFName('FitB'));
+    } elsif(defined $opts{-fitbh}) {
+        $self->{Dest}=PDFArray($page,PDFName('FitBH'),PDFNum($opts{-fitbh}));
+    } elsif(defined $opts{-fitv}) {
+        $self->{Dest}=PDFArray($page,PDFName('FitV'),PDFNum($opts{-fitv}));
+    } elsif(defined $opts{-fitbv}) {
+        $self->{Dest}=PDFArray($page,PDFName('FitBV'),PDFNum($opts{-fitbv}));
+    } elsif(defined $opts{-fitr}) {
+        die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
+        $self->{Dest}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
+    } elsif(defined $opts{-xyz}) {
+        die "insufficient parameters to ->dest( page, -xyz => [] ) " unless(scalar @{$opts{-fitr}} == 3);
+        $self->{Dest}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
+    }
+    return($self);
+}
+
+=item $otl->url $url, %opts
+
+Defines the outline as launch-url with url $url.
+
+=cut
+
+sub url {
+    my ($self,$url,%opts)=@_;
+    delete $self->{Dest};
+    $self->{A}=PDFDict();
+    $self->{A}->{S}=PDFName('URI');
+    $self->{A}->{URI}=PDFStr($url);
+    return($self);
+}
+
+=item $otl->file $file, %opts
+
+Defines the outline as launch-file with filepath $file.
+
+=cut
+
+sub file {
+    my ($self,$file,%opts)=@_;
+    delete $self->{Dest};
+    $self->{A}=PDFDict();
+    $self->{A}->{S}=PDFName('Launch');
+    $self->{A}->{F}=PDFStr($file);
+    return($self);
+}
+
+=item $otl->pdfile $pdfile, $pagenum, %opts
+
+Defines the destination of the outline as pdf-file with filepath $pdfile, $pagenum
+and options %opts (same as dest).
+
+=cut
+
+sub pdfile {
+    my ($self,$file,$pnum,%opts)=@_;
+    delete $self->{Dest};
+    $self->{A}=PDFDict();
+    $self->{A}->{S}=PDFName('GoToR');
+    $self->{A}->{F}=PDFStr($file);
+    if(defined $opts{-fit}) {
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('Fit'));
+    } elsif(defined $opts{-fith}) {
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitH'),PDFNum($opts{-fith}));
+    } elsif(defined $opts{-fitb}) {
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitB'));
+    } elsif(defined $opts{-fitbh}) {
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitBH'),PDFNum($opts{-fitbh}));
+    } elsif(defined $opts{-fitv}) {
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitV'),PDFNum($opts{-fitv}));
+    } elsif(defined $opts{-fitbv}) {
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitBV'),PDFNum($opts{-fitbv}));
+    } elsif(defined $opts{-fitr}) {
+        die "insufficient parameters to ->dest( page, -fitr => [] ) " unless(scalar @{$opts{-fitr}} == 4);
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('FitR'),map {PDFNum($_)} @{$opts{-fitr}});
+    } elsif(defined $opts{-xyz}) {
+        die "insufficient parameters to dest( page, -xyz => [] ) " unless(scalar @{$opts{-fitr}} == 3);
+        $self->{A}->{D}=PDFArray(PDFNum($pnum),PDFName('XYZ'),map {PDFNum($_)} @{$opts{-xyz}});
+    }
+    return($self);
 }
 
 sub out_obj {
-	my ($self,@param)=@_;
-	$self->fix_outline;
-	return $self->SUPER::out_obj(@param);
+    my ($self,@param)=@_;
+    $self->fix_outline;
+    return $self->SUPER::out_obj(@param);
 }
 
 sub outobjdeep {
-	my ($self,@param)=@_;
-	$self->fix_outline;
-	foreach my $k (qw/ api apipdf apipage /) {
-		$self->{" $k"}=undef;
-		delete($self->{" $k"});
-	}
-	my @ret=$self->SUPER::outobjdeep(@param);
-	foreach my $k (qw/ First Parent Next Last Prev /) {
-		$self->{$k}=undef;
-		delete($self->{$k});
-	}
-	return @ret;
+    my ($self,@param)=@_;
+    $self->fix_outline;
+    foreach my $k (qw/ api apipdf apipage /) {
+        $self->{" $k"}=undef;
+        delete($self->{" $k"});
+    }
+    my @ret=$self->SUPER::outobjdeep(@param);
+    foreach my $k (qw/ First Parent Next Last Prev /) {
+        $self->{$k}=undef;
+        delete($self->{$k});
+    }
+    return @ret;
 }
 
 1;

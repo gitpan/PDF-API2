@@ -20,7 +20,7 @@ package PDF::API2::ColorSpace;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::PDF::Array);
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::PDF::Utils;
@@ -47,10 +47,10 @@ sub new {
 	if($opts{-type} eq 'CalRGB') {
 
 		my $csd=PDFDict();
-		$opts{-whitepoint}=$opts{-whitepoint} || [ 0.95049, 1, 1.08897 ];
-		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
-		$opts{-gamma}=$opts{-gamma} || [ 2.22218, 2.22218, 2.22218 ];
-		$opts{-matrix}=$opts{-matrix} || [
+		$opts{-whitepoint}||=[ 0.95049, 1, 1.08897 ];
+		$opts{-blackpoint}||=[ 0, 0, 0 ];
+		$opts{-gamma}||=[ 2.22218, 2.22218, 2.22218 ];
+		$opts{-matrix}||=[
 			0.41238, 0.21259, 0.01929,
 			0.35757, 0.71519, 0.11919,
 			0.1805,  0.07217, 0.95049
@@ -68,9 +68,9 @@ sub new {
 	} elsif($opts{-type} eq 'CalGray') {
 
 		my $csd=PDFDict();
-		$opts{-whitepoint}=$opts{-whitepoint} || [ 0.95049, 1, 1.08897 ];
-		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
-		$opts{-gamma}=$opts{-gamma} || 2.22218;
+		$opts{-whitepoint}||=[ 0.95049, 1, 1.08897 ];
+		$opts{-blackpoint}||=[ 0, 0, 0 ];
+		$opts{-gamma}||=2.22218;
 		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
 		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
 		$csd->{Gamma}=PDFNum($opts{-gamma});
@@ -82,10 +82,10 @@ sub new {
 	} elsif($opts{-type} eq 'Lab') {
 
 		my $csd=PDFDict();
-		$opts{-whitepoint}=$opts{-whitepoint} || [ 0.95049, 1, 1.08897 ];
-		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
-		$opts{-range}=$opts{-range} || [ -200, 200, -200, 200 ];
-		$opts{-gamma}=$opts{-gamma} || [ 2.22218, 2.22218, 2.22218 ];
+		$opts{-whitepoint}||=[ 0.95049, 1, 1.08897 ];
+		$opts{-blackpoint}||=[ 0, 0, 0 ];
+		$opts{-range}||=[ -200, 200, -200, 200 ];
+		$opts{-gamma}||=[ 2.22218, 2.22218, 2.22218 ];
 
 		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
 		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
@@ -98,25 +98,54 @@ sub new {
 
 	} elsif($opts{-type} eq 'Indexed') {
 
-		my $csd=PDFDict();
-		$opts{-base}=$opts{-base} || 'DeviceRGB';
-		$opts{-maxindex}=$opts{-maxindex} || scalar(@{$opts{-colors}})-1;
-		$opts{-whitepoint}=$opts{-whitepoint} || [ 0.95049, 1, 1.08897 ];
-		$opts{-blackpoint}=$opts{-blackpoint} || [ 0, 0, 0 ];
-		$opts{-gamma}=$opts{-gamma} || [ 2.22218, 2.22218, 2.22218 ];
+		$opts{-base}||='DeviceRGB';
+		$opts{-whitepoint}||=[ 0.95049, 1, 1.08897 ];
+		$opts{-blackpoint}||=[ 0, 0, 0 ];
+		$opts{-gamma}||=[ 2.22218, 2.22218, 2.22218 ];
 
-		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
-		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
-		$csd->{Gamma}=PDFArray(map {PDFNum($_)} @{$opts{-gamma}});
+#		my $csd=PDFDict();
+#		$csd->{WhitePoint}=PDFArray(map {PDFNum($_)} @{$opts{-whitepoint}});
+#		$csd->{BlackPoint}=PDFArray(map {PDFNum($_)} @{$opts{-blackpoint}});
+#		$csd->{Gamma}=PDFArray(map {PDFNum($_)} @{$opts{-gamma}});
 
-		foreach my $col (@{$opts{-colors}}) {
-			map { $csd->{' stream'}.=pack('C',$_); } @{$col};
-		}
-		$pdf->new_obj($csd);
-		$csd->{Filter}=PDFArray(PDFName('FlateDecode'));
+ 		my $csd=PDFDict();
+ 		$pdf->new_obj($csd);
+ 		$csd->{Filter}=PDFArray(PDFName('FlateDecode'));
+    $self->{' index'}=[];
+
+    if(defined $opts{-actfile}) {
+    } elsif(defined $opts{-acofile}) {
+    } elsif(defined $opts{-colors}) {
+  		$opts{-maxindex}||=scalar(@{$opts{-colors}})-1;
+  
+  		foreach my $col (@{$opts{-colors}}) {
+  			map { $csd->{' stream'}.=pack('C',$_); } @{$col};
+  		}
+
+  		foreach my $col (0..$opts{-maxindex}) {
+        if($opts{-base}=~/RGB/i) {
+          my $r=(shift(@{$opts{-colors}})||0)/255;
+          my $g=(shift(@{$opts{-colors}})||0)/255;
+          my $b=(shift(@{$opts{-colors}})||0)/255;
+          push(@{$self->{' index'}},[$r,$g,$b]);
+        } elsif($opts{-base}=~/CMYK/i) {
+          my $c=(shift(@{$opts{-colors}})||0)/255;
+          my $m=(shift(@{$opts{-colors}})||0)/255;
+          my $y=(shift(@{$opts{-colors}})||0)/255;
+          my $k=(shift(@{$opts{-colors}})||0)/255;
+          push(@{$self->{' index'}},[$c,$m,$y,$k]);
+        }
+  		}
+    } else {
+      die "unspecified color index table.";
+    }
+
 		$self->add_elements(PDFName($opts{-type}),PDFName($opts{-base}),PDFNum($opts{-maxindex}),$csd);
 
-		$self->{' type'}='index';
+		$self->{' type'}='index-'.(
+			$opts{-base}=~/RGB/i ? 'rgb' :
+			$opts{-base}=~/CMYK/i ? 'cmyk' : 'unknown'
+		);
 
 	} elsif($opts{-type} eq 'ICCBased') {
 
@@ -139,14 +168,52 @@ sub new {
 
 	}
 
-	return($self);
+  return($self);
 }
 
+=item $cs->isRGB
+
+Returns true if colorspace is RGB based.
+
+=cut
+
 sub isRGB { $_[0]->{' type'}=~/rgb/ ? 1 : 0 ; }
+
+=item $cs->isCMYK
+
+Returns true if colorspace is CMYK based.
+
+=cut
+
 sub isCMYK { $_[0]->{' type'}=~/cmyk/ ? 1 : 0 ; }
+
+=item $cs->isLab
+
+Returns true if colorspace is L*a*b based.
+
+=cut
+
 sub isLab { $_[0]->{' type'}=~/lab/ ? 1 : 0 ; }
+
+=item $cs->isGray
+
+Returns true if colorspace is Greyscale based.
+
+=cut
+
 sub isGray { $_[0]->{' type'}=~/gray/ ? 1 : 0 ; }
+
+=item $cs->isIndexed
+
+Returns true if colorspace is index based.
+
+=cut
+
 sub isIndexed { $_[0]->{' type'}=~/index/ ? 1 : 0 ; }
+
+# will convert a color to the indexed-colorspaces 
+# index with a closest match.
+sub color2index { 0; }
 
 sub outobjdeep {
 	my ($self, @opts) = @_;

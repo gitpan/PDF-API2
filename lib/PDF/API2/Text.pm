@@ -20,7 +20,7 @@ package PDF::API2::Text;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Content);
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::Content;
@@ -424,6 +424,38 @@ You can use the -utf8 option to give the text in utf8.
 
 sub text {
   my ($self,$text,%opt)=@_;
+  my $wd=0;
+  my @txt;
+  if(! $opt{-ucs2}) {
+    @txt=split(/\s+/,$text);
+    $text=join(' ',@txt);
+  }
+  if(defined $opt{-indent}) {
+    if($opt{-utf8}){
+      $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text_utf8($text),']','TJ');
+    } elsif($opt{-ucs2}){
+      $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text_ucs2($text),']','TJ');
+    } else {
+      $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text($text),']','TJ');
+    }
+    $wd=$self->advancewidth($text,%opt)+$opt{-indent};
+  } else {
+    if($opt{-utf8}){
+      $self->add($self->{' font'}->text_utf8($text),'Tj');
+    } elsif($opt{-ucs2}){
+      $self->add($self->{' font'}->text_ucs2($text),'Tj');
+    } else {
+      $self->add($self->{' font'}->text($text),'Tj');
+    }
+    $wd=$self->advancewidth($text,%opt);
+  }
+
+  $self->matrix_update($wd,0);
+  return($wd);
+}
+
+sub text_fancy {
+  my ($self,$text,%opt)=@_;
   my %state1=();
   my %state2=();
   my $wd=0;
@@ -432,7 +464,11 @@ sub text {
     @txt=split(/\s+/,$text);
     $text=join(' ',@txt);
   }
-  if(scalar %opt) {
+  if((defined $opt{-font})
+    || (defined $opt{-size})
+    || (defined $opt{-color})
+    || (defined $opt{-underline})
+  ) {
     %state1=$self->textstate;
 
     # look into font options
@@ -476,28 +512,19 @@ sub text {
       }
     }
   }
-  if(defined $opt{-indent}) {
-    if($opt{-utf8}){
-      $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text_utf8($text),']','TJ');
-    } elsif($opt{-ucs2}){
-      $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text_ucs2($text),']','TJ');
-    } else {
-      $self->add('[',(-$opt{-indent}*(1000/$self->{' fontsize'})*(100/$self->hspace)),$self->{' font'}->text($text),']','TJ');
-    }
-    $wd=$self->advancewidth($text,%opt)+$opt{-indent};
-  } else {
-    if($opt{-utf8}){
-      $self->add($self->{' font'}->text_utf8($text),'Tj');
-    } elsif($opt{-ucs2}){
-      $self->add($self->{' font'}->text_ucs2($text),'Tj');
-    } else {
-      $self->add($self->{' font'}->text($text),'Tj');
-    }
-    $wd=$self->advancewidth($text,%opt);
+  $wd=$self->text($text,%opt);
+  if((defined $opt{-font})
+    || (defined $opt{-size})
+    || (defined $opt{-color})
+    || (defined $opt{-underline})
+  ) {
+    delete $state1{matrix};
+    delete $state1{rotate};
+    delete $state1{scale};
+    delete $state1{skew};
+    delete $state1{translate};
+    $self->textstate(%state1);
   }
-  $self->textstate(%state1);
-
-  $self->matrix_update($wd,0);
   return($wd);
 }
 
@@ -599,8 +626,8 @@ sub text_justify {
     my $wth=$self->advancewidth($text,%opts);
 
     my $hs=$self->hspace;
-    $self->hspace($hs*($opts{-width}-$indent)/$wth);
-    $self->text($text,%opts);
+    $self->hspace($hs*($opts{-width}-$indent)/$wth) unless($opts{-left});
+    $ofw=$self->text($text,%opts);
     $self->hspace($hs);
   }
   return ($ofw,$overflow);

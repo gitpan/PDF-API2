@@ -21,7 +21,7 @@ package PDF::API2::IOString;
 
 require 5.006;
 use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Symbol ();
 use FileHandle;

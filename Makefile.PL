@@ -28,7 +28,8 @@ EOT
 			close(INF);
 			$l=~/\$Revisioning:\s+([^\s]+)\s+/gm;
 			if($1) {
-				$l=~s/(\$Revisioning:\s+)[^\s]+(\s+)/$1$opts{-version}$2/gm;
+				$t=scalar localtime();
+				$l=~s/(\$Revisioning:\s+)[^\s]+(\s*)[^\$]*\s+(\$)/$1$opts{-version}$2 $t $3/gm;
 				print "fixing version in file '$file'\n";
 				open(INF,">$file");
 				print INF $l;

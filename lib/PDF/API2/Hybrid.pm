@@ -20,7 +20,7 @@ package PDF::API2::Hybrid;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Gfx PDF::API2::Text PDF::API2::Content);
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
@@ -56,6 +56,7 @@ sub new {
 	$self->{' scale'}=[1,1];
 	$self->{' skew'}=[0,0];
 	$self->{' rotate'}=0;
+	$self->{' apiistext'}=0;
 	return($self);
 }
 
@@ -67,7 +68,7 @@ Sets the matrix.
 
 sub matrix {
 	my ($self,$a,$b,$c,$d,$e,$f)= @_;
-	if($self->{' apiistext'} == 1) {
+	if(defined($self->{' apiistext'}) && $self->{' apiistext'} == 1) {
 		return PDF::API2::Text::matrix(@_);
 	} else {
 		$self->add(floats($a,$b,$c,$d,$e,$f),'cm');

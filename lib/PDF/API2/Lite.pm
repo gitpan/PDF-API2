@@ -10,7 +10,7 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3b49 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -214,21 +214,48 @@ sub create_egs {
 	return $self->{api}->extgstate;
 }
 
-=item $img = $pdf->loadimage $file
+=item $img = $pdf->image_jpeg $file
 
-Returns a new image object.
-
-B<Examples:>
-
-	$img = $pdf->loadimage('yetanotherfun.jpg');
-	$img = $pdf->loadimage('truly24bitpic.png');
-	$img = $pdf->loadimage('reallargefile.pnm');
+Returns a new jpeg-image object.
 
 =cut
 
-sub loadimage {
+sub image_jpeg {
 	my ($self,$file)=@_;
-	return $self->{api}->image($file);
+	return $self->{api}->image_jpeg($file);
+}
+
+=item $img = $pdf->image_png $file
+
+Returns a new png-image object.
+
+=cut
+
+sub image_png {
+	my ($self,$file)=@_;
+	return $self->{api}->image_png($file);
+}
+
+=item $img = $pdf->image_tiff $file
+
+Returns a new tiff-image object.
+
+=cut
+
+sub image_tiff {
+	my ($self,$file)=@_;
+	return $self->{api}->image_tiff($file);
+}
+
+=item $img = $pdf->image_pnm $file
+
+Returns a new pnm-image object.
+
+=cut
+
+sub image_pnm {
+	my ($self,$file)=@_;
+	return $self->{api}->image_pnm($file);
 }
 
 =item $pdf->savestate

@@ -22,6 +22,7 @@ use vars qw(
 	@ISA
 
 	$code3of9
+	$code3of9_chk
 	@bar3of9
 	%bar3of9ext
 	%bar_wdt
@@ -50,7 +51,7 @@ use vars qw(
 	$VERSION
 );
 
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Utils;
 use PDF::API2::PDF::Dict;
@@ -245,6 +246,7 @@ sub encode_ean128 {
 }
 
 $code3of9=q|1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*|;
+$code3of9_chk=q|0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%|;
 
 @bar3of9=qw/
 	2112111121	1122111121	2122111111	1112211121
@@ -414,7 +416,7 @@ sub encode_3of9_string_w_chk {
 	my @c=split(//,$string);
 
 	foreach my $char (@c) {
-		$num+=index($code3of9,$char);
+		$num+=index($code3of9_chk,$char);
 		$bar.=encode_3of9_char($char);
 	}
 	$num%=43;

@@ -3,7 +3,7 @@ package PDF::API2::Color;
 use vars qw( $VERSION );
 use PDF::API2::Util;
 
-( $VERSION ) = '$Revisioning: 0.3b49 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 

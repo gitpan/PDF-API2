@@ -21,7 +21,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::PDF::Dict);
 
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Dict;
 use PDF::API2::PDF::Utils;
@@ -53,7 +53,10 @@ Adds @content to the object.
 
 sub add {
 	my $self=shift @_;
-	$self->{' stream'}.=" ".join(' ',@_)."\n";
+	if(scalar @_>0) {
+  	$self->{' stream'}.=" ".join(' ',@_)."\n";
+	}
+	$self;
 }
 
 =item $co->save
@@ -127,21 +130,23 @@ sub checkcolor {
 				return(checkcolor($t,@col));
 			} else {
 				return('g',$c) unless(ref $t);
-				if($t->isRGB) {
-					return('sc',$c,$c,$c);
+        if($t->isIndexed) {
+					return('sc',$c);
 				} elsif($t->isCMYK) {
 					return('sc',0,0,0,1-$c);
 				} elsif($t->isGray) {
 					return('sc',$c);
-				} elsif($t->isIndexed) {
-					return('sc',$c);
+				} elsif($t->isRGB) {
+					return('sc',$c,$c,$c);
 				} else {
 					die "undefined color=(".join(',',$c,$m,$y,$k).") in colorspace $t of type=($t->{' type'})";
 				}
 			}
 		} else {
 			return('rg',$c,$m,$y) unless(ref $t);
-			if($t->isRGB) {
+      if($t->isIndexed) {
+				# return('sc',$t->resolveIndexFromRGB($c,$m,$y));
+		  } elsif($t->isRGB) {
 				return('sc',$c,$m,$y);
 			} elsif($t->isCMYK) {
 				return('sc',1-$c,1-$m,1-$y,0);
@@ -153,7 +158,9 @@ sub checkcolor {
 		}
 	} else {
 		return('k',$c,$m,$y,$k) unless(ref $t);
-		if($t->isRGB) {
+    if($t->isIndexed) {
+			# return('sc',$t->resolveIndexFromCMYK($c,$m,$y,$k));
+		} elsif($t->isRGB) {
 			return('sc',1-$c-$k,1-$m-$k,1-$y-$k);
 		} elsif($t->isCMYK) {
 			return('sc',$c,$m,$y,$k);
@@ -330,14 +337,14 @@ Sets linedash.
 
 sub linedash {
 	my ($self,@a)=@_;
-	if($a[0]=~/^\-/){
-		my %a=@a;
-		$a{-pattern}=[$a{-full}||0,$a{-clear}||0] unless($a{-pattern});
-		$self->add('[',floats(@{$a{-pattern}}),']',intg($a{-shift}||0),'d');
-	} else {
-		if(scalar @a < 1) {
+	if(scalar @a < 1) {
 			$self->add('[ ] 0 d');
-		} else {
+	} else {
+  	if($a[0]=~/^\-/){
+  		my %a=@a;
+  		$a{-pattern}=[$a{-full}||0,$a{-clear}||0] unless($a{-pattern});
+  		$self->add('[',floats(@{$a{-pattern}}),']',intg($a{-shift}||0),'d');
+  	} else {
 			$self->add('[',floats(@a),'] 0 d');
 		}
 	}
@@ -504,7 +511,7 @@ sub resource {
 	my ($self, $type, $key, $obj, $force) = @_;
 	if($self->{' apipage'}) { 
 	  # we are a content stream on a page.
-  	$self->{' apipage'}->resource($type, $key, $obj, $force);
+  	return( $self->{' apipage'}->resource($type, $key, $obj, $force) );
 	} else {
 	  # we are a self-contained content stream.
   	$self->{Resources}||=PDFDict();
@@ -514,14 +521,17 @@ sub resource {
   
   	$dict->{$type}||= PDFDict();
   	$dict->{$type}->realise if(ref($dict->{$type})=~/Objind$/);
-  
-  	if($force) {
-  		$dict->{$type}->{$key}=$obj;
-  	} else {
-  		$dict->{$type}->{$key}||= $obj;
-  	}
+    unless (defined $obj) {
+      return($dict->{$type}->{$key} || undef);
+    } else {
+    	if($force) {
+    		$dict->{$type}->{$key}=$obj;
+    	} else {
+    		$dict->{$type}->{$key}||= $obj;
+    	}
+      return($dict);
+    }
 	}
-	return($self);
 }
 
 1;

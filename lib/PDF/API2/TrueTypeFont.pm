@@ -24,7 +24,7 @@ use PDF::API2::PDF::Dict;
 use POSIX;
 use vars qw(@ISA $VERSION);
 @ISA = qw( PDF::API2::PDF::Dict );
-( $VERSION ) = '$Revisioning: 0.3b49 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3d71          Thu Jun  5 23:34:37 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =item $font = PDF::API2::TrueTypeFont->new $pdf, $file, %options
 
@@ -79,7 +79,7 @@ sub new {
 
 	my @w=();
 
-	$self->{'PdfApi2Encoding'}=PDFStr($opts{-encode}) if($opts{-encode});
+	$self->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
 	$self->{'Encoding'}=PDFDict();
 	$self->{'Encoding'}->{'Type'}=PDFName('Encoding');
 	$self->{'Encoding'}->{'BaseEncoding'}=PDFName('WinAnsiEncoding');
@@ -100,13 +100,14 @@ sub new {
 	@w = map { PDFNum($des->wxe($_)||300) } (1..255);
 	$self->{'Widths'}=PDFArray(@w);
 	$self->{' t0'}=$t0;
+	$self->{' apipdf'}=$pdf;
 
 	return($self);
 }
 
 =item $font = PDF::API2::TrueTypeFont->new_api $api, $file, %options
 
-Returns a corefont object. This method is different from 'new' that
+Returns a truetype-font object. This method is different from 'new' that
 it needs an PDF::API2-object rather than a Text::PDF::File-object.
 
 =cut
@@ -116,11 +117,90 @@ sub new_api {
 
 	my $obj=$class->new($api->{pdf},@opts);
 	my $key=$obj->{' apiname'};
+	$self->{' api'}=$api;
 
 	$api->resource('Font',$key,$obj);
 	$api->resource('Font',$obj->{' apiname'},$obj);
 
 	$api->{pdf}->out_obj($api->{pages});
+	return($obj);
+}
+
+=item $derivedfont = $font->derive %options
+
+Returns a truetype-font object derived from a previously created font. 
+This method is useful for creating variant encodings from one common font.
+The only supported option at this time is '-encode'.
+
+=cut
+
+sub derive {
+	my ($self,@opts) = @_;
+	my $class = ref($self) ? ref($self) : $self;
+    my $des;
+    my $obj=$class->SUPER::new();
+
+	if((scalar @opts) > 0) {
+      my %opts=();
+      %opts=@opts if((scalar @opts)%2 == 0);
+      $self->{' apipdf'}->new_obj($obj);
+      foreach my $k (qw| Type Subtype BaseFont FirstChar LastChar |) {
+	    $obj->{$k}=$self->{$k};
+	  }
+      $obj->{' t0'}=$self->{' t0'};
+	  $obj->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
+#	  $des=$self->{'FontDescriptor'}->derive(@opts);
+	  $des=$self->{'FontDescriptor'};
+	  $obj->{'FontDescriptor'}=$des;
+	  $obj->{' apiname'} = 'TTx'.pdfkey($des->fontname,%opts);
+	  $obj->{'Name'} = PDFName($obj->{' apiname'});
+      $obj->{' data'}={};
+      $obj->{' data'}->{eu}=[
+      	0 .. 127,
+      	0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
+      	0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008D, 0x017D, 0x008F,
+      	0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
+      	0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x009D, 0x017E, 0x0178,
+      	0xA0 .. 0xFF
+      ];
+       
+      $obj->data->{char}=[];
+      if($opts{-encode} && (lc($opts{-encode}) ne 'latin1')) {
+      	my $uniMap = PDF::API2::UniMap->new($opts{-encode});
+      	@{$obj->charset}=( $uniMap->glyphs() );
+      	foreach my $c (0..255) {
+          $obj->data->{eu}->[$c]=$uniMap->c2u($c);
+       	}
+      } else {
+        foreach my $c (0..255) {
+          $obj->data->{char}->[$c]=$obj->glyph2name($obj->enc2glyph($c));
+      	}
+      }
+
+      my @w=();
+      $obj->{'Encoding'}=PDFDict();
+      $obj->{'Encoding'}->{'Type'}=PDFName('Encoding');
+      $obj->{'Encoding'}->{'BaseEncoding'}=PDFName('WinAnsiEncoding');
+      my $notdefbefore=1;
+      foreach my $w (1..255) {
+      	if(!defined($obj->charset->[$w]) ||($obj->charset->[$w] eq '.notdef')) {
+      		$notdefbefore=1;
+      		next;
+      	} else {
+      		if($notdefbefore) {
+      			push(@w,PDFNum($w))
+      		}
+      		$notdefbefore=0;
+      		push(@w,PDFName($obj->charset->[$w]));
+      	}
+      }
+      $obj->{'Encoding'}->{'Differences'}=PDFArray(@w);
+      @w = map { PDFNum($obj->wxe($_)||300) } (1..255);
+      $obj->{'Widths'}=PDFArray(@w);
+      $obj->{' apipdf'}=$self->{' apipdf'};
+	} else {
+	  $obj=$self;
+	}
 	return($obj);
 }
 
@@ -141,7 +221,7 @@ sub text {
 			(substr($text,$g,1)=~/[\x00-\x1f\\\{\}\[\]\(\)]/)
 			? sprintf('\%03lo',vec($text,$g,8))
 			: substr($text,$g,1) ;
-		$self->fontdesc->subsete(vec($text,$g,8));
+		$self->subsete(vec($text,$g,8));
 	}
 	return("($newtext)");
 }
@@ -281,13 +361,56 @@ sub descender { return( (shift @_)->fontdesc->descender ); }
 sub issymbol { return( (shift @_)->fontdesc->issymbol ); }
 sub unicode { return( (shift @_)->{' t0'} ); }
 
-sub data { return( (shift @_)->fontdesc->data ); }
+sub data { return( $_[0]->{' data'} || $_[0]->fontdesc->data ); }
 
-sub wxe { return( (shift @_)->fontdesc->wxe(@_) ); }
+sub wxe {
+	my $self=shift @_;
+    my $e=shift @_;
+    my $g=$self->enc2glyph($e);
+    return($self->wxg($g));
+}
 sub wxu { return( (shift @_)->fontdesc->wxu(@_) ); }
 sub wxn { return( (shift @_)->fontdesc->wxn(@_) ); }
 sub wxg { return( (shift @_)->fontdesc->wxg(@_) ); }
-sub wx { return( (shift @_)->fontdesc->wx(@_) ); }
+sub wx {
+	my ($self,$text,%opts)=@_;
+	my $w=0;
+	
+	if($opts{-utf8}) {
+		map { $w+=$self->wxu($_) } unpack('U*',$text);
+	} elsif($opts{-ucs2}) {
+		map { $w+=$self->wxu($_) } unpack('n*',$text);
+	} elsif($opts{-cid}) {
+		map { $w+=$self->wxg($_) } unpack('n*',$text);
+	} else {
+		map { $w+=$self->wxe($_) } unpack('C*',$text);
+	}
+	return($w);
+}
+
+sub charset { return( $_[0]->data->{char} || $_[0]->fontdesc->charset ); }
+
+sub subsetg { return( (shift @_)->fontdesc->subsetg(@_) ); }
+sub subsete { 
+	my $self = shift @_;
+	return if($self->fontdesc->iscff);
+	my $e = shift @_;
+	my $g = $self->enc2glyph($e);
+	$self->subsetg($g);
+}
+sub subsetu { return( (shift @_)->fontdesc->subsetu(@_) ); }
+sub subvec { return( (shift @_)->fontdesc->subvec(@_) ); }
+
+sub glyph2name { return( (shift @_)->fontdesc->glyph2name(@_) ); }
+sub uni2glyph { return( (shift @_)->fontdesc->uni2glyph(@_) ); }
+sub enc2glyph {
+	my $self = shift @_;
+	my $e = (shift @_) & 0xff;
+	$self->data->{eg} ||= {};
+	$self->data->{eg}->{$e} ||= $self->uni2glyph($self->data->{eu}->[$e]) || 0;
+	return($self->data->{eg}->{$e});
+}
+sub glyphs { return( (shift @_)->fontdesc->glyphs ); }
 
 #sub bbxg { return( (shift @_)->fontdesc->bbxg(@_) ); }
 #sub bbxu { return( (shift @_)->fontdesc->bbxu(@_) ); }
@@ -295,6 +418,16 @@ sub wx { return( (shift @_)->fontdesc->wx(@_) ); }
 #sub bbxn { return( (shift @_)->fontdesc->bbxn(@_) ); }
 #sub bbx { return( (shift @_)->fontdesc->bbx(@_) ); }
 
+sub outobjdeep {
+	my ($self, $fh, $pdf, %opts) = @_;
+
+	return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
+	foreach my $k (qw/ api apipdf /) {
+		$self->{" $k"}=undef;
+		delete($self->{" $k"});
+	}
+	$self->SUPER::outobjdeep($fh, $pdf, %opts);
+}
 
 #=======================================================================
 #	 ____  ____  _____              _    ____ ___   ____
@@ -628,18 +761,62 @@ sub new {
 	$self->{'MissingWidth'}=PDFNum($self->fontfile->missingwidth);
 	$self->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
 
+	$self->{' apipdf'}=$pdf;
+
 	return($self);
+}
+
+sub derive {
+	my ($class,@opts) = @_;
+	my $self=$class;
+	my $pdf=$self->{' apipdf'};
+	my %opts=();
+	%opts=@opts if((scalar @opts)%2 == 0);
+	$class = ref $class if ref $class;
+	$obj=$class->SUPER::new();
+
+	$pdf->new_obj($obj);
+
+	$obj->{' fontfile'}=$self->{' fontfile'};
+    foreach my $k (qw| Type FontName FontBBox Ascent Descent ItalicAngle CapHeight StemV StemH XHeight Flags MaxWidth MissingWidth FontFile3 FontFile2 |) {
+	  next unless(defined $self->{$k});
+	  $obj->{$k}=$self->{$k};
+	}
+	$obj->{'SpecifiedEncoding'}=PDFStr($opts{-encode}) if($opts{-encode});
+
+	$obj->{' data'}={};
+	$obj->{' data'}->{eu}=[
+		0 .. 127,
+		0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
+		0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008D, 0x017D, 0x008F,
+		0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
+		0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x009D, 0x017E, 0x0178,
+		0xA0 .. 0xFF
+	];
+
+	$obj->data->{char}=[];
+	if($opts{-encode} && (lc($opts{-encode}) ne 'latin1')) {
+		my $uniMap = PDF::API2::UniMap->new($opts{-encode});
+		@{$obj->char}=( $uniMap->glyphs() );
+		foreach my $c (0..255) {
+			$obj->data->{eu}->[$c]=$uniMap->c2u($c);
+		}
+	} else {
+		foreach my $c (0..255) {
+			$obj->data->{char}->[$c]=$obj->glyph2name($obj->enc2glyph($c));
+		}
+	}
+	$obj->{' apipdf'}=$pdf;
+	return($obj);
 }
 
 sub fontfile { return( $_[0]->{' fontfile'} ); }
 
-sub data { return( $_[0]->fontfile->data ); }
+sub data { return( $_[0]->{' data'} || $_[0]->fontfile->data ); }
 
 sub fontname { return( $_[0]->fontfile->fontname ); }
 sub altname { return( (shift @_)->fontfile->altname ); }
 sub subname { return( (shift @_)->fontfile->subname ); }
-
-sub charset { return( $_[0]->fontfile->char ); }
 
 sub wxe { return( (shift @_)->fontfile->wxe(@_) ); }
 sub wxu { return( (shift @_)->fontfile->wxu(@_) ); }
@@ -653,13 +830,29 @@ sub wx { return( (shift @_)->fontfile->wx(@_) ); }
 #sub bbxn { return( (shift @_)->fontfile->bbxn(@_) ); }
 #sub bbx { return( (shift @_)->fontfile->bbx(@_) ); }
 
+sub char { return( $_[0]->data->{char} ); }
+sub charset { return( $_[0]->char || $_[0]->fontfile->char ); }
+
 sub subsetg { return( (shift @_)->fontfile->subsetg(@_) ); }
-sub subsete { return( (shift @_)->fontfile->subsete(@_) ); }
+sub subsete { 
+	my $self = shift @_;
+	return if($self->iscff);
+	my $e = shift @_;
+	my $g = $self->enc2glyph($e);
+	$self->subsetg($g);
+}
 sub subsetu { return( (shift @_)->fontfile->subsetu(@_) ); }
 sub subvec { return( (shift @_)->fontfile->subvec(@_) ); }
 
+sub glyph2name { return( (shift @_)->fontfile->glyph2name(@_) ); }
 sub uni2glyph { return( (shift @_)->fontfile->uni2glyph(@_) ); }
-sub enc2glyph { return( (shift @_)->fontfile->enc2glyph(@_) ); }
+sub enc2glyph {
+	my $self = shift @_;
+	my $e = (shift @_) & 0xff;
+	$self->data->{eg} ||= {};
+	$self->data->{eg}->{$e} ||= $self->uni2glyph($self->data->{eu}->[$e]) || 0;
+	return($self->data->{eg}->{$e});
+}
 sub glyphs { return( (shift @_)->fontfile->glyphs ); }
 
 sub issymbol { return( (shift @_)->fontfile->issymbol ); }
