@@ -20,7 +20,7 @@ package PDF::API2::Text;
 use strict;
 use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Content);
-( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 use PDF::API2::Content;
@@ -646,6 +646,9 @@ You can use the -utf8 option to give the text in utf8.
   $w ... witdth of the text on the last line.
   $y ... y-coord of the last line.
   $text ... any left-over text which did not fit into the paragraph
+
+You must give the -rel option if you require awareness of previously
+set relative transformations.
 
 =cut
 

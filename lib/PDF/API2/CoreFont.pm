@@ -19,7 +19,7 @@ package PDF::API2::CoreFont;
 
 BEGIN {
   use vars qw( @ISA $fonts $alias $subs $encodings $VERSION );
-  ( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+  ( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 use strict;
@@ -85,6 +85,17 @@ sub _look_for_font ($) {
   }
 }
 
+sub _look_for_fontfile ($) {
+  my $fname=shift;
+  my $fpath;
+  foreach my $dir (@INC) {
+    $fpath="$dir/PDF/API2/CoreFont/$fname";
+    last if(-f $fpath);
+    $fpath=undef;
+  }
+  return($fpath);
+}
+
 sub new {
   my ($class,$pdf,$name,@opts) = @_;
   my $self;
@@ -118,9 +129,9 @@ sub new {
   $self->{'Subtype'} = PDFName($self->{' data'}->{type});
   $self->{'BaseFont'} = PDFName($self->{' data'}->{fontname});
   if($self->{' data'}->{apiname}) {
-	  $self->{' apiname'} = $self->{' data'}->{apiname}.(((scalar @opts >0) && (!$self->{' data'}->{issymbol})) ? '+'.pdfkey(@opts) : '+0');
+      $self->{' apiname'} = $self->{' data'}->{apiname}.(((scalar @opts >0) && (!$self->{' data'}->{issymbol})) ? '+'.pdfkey(@opts) : '+0');
   } else {
-	  $self->{' apiname'} = 'cFx'.pdfkey($self->{' data'}->{fontname}).(((scalar @opts >0) && (!$self->{' data'}->{issymbol})) ? '+'.pdfkey(@opts) : '0');
+      $self->{' apiname'} = 'cFx'.pdfkey($self->{' data'}->{fontname}).(((scalar @opts >0) && (!$self->{' data'}->{issymbol})) ? '+'.pdfkey(@opts) : '0');
   }
   $self->{'Name'} = PDFName($self->{' apiname'});
 
@@ -131,7 +142,7 @@ sub new {
     $self->{'FontDescriptor'}->{'Type'}=PDFName('FontDescriptor');
     $self->{'FontDescriptor'}->{'FontName'}=PDFName($self->{' data'}->{fontname});
     $self->{'FontDescriptor'}->{'FontBBox'}=PDFArray(map { PDFNum($_ || 0) } @{$self->{' data'}->{fontbbox}});
-    unless($self->{' data'}->{issymbol}) {
+    unless($self->{' data'}->{issymbol} && !$self->{' data'}->{-ttfile}) {
       $self->{'FontDescriptor'}->{'Ascent'}=PDFNum($self->{' data'}->{ascender});
       $self->{'FontDescriptor'}->{'Descent'}=PDFNum($self->{' data'}->{descender});
       $self->{'FontDescriptor'}->{'ItalicAngle'}=PDFNum($self->{' data'}->{italicangle});
@@ -142,6 +153,18 @@ sub new {
     }
 
     $self->{'FontDescriptor'}->{'Flags'}=PDFNum($self->{' data'}->{flags}) if(defined $self->{' data'}->{flags});
+
+    if(defined $self->{' data'}->{-ttfile}) {
+        my $ttf = _look_for_fontfile($self->{' data'}->{-ttfile});
+        if(defined $ttf) {
+            my $ff=PDFDict();
+            $pdf->new_obj($ff);
+            $self->{'FontDescriptor'}->{FontFile2}=$ff;
+            $ff->{Filter}=PDFArray(PDFName('FlateDecode'));
+            $ff->{' streamfile'}=$ttf;
+            $ff->{Length1}=PDFNum(-s $ttf);
+        }
+    }
 
   }
 

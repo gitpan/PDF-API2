@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
     use vars qw( $VERSION $hasWeakRef $seq);
-    ( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+    ( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
     eval " use WeakRef; ";
     $hasWeakRef= $@ ? 0 : 1;
     $seq="AA";
@@ -886,6 +886,7 @@ sub importpage {
 
     $self->{pdf}->out_obj($t_page);
     $self->{pdf}->out_obj($self->{pages});
+    $self->{pdf}->out_obj($self->{pages}->{Resources});
     $self->{pdf}->out_obj($content);
     if(wantarray) {
         return($content,$t_page);

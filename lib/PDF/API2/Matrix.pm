@@ -19,7 +19,7 @@
 #=======================================================================
 package PDF::API2::Matrix;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 sub new {
     my $type = shift;

@@ -8,7 +8,7 @@ BEGIN {
   @EXPORT      = qw ();
   @EXPORT_OK   = qw ( utf8_to_ucs2 utf16_to_ucs2 );
   @EXPORT_TAGS = qw ();
-  ( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+  ( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 sub utf8_to_ucs2 {

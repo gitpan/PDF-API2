@@ -21,7 +21,7 @@ use PDF::API2::UniMap;
 use PDF::API2::Util;
 use PDF::API2::PDF::Utils;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:25 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 =head2 PDF::API2::Font

@@ -143,7 +143,7 @@ use PDF::API2::PDF::Page;
 use PDF::API2::PDF::Pages;
 use PDF::API2::PDF::Null;
 
-( $VERSION ) = '$Revisioning: 0.3d72           Wed Jun 11 11:03:27 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:04 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 #$VERSION = "0.23";      # MJPH  14-AUG-2002     Fix MANIFEST
 #$VERSION = "0.22";      # MJPH  26-JUL-2002     Add PDF::API2::PDF::File::copy, tidy up update(), sort out out_trailer
@@ -160,8 +160,8 @@ use PDF::API2::PDF::Null;
 #$VERSION = "0.13";      # MJPH  23-MAR-2001     General bug fix release
 #$VERSION = "0.12";      # MJPH  29-JUL-2000     Add font subsetting, random page insertion
 #$VERSION = "0.11";      # MJPH  18-JUL-2000     Add pdfstamp.plx and more debugging
-#$VERSION = "0.10";	     # MJPH	 27-JUN-2000     Tidy up some bugs - names
-#$VERSION = "0.09";	     # MJPH	 31-MAR-2000     Copy trailer dictionary properly
+#$VERSION = "0.10";      # MJPH  27-JUN-2000     Tidy up some bugs - names
+#$VERSION = "0.09";      # MJPH  31-MAR-2000     Copy trailer dictionary properly
 #$VERSION = "0.08";      # MJPH  07-FEB-2000     Add null element
 #$VERSION = "0.07";      # MJPH  01-DEC-1999     Debug for pdfbklt
 #$VERSION = "0.06";      # MJPH  11-SEP-1999     Sort out unixisms
@@ -492,20 +492,20 @@ sub readval
 
         while ($str !~ m/^>>/o)
         {
-	    if ($str =~ s|^/($reg_char+)||o)
+        if ($str =~ s|^/($reg_char+)||o)
             {
-		$k = PDF::API2::PDF::Name::name_to_string ($1, $self);
+        $k = PDF::API2::PDF::Name::name_to_string ($1, $self);
                 ($value, $str) = $self->readval($str, %opts);
                 $res->{$k} = $value;
             }
-	    $str = update($fh, $str);                           # thanks gareth.jones@stud.man.ac.uk
+        $str = update($fh, $str);                           # thanks gareth.jones@stud.man.ac.uk
         }
         $str =~ s/^>>//o;
         $str = update($fh, $str);
-	# streams can't be followed by a lone carriage-return.
-	# fredo: yes they can !!! -- use the MacOS Luke.
+    # streams can't be followed by a lone carriage-return.
+    # fredo: yes they can !!! -- use the MacOS Luke.
         if (($str =~ s/^stream(?:(?:\015\012)|\012|\015)//o)
-	    && ($res->{'Length'}->val != 0))           # stream
+        && ($res->{'Length'}->val != 0))           # stream
         {
             $k = $res->{'Length'}->val;
             $res->{' streamsrc'} = $fh;
@@ -529,8 +529,8 @@ sub readval
 
         bless $res, $types{$res->{'Type'}->val}
                 if (defined $res->{'Type'} && defined $types{$res->{'Type'}->val});
-	# gdj: FIXME: if any of the ws chars were crs, then the whole
-	# string might not have been read.
+    # gdj: FIXME: if any of the ws chars were crs, then the whole
+    # string might not have been read.
     } elsif ($str =~ m/^([0-9]+)$ws_char+([0-9]+)$ws_char+R/so) # objind
     {
         $k = $1;
@@ -545,8 +545,8 @@ sub readval
         }
         $res->{' parent'} = $self;
         $res->{' realised'} = 0;
-	# gdj: FIXME: if any of the ws chars were crs, then the whole
- 	# string might not have been read.
+    # gdj: FIXME: if any of the ws chars were crs, then the whole
+    # string might not have been read.
     } elsif ($str =~ m/^([0-9]+)$ws_char+([0-9]+)$ws_char+obj/so)  # object data
     {
         my ($obj);
@@ -573,43 +573,43 @@ sub readval
     } elsif ($str =~ m/^\(/o)  # literal string
     {
         $str =~ s/^\(//o;
-	# We now need to find an unbalanced, unescaped right-paren.
-	# This can't be done with regexps.
-	my ($value) = "";
-	# The current level of nesting, when this reaches 0 we have finished.
-	my ($nested) = 1;
-	while (1) {
-	    # Remove everything up to the first (possibly escaped) paren.
-	    $str =~ /^((?:[^\\()]|\\[^()])*)(.*)/so;
-	    $value .= $1;
-	    $str = $2;
+    # We now need to find an unbalanced, unescaped right-paren.
+    # This can't be done with regexps.
+    my ($value) = "";
+    # The current level of nesting, when this reaches 0 we have finished.
+    my ($nested) = 1;
+    while (1) {
+        # Remove everything up to the first (possibly escaped) paren.
+        $str =~ /^((?:[^\\()]|\\[^()])*)(.*)/so;
+        $value .= $1;
+        $str = $2;
 
-	    if ($str =~ /^(\\[()])/o) {
-		# An escaped paren.  This would be tricky to do with
-		# the regexp above (it's very difficult to be certain
-		# that all cases are covered so I think it's better to
-		# deal with them explicitly).
-		$str = substr ($str, 2);
-		$value = $value . $1;
-	    } elsif ($str =~ /^\)/o) {
-		# Right paren
-		$nested--;
-		$str = substr ($str, 1);
-		if ($nested == 0)
-		    { last; }
-		$value = $value . ')';
-	    } elsif ($str =~ /^\(/o) {
-		# Left paren
-		$nested++;
-		$str = substr ($str, 1);
-		$value = $value . '(';
-	    } else {
-		# No parens, we must read more.  We don't use update
-		# because we don't want to remove whitespace or
-		# comments.
-		$fh->read($str, 255, length($str)) or die "Unterminated string.";
-	    }
-	}
+        if ($str =~ /^(\\[()])/o) {
+        # An escaped paren.  This would be tricky to do with
+        # the regexp above (it's very difficult to be certain
+        # that all cases are covered so I think it's better to
+        # deal with them explicitly).
+        $str = substr ($str, 2);
+        $value = $value . $1;
+        } elsif ($str =~ /^\)/o) {
+        # Right paren
+        $nested--;
+        $str = substr ($str, 1);
+        if ($nested == 0)
+            { last; }
+        $value = $value . ')';
+        } elsif ($str =~ /^\(/o) {
+        # Left paren
+        $nested++;
+        $str = substr ($str, 1);
+        $value = $value . '(';
+        } else {
+        # No parens, we must read more.  We don't use update
+        # because we don't want to remove whitespace or
+        # comments.
+        $fh->read($str, 255, length($str)) or die "Unterminated string.";
+        }
+    }
 
         $res = PDF::API2::PDF::String->from_pdf($value);
     } elsif ($str =~ m/^</o)                                          # hex-string
@@ -645,7 +645,7 @@ sub readval
         $res = PDF::API2::PDF::Null->new;
     } else
     {
-	die "Can't parse `$str' near " . ($fh->tell()) . " length " . length($str) . ".";
+    die "Can't parse `$str' near " . ($fh->tell()) . " length " . length($str) . ".";
     }
     
     $str =~ s/^$ws_char*//os;
@@ -989,12 +989,12 @@ sub update
     $str =~ s/^$ws_char*//o;
     while ($str !~ m/$cr/o && !$fh->eof)
     {
-        $fh->read($str, 255, length($str));
+        $fh->read($str, 314, length($str));
         $str =~ s/^$ws_char*//so;
     }
     while ($str =~ m/^\%/o) # restructured by fredo/2003-03-23
     {
-        $fh->read($str, 255, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
+        $fh->read($str, 314, length($str)) while ($str !~ m/$cr/o && !$fh->eof);
         $str =~ s/^\%(.*)$cr$ws_char*//so;
     }
 
