@@ -26,7 +26,7 @@ use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 
 use Math::Trig;
-( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 
 =head2 PDF::API2::Page
@@ -284,17 +284,26 @@ sub addcontent {
         $self->fixcontents;
         $self->{'Contents'}->add_elements(@objs);
 }
+sub precontent {
+    my ($self,@objs) = @_;
+    $self->fixcontents;
+    unshift(@{$self->{'Contents'}->val},@objs);
+}
 
 sub gfx {
     use PDF::API2::Gfx;
-    my ($self) = @_;
+    my ($self,$dir) = @_;
     my $gfx=PDF::API2::Gfx->new();
+    if(defined($dir) && $dir>0) {
+        $self->precontent($gfx);
+    } else {
         $self->addcontent($gfx);
-        $self->{' apipdf'}->new_obj($gfx);
-        $gfx->{' apipdf'}=$self->{' apipdf'};
-        $gfx->{' apipage'}=$self;
-        $gfx->compress() if($self->{' api'}->{forcecompress});
-        return($gfx);
+    }
+    $self->{' apipdf'}->new_obj($gfx);
+    $gfx->{' apipdf'}=$self->{' apipdf'};
+    $gfx->{' apipage'}=$self;
+    $gfx->compress() if($self->{' api'}->{forcecompress});
+    return($gfx);
 }
 
 =item $txt = $page->text
@@ -305,14 +314,18 @@ Returns a text content object.
 
 sub text {
     use PDF::API2::Text;
-    my ($self) = @_;
+    my ($self,$dir) = @_;
     my $text=PDF::API2::Text->new();
+    if(defined($dir) && $dir>0) {
+        $self->precontent($text);
+    } else {
         $self->addcontent($text);
-        $self->{' apipdf'}->new_obj($text);
-        $text->{' apipdf'}=$self->{' apipdf'};
-        $text->{' apipage'}=$self;
-        $text->compress() if($self->{' api'}->{forcecompress});
-        return($text);
+    }
+    $self->{' apipdf'}->new_obj($text);
+    $text->{' apipdf'}=$self->{' apipdf'};
+    $text->{' apipage'}=$self;
+    $text->compress() if($self->{' api'}->{forcecompress});
+    return($text);
 }
 
 =item $hyb = $page->hybrid
@@ -323,14 +336,18 @@ Returns a hybrid content object.
 
 sub hybrid {
     use PDF::API2::Hybrid;
-    my ($self) = @_;
+    my ($self,$dir) = @_;
     my $hyb=PDF::API2::Hybrid->new();
+    if(defined($dir) && $dir>0) {
+        $self->precontent($hyb);
+    } else {
         $self->addcontent($hyb);
-        $self->{' apipdf'}->new_obj($hyb);
-        $hyb->{' apipdf'}=$self->{' apipdf'};
-        $hyb->{' apipage'}=$self;
-        $hyb->compress() if($self->{' api'}->{forcecompress});
-        return($hyb);
+    }
+    $self->{' apipdf'}->new_obj($hyb);
+    $hyb->{' apipdf'}=$self->{' apipdf'};
+    $hyb->{' apipage'}=$self;
+    $hyb->compress() if($self->{' api'}->{forcecompress});
+    return($hyb);
 }
 
 =item $ant = $page->annotation
@@ -406,13 +423,16 @@ sub resource {
 }
 
 sub content {
-    my ($self,$obj) = @_;
-        $self->fixcontents;
-        $self->{'Contents'}->add_elements($obj);
-        $self->{' apipdf'}->new_obj($obj) unless($obj->is_obj($self->{' apipdf'}));
-        $obj->{' apipdf'}=$self->{' apipdf'};
-        $obj->{' apipage'}=$self;
-        return($obj);
+    my ($self,$obj,$dir) = @_;
+    if(defined($dir) && $dir>0) {
+        $self->precontent($obj);
+    } else {
+        $self->addcontent($obj);
+    }
+    $self->{' apipdf'}->new_obj($obj) unless($obj->is_obj($self->{' apipdf'}));
+    $obj->{' apipdf'}=$self->{' apipdf'};
+    $obj->{' apipage'}=$self;
+    return($obj);
 }
 
 =item $pie = $page->piechart @options

@@ -20,7 +20,7 @@ use PDF::API2::TTF::Font 0.28;
 
 @ISA=qw( PDF::API2::PDF::File );
 
-( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:04 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:02 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 BEGIN
 {

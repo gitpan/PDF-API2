@@ -20,7 +20,7 @@ use strict;
 use PDF::API2::Util;
 use PDF::API2::PDF::Utils;
 use vars qw( $VERSION );
-( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:01 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use PDF::API2::PDF::Image;
 use PDF::API2::PDF::ImageGD;

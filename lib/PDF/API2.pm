@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
     use vars qw( $VERSION $hasWeakRef $seq);
-    ( $VERSION ) = '$Revisioning: 0.3r74             Wed Jun 25 22:22:03 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
+    ( $VERSION ) = '$Revisioning: 0.3r77                Fri Jul  4 13:16:00 2003 $' =~ /\$Revisioning:\s+([^\s]+)/;
     eval " use WeakRef; ";
     $hasWeakRef= $@ ? 0 : 1;
     $seq="AA";
@@ -430,52 +430,6 @@ B<Note:> on $index
     1 ... returns page number 1
 
 =cut
-
-sub unfilter {
-    my ($filter,$stream)=@_;
-
-    if((defined $filter) ) {
-        # we need to fix filter because it MAY be
-        # an array BUT IT COULD BE only a name
-        if(ref($filter)!~/Array$/) {
-               $filter = PDFArray($filter);
-        }
-        use PDF::API2::PDF::Filter;
-        my @filts;
-        my ($hasflate) = -1;
-        my ($temp, $i, $temp1);
-
-        @filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
-
-        foreach my $f (@filts) {
-            $stream = $f->infilt($stream, 1);
-        }
-    }
-    return($stream);
-}
-
-sub dofilter {
-    my ($filter,$stream)=@_;
-
-    if((defined $filter) ) {
-        # we need to fix filter because it MAY be
-        # an array BUT IT COULD BE only a name
-        if(ref($filter)!~/Array$/) {
-               $filter = PDFArray($filter);
-        }
-        use PDF::API2::PDF::Filter;
-        my @filts;
-        my ($hasflate) = -1;
-        my ($temp, $i, $temp1);
-
-        @filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
-
-        foreach my $f (@filts) {
-            $stream = $f->outfilt($stream, 1);
-        }
-    }
-    return($stream);
-}
 
 sub openpage {
     my $self=shift @_;
