@@ -18,10 +18,11 @@
 package PDF::API2::Hybrid;
 
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Gfx PDF::API2::Text PDF::API2::Content);
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
-use Text::PDF::Utils;
+use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 use PDF::API2::Content;
 use PDF::API2::Text;

@@ -18,12 +18,14 @@
 package PDF::API2::Text;
 
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $VERSION);
 @ISA = qw(PDF::API2::Content);
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
 
 use PDF::API2::Content;
 use PDF::API2::Gfx;
-use Text::PDF::Utils;
+use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 use Math::Trig;
 
@@ -506,8 +508,7 @@ You can use the -utf8 option to give the text in utf8.
 sub text_center {
 	my ($self,$text,%opt)=@_;
 	my $width=$self->advancewidth($text,%opt);
-	$self->distance(float(-($width/2)),0);
-	return $self->text($text,%opt);
+	return $self->text($text,-indent=>-($width/2),%opt);
 }
 
 =item $txt->text_right $text, %options
@@ -519,8 +520,7 @@ You can use the -utf8 option to give the text in utf8.
 sub text_right {
 	my ($self,$text,%opt)=@_;
 	my $width=$self->advancewidth($text,%opt);
-	$self->distance(float(-$width),0);
-	return $self->text($text,%opt);
+	return $self->text($text,-indent=>-$width,%opt);
 }
 
 =item ($flowwidth, $overflow) = $txt->text_justify $text , -width => $width [, -overflow => 1 ] [, -underflow => 1 ] [, %options ]
@@ -584,20 +584,31 @@ sub text_justify {
 	return ($ofw,$overflow);
 }
 
-=item $txt->paragraph $x, $y, $width, $heigth, $indent, $text, %options
+=item $txt->paragraph  $text, %options,
+-x => $xorg, 
+-y => $yorg, 
+-w => $width, 
+-h => $height, 
+-flindent => $firstlineindent, 
+-lead => $lead
 
 You can use the -utf8 option to give the text in utf8.
 
 =cut
 
 sub paragraph {
-	my ($self,$x,$y,$wd,$ht,$idt,$text,%opt)=@_;
+	my ($self,$text,%opt)=@_;
+	my $x=$opt{-x}||0;
+	my $y=$opt{-y}||0;
+	my $ht=$opt{-h}||0;
+	my $wd=$opt{-w}||0;
+	my $idt=$opt{-flindent}||0;
 	my $h=$ht;
 	my $sz=$self->{' fontsize'};
 	my @txt;
 	my $spacer;
 		
-	$self->lead($sz) if not defined $self->lead();
+	$self->lead($opt{-lead} || $self->lead() || $sz);
 
 	if($opt{-ucs2}) {
 		@txt=split(/\x00\x20/,$text);

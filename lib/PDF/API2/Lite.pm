@@ -10,7 +10,7 @@ package PDF::API2::Lite;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3a2 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a11 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -37,7 +37,7 @@ PDF::API2:: - A lite high-level wrapper around PDF::API2 for pdf-creation only.
 
 use PDF::API2;
 use PDF::API2::Util;
-use Text::PDF::Utils;
+use PDF::API2::PDF::Utils;
 
 use POSIX qw( ceil floor );
 

@@ -28,6 +28,7 @@ EOT
 			$l=~/\$Revisioning:\s+([^\s]+)\s+/gm;
 			if($1) {
 				$l=~s/(\$Revisioning:\s+)[^\s]+(\s+)/$1$opts{-version}$2/gm;
+				print "fixing version in file '$file'\n";
 				open(INF,">$file");
 				print INF $l;
 				close(INF);
@@ -71,7 +72,6 @@ WriteMakefile (
 	MAN3PODS	=>	{},
 	PREREQ_PM	=>	{
 					'Compress::Zlib'	=> 1.03,
-					'Text::PDF::File'	=> 0.19,
 					'Font::TTF::Font'	=> 0.28,
 				},
 	BINARY_LOCATION	=>  "PDF-API2-$version$tag-ppd.tar.gz",

@@ -18,18 +18,20 @@
 package PDF::API2::Page;
 
 use strict;
-use vars qw(@ISA %pgsz);
-@ISA = qw(Text::PDF::Pages);
-use Text::PDF::Pages;
-use Text::PDF::Utils;
+use vars qw(@ISA %pgsz $VERSION);
+@ISA = qw(PDF::API2::PDF::Pages);
+use PDF::API2::PDF::Pages;
+use PDF::API2::PDF::Utils;
 
 use PDF::API2::Util;
 
 use Math::Trig;
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
 
 =head2 PDF::API2::Page
 
-Subclassed from Text::PDF::Pages
+Subclassed from PDF::API2::PDF::Pages
 
 =item $page = PDF::API2::Page->new $pdf, $parent, $index
 
@@ -291,6 +293,7 @@ sub gfx {
         $self->{' apipdf'}->new_obj($gfx);
         $gfx->{' apipdf'}=$self->{' apipdf'};
         $gfx->{' apipage'}=$self;
+        $gfx->compress() if($self->{' api'}->{forcecompress});
         return($gfx);
 }
 
@@ -308,6 +311,7 @@ sub text {
         $self->{' apipdf'}->new_obj($text);
         $text->{' apipdf'}=$self->{' apipdf'};
         $text->{' apipage'}=$self;
+        $text->compress() if($self->{' api'}->{forcecompress});
         return($text);
 }
 
@@ -325,6 +329,7 @@ sub hybrid {
         $self->{' apipdf'}->new_obj($hyb);
         $hyb->{' apipdf'}=$self->{' apipdf'};
         $hyb->{' apipage'}=$self;
+        $hyb->compress() if($self->{' api'}->{forcecompress});
         return($hyb);
 }
 

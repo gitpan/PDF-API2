@@ -3,7 +3,7 @@ package PDF::API2::Color;
 use vars qw( $VERSION );
 use PDF::API2::Util;
 
-( $VERSION ) = '$Revisioning: 0.3a2 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a11 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use POSIX;
 
@@ -16,7 +16,7 @@ PDF::API2::Color - A OO-Color Module for PDFs.
 =head1 DESCRIPTION
 
 A module for manipulation Colors within RGB, HSV and HSL color-spaces for
-usage within PDF-Documents especially with the Text::PDF::API modules.
+usage within PDF-Documents especially with the PDF::API2::PDF::API modules.
 
 =head1 SYNOPSIS
 

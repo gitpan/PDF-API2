@@ -15,7 +15,7 @@ package PDF::API2;
 
 BEGIN {
 	use vars qw( $VERSION $hasWeakRef );
-	( $VERSION ) = '$Revisioning: 0.3a2 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
 }
@@ -44,11 +44,11 @@ PDF::API2 - The Next Generation API for creating and modifing PDFs.
 
 require 5.6.1;
 
-use Text::PDF::FileAPI;
-use Text::PDF::Page;
-use Text::PDF::Utils;
-use Text::PDF::TTFont;
-use Text::PDF::TTFont0;
+use PDF::API2::PDF::FileAPI;
+use PDF::API2::PDF::Page;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::TTFont;
+use PDF::API2::PDF::TTFont0;
 
 use PDF::API2::Util;
 use PDF::API2::CoreFont;
@@ -92,13 +92,13 @@ sub new {
 	my %opt=@_;
 	my $self={};
 	bless($self,$class);
-	$self->{pdf}=Text::PDF::FileAPI->new();
+	$self->{pdf}=PDF::API2::PDF::FileAPI->new();
 	$self->{time}='_'.pdfkey(time());
 #	foreach my $para (keys(%opt)) {
 #		$self->{$para}=$opt{$para};
 #	}
 	$self->{pdf}->{' version'} = 4;
-	$self->{pages} = Text::PDF::Pages->new($self->{pdf});
+	$self->{pages} = PDF::API2::PDF::Pages->new($self->{pdf});
 	weaken($self->{pages}) if($hasWeakRef);
 	$self->{pages}->proc_set(qw( PDF Text ImageB ImageC ImageI ));
 	$self->{catalog}=$self->{pdf}->{Root};
@@ -107,6 +107,7 @@ sub new {
 	my $dig=digest16(digest32($class,$self,%opt));
        	$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
        	$self->{pdf}->{' id'}=$dig;
+       	$self->{forcecompress}=1;
 	if($opt{-file}) {
 		$self->{' filed'}=$opt{-file};
 		$self->{pdf}->create_file($opt{-file});
@@ -207,9 +208,9 @@ sub open {
 
 	my $fh=PDF::API2::IOString->new();
 	$fh->import($file);
-	$self->{pdf}=Text::PDF::FileAPI->open($fh,1);
+	$self->{pdf}=PDF::API2::PDF::FileAPI->open($fh,1);
 
-#	$self->{pdf}=Text::PDF::FileAPI->open($file,1);
+#	$self->{pdf}=PDF::API2::PDF::FileAPI->open($file,1);
 
 	$self->{pdf}->{' fname'}=$file;
 	$self->{pdf}->{'Root'}->realise;
@@ -229,6 +230,7 @@ sub open {
 		$self->{pdf}->{'ID'}=PDFArray(PDFStr($dig),PDFStr($dig));
 		$self->{pdf}->{' id'}=$dig;
 	}
+       	$self->{forcecompress}=1;
 	return $self;
 }
 
@@ -438,12 +440,12 @@ sub unfilter {
 		if(ref($filter)!~/Array$/) {
 		       $filter = PDFArray($filter);
 		}
-		use Text::PDF::Filter;
+		use PDF::API2::PDF::Filter;
 		my @filts;
 		my ($hasflate) = -1;
 		my ($temp, $i, $temp1);
 
-		@filts=(map { ("Text::PDF::".($_->val))->new } $filter->elementsof);
+		@filts=(map { ("PDF::API2::PDF::".($_->val))->new } $filter->elementsof);
 
 		foreach my $f (@filts) {
 			$stream = $f->infilt($stream, 1);
@@ -1094,7 +1096,7 @@ sub barcode {
 	$self->resource('XObject',$key,$obj,1);
 
         $self->{pdf}->out_obj($self->{pages});
-
+	$obj->compress() if($self->{forcecompress});
 	return($obj);
 }
 

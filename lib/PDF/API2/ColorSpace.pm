@@ -18,10 +18,12 @@
 package PDF::API2::ColorSpace;
 
 use strict;
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Array);
+use vars qw(@ISA $VERSION);
+@ISA = qw(PDF::API2::PDF::Array);
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
-use Text::PDF::Utils;
+
+use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 use Math::Trig;
 
@@ -29,7 +31,7 @@ use Math::Trig;
 
 =head2 PDF::API2::ColorSpace
 
-Subclassed from Text::PDF::Array.
+Subclassed from PDF::API2::PDF::Array.
 
 =item $cs = PDF::API2::ColorSpace->new $pdf, $key, %parameters
 

@@ -4,7 +4,7 @@ use vars qw($VERSION @ISA @EXPORT %colors);
 use Math::Trig;
 use POSIX qw( HUGE_VAL floor );
 
-( $VERSION ) = '$Revisioning: 0.3a2 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
+( $VERSION ) = '$Revisioning: 0.3a11 $ ' =~ /\$Revisioning:\s+([^\s]+)/;
 
 use Exporter;
 @ISA = qw(Exporter);

@@ -18,7 +18,9 @@
 package PDF::API2::Image;
 use strict;
 use PDF::API2::Util;
-use Text::PDF::Utils;
+use PDF::API2::PDF::Utils;
+use vars qw( $VERSION );
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 =head2 PDF::API2::Image
 
@@ -33,12 +35,12 @@ sub new {
 	my ($obj,$buf);
 	if(ref $file) {
 		if(UNIVERSAL::isa($file,'GD::Image')) {
-			eval ' use Text::PDF::ImageGD; ';
-			die "unable to load Text::PDF::ImageGD (did you install correctly?) " if($@);
-			$obj=Text::PDF::ImageGD->new($pdf,'IMGxGDx'.pdfkey($file),$file);
+			eval ' use PDF::API2::PDF::ImageGD; ';
+			die "unable to load PDF::API2::PDF::ImageGD (did you install correctly?) " if($@);
+			$obj=PDF::API2::PDF::ImageGD->new($pdf,'IMGxGDx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxGDx'.pdfkey($file);
 	#	} elsif(UNIVERSAL::isa($file,'Image::Base')) {
-	#		$obj=Text::PDF::ImageIMAGE->new($pdf,'IMGxIMAGEx'.pdfkey($file),$file);
+	#		$obj=PDF::API2::PDF::ImageIMAGE->new($pdf,'IMGxIMAGEx'.pdfkey($file),$file);
 	#		$obj->{' apiname'}='IMGxIMAGEx'.pdfkey($file);
 		} else {
 			die "Unknown Object '$file'";
@@ -49,19 +51,19 @@ sub new {
 		read(INF,$buf,10,0);
 		close(INF);
 		if ($buf=~/^\xFF\xD8/) {
-			eval ' use Text::PDF::ImageJPEG; ';
-			die "unable to load Text::PDF::ImageJPEG (did you install correctly?) " if($@);
-			$obj=Text::PDF::ImageJPEG->new($pdf,'IMGxJPEGx'.pdfkey($file),$file);
+			eval ' use PDF::API2::PDF::ImageJPEG; ';
+			die "unable to load PDF::API2::PDF::ImageJPEG (did you install correctly?) " if($@);
+			$obj=PDF::API2::PDF::ImageJPEG->new($pdf,'IMGxJPEGx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxJPEGx'.pdfkey($file);
 		} elsif ($buf=~/^\x89PNG/) {
-			eval ' use Text::PDF::ImagePNG; ';
-			die "unable to load Text::PDF::ImagePNG (did you install correctly?) " if($@);
-			$obj=Text::PDF::ImagePNG->new($pdf,'IMGxPNGx'.pdfkey($file),$file);
+			eval ' use PDF::API2::PDF::ImagePNG; ';
+			die "unable to load PDF::API2::PDF::ImagePNG (did you install correctly?) " if($@);
+			$obj=PDF::API2::PDF::ImagePNG->new($pdf,'IMGxPNGx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxPNGx'.pdfkey($file);
 		} elsif ($buf=~/^P[456][\s\n]/) {
-			eval ' use Text::PDF::ImagePPM; ';
-			die "unable to load Text::PDF::ImagePPM (did you install correctly?) " if($@);
-			$obj=Text::PDF::ImagePPM->new($pdf,'IMGxPPMx'.pdfkey($file),$file);
+			eval ' use PDF::API2::PDF::ImagePPM; ';
+			die "unable to load PDF::API2::PDF::ImagePPM (did you install correctly?) " if($@);
+			$obj=PDF::API2::PDF::ImagePPM->new($pdf,'IMGxPPMx'.pdfkey($file),$file);
 			$obj->{' apiname'}='IMGxPPMx'.pdfkey($file);
 		} else {
 			die sprintf("image '$file' has unknown format with signature '%02x%02x%02x%02x%02x%02x'",

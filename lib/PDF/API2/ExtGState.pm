@@ -18,17 +18,19 @@
 package PDF::API2::ExtGState;
 
 use strict;
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict);
+use vars qw(@ISA $VERSION);
+@ISA = qw(PDF::API2::PDF::Dict);
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
-use Text::PDF::Dict;
-use Text::PDF::Utils;
+
+use PDF::API2::PDF::Dict;
+use PDF::API2::PDF::Utils;
 use Math::Trig;
 use PDF::API2::Util;
 
 =head2 PDF::API2::ExtGState
 
-Subclassed from Text::PDF::Dict.
+Subclassed from PDF::API2::PDF::Dict.
 
 =item $egs = PDF::API2::ExtGState->new @parameters
 

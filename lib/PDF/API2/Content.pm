@@ -18,17 +18,19 @@
 package PDF::API2::Content;
 
 use strict;
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict);
+use vars qw(@ISA $VERSION);
+@ISA = qw(PDF::API2::PDF::Dict);
 
-use Text::PDF::Dict;
-use Text::PDF::Utils;
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
+use PDF::API2::PDF::Dict;
+use PDF::API2::PDF::Utils;
 use Math::Trig;
 use PDF::API2::Util;
 
 =head2 PDF::API2::Content
 
-Subclassed from Text::PDF::Dict.
+Subclassed from PDF::API2::PDF::Dict.
 
 =item $co = PDF::API2::Content->new @parameters
 

@@ -19,17 +19,17 @@ package PDF::API2::CoreFont;
 
 BEGIN {
 	use vars qw( @ISA $fonts $alias $subs @latin1 @macroman @winansi @adobestd $VERSION );
-	( $VERSION ) = '$Revisioning: 0.3a2 $' =~ /\$Revisioning:\s+([^\s]+)/;
+	( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 }
 
 use strict;
 
 use PDF::API2::UniMap;
 use PDF::API2::Util;
-use Text::PDF::Utils;
-use Text::PDF::Dict;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
 
-@ISA = qw( Text::PDF::Dict );
+@ISA = qw( PDF::API2::PDF::Dict );
 
 =head1 PDF::API2::CoreFont
 
@@ -47,10 +47,10 @@ Text::PDF and PDF::API2.
 
 OR
 	
-	use Text::PDF::File;
+	use PDF::API2::PDF::File;
 	use PDF::API2::CoreFont;
 	
-	$pdf = Text::PDF::File->new('some.pdf');
+	$pdf = PDF::API2::PDF::File->new('some.pdf');
 	...
 	$font = PDF::API2::CoreFont->new($pdf,'Helvetica', -encoding => 'latin1', -pdfname => 'F0'); 
 
@@ -150,7 +150,7 @@ sub new {
 =item $font = PDF::API2::CoreFont->new_api $api, $fontname, %options
 
 Returns a corefont object. This method is different from 'new' that
-it needs an PDF::API2-object rather than a Text::PDF::File-object.
+it needs an PDF::API2-object rather than a PDF::API2::PDF::File-object.
 
 =cut
 

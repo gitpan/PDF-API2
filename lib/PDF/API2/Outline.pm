@@ -19,19 +19,21 @@ package PDF::API2::Outline;
 
 BEGIN {
 	use strict;
-	use vars qw( @ISA $hasWeakRef );
+	use vars qw( @ISA $hasWeakRef  $VERSION);
 	eval " use WeakRef; ";
 	$hasWeakRef= $@ ? 0 : 1;
-	@ISA = qw(Text::PDF::Dict);
+	@ISA = qw(PDF::API2::PDF::Dict);
+	( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
 }
 
-use Text::PDF::Dict;
-use Text::PDF::Utils;
+use PDF::API2::PDF::Dict;
+use PDF::API2::PDF::Utils;
 use PDF::API2::Util;
 
 =head2 PDF::API2::Outline
 
-Subclassed from Text::PDF::Dict.
+Subclassed from PDF::API2::PDF::Dict.
 
 =over 4
 

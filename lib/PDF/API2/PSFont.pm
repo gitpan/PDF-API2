@@ -19,15 +19,17 @@ package PDF::API2::PSFont;
 use strict;
 use PDF::API2::Util;
 use PDF::API2::Font;
-use Text::PDF::Utils;
-use Text::PDF::AFont;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::AFont;
 
-use vars qw(@ISA);
-@ISA = qw( Text::PDF::AFont PDF::API2::Font );
+use vars qw(@ISA $VERSION);
+@ISA = qw( PDF::API2::PDF::AFont PDF::API2::Font );
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
 
 =head2 PDF::API2::PSFont
 
-Subclassed from Text::PDF::AFont and PDF::API2::Font.
+Subclassed from PDF::API2::PDF::AFont and PDF::API2::Font.
 
 =item $font = PDF::API2::PSFont->new @parameters
 

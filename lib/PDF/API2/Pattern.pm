@@ -18,16 +18,18 @@
 package PDF::API2::Pattern;
 
 use strict;
-use vars qw(@ISA);
-@ISA = qw(Text::PDF::Dict);
+use vars qw(@ISA $VERSION);
+@ISA = qw(PDF::API2::PDF::Dict);
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
-use Text::PDF::Utils;
-use Text::PDF::Dict;
+
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
 use PDF::API2::Util;
 
 =head2 PDF::API2::Pattern
 
-Subclassed from Text::PDF::Dict.
+Subclassed from PDF::API2::PDF::Dict.
 
 =item $otls = PDF::API2::Pattern->new
 

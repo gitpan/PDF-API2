@@ -19,7 +19,10 @@ package PDF::API2::Font;
 use strict;
 use PDF::API2::UniMap;
 use PDF::API2::Util;
-use Text::PDF::Utils;
+use PDF::API2::PDF::Utils;
+use vars qw( $VERSION );
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
 
 =head2 PDF::API2::Font
 

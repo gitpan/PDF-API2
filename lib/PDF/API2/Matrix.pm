@@ -18,6 +18,8 @@
 #
 #=======================================================================
 package PDF::API2::Matrix;
+use vars qw( $VERSION );
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
 
 sub new {
     my $type = shift;

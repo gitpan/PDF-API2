@@ -20,16 +20,18 @@ use strict;
 use PDF::API2::UniMap qw( utf8_to_ucs2 );
 use PDF::API2::Util;
 use PDF::API2::Font;
-use Text::PDF::Utils;
-use Text::PDF::TTFont0;
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::TTFont0;
 use POSIX;
 
-use vars qw(@ISA);
-@ISA = qw( Text::PDF::TTFont0 PDF::API2::Font );
+use vars qw(@ISA $VERSION);
+@ISA = qw( PDF::API2::PDF::TTFont0 PDF::API2::Font );
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
 
 =head2 PDF::API2::TTFont
 
-Subclassed from Text::PDF::TTFont0 and PDF::API2::Font.
+Subclassed from PDF::API2::PDF::TTFont0 and PDF::API2::Font.
 
 =item $font = PDF::API2::TTFont->new $pdf,$ttffile,$pdfname
 

@@ -47,11 +47,13 @@ use vars qw(
 
 	@ean_code_odd
 	@ean_code_even
-
+	$VERSION
 );
 
-use Text::PDF::Utils;
-use Text::PDF::Dict;
+( $VERSION ) = '$Revisioning: 0.3a11 $' =~ /\$Revisioning:\s+([^\s]+)/;
+
+use PDF::API2::PDF::Utils;
+use PDF::API2::PDF::Dict;
 use PDF::API2::Util;
 use PDF::API2::Hybrid;
 
@@ -779,7 +781,7 @@ sub outobjdeep {
 		$self->{" $k"}=undef;
 		delete($self->{" $k"});
 	}
-	Text::PDF::Dict::outobjdeep(@_);
+	PDF::API2::PDF::Dict::outobjdeep(@_);
 }
 
 1;
