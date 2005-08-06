@@ -1,0 +1,11 @@
+<SOFTPKG NAME="PDF-API2" VERSION="0,45,0,0">
+    <TITLE>PDF-API2</TITLE>
+    <ABSTRACT>TheNextGen PDF Create/Modify API</ABSTRACT>
+    <AUTHOR>areibens@cpan.org</AUTHOR>
+    <IMPLEMENTATION>
+        <DEPENDENCY NAME="Compress-Zlib" VERSION="1,0,0,0" />
+        <OS NAME="MSWin32" />
+        <ARCHITECTURE NAME="MSWin32-x86-multi-thread-5.8" />
+        <CODEBASE HREF="PDF-API2-0.45.ppm.tar.gz" />
+    </IMPLEMENTATION>
+</SOFTPKG>
