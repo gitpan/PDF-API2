@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 1.15 2005/10/20 21:04:57 fredo Exp $
+#   $Id: TrueType.pm,v 2.0 2005/11/16 02:16:04 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -51,7 +51,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.15 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/20 21:04:57 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:04 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -240,6 +240,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 2.0  2005/11/16 02:16:04  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:25  areibens
+    genesis
+
     Revision 1.15  2005/10/20 21:04:57  fredo
     added handling of optional kerning
 

@@ -31,7 +31,7 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: pdf-merge.pl,v 1.1 2004/06/01 00:17:26 fredo Exp $
+#   $Id: pdf-merge.pl,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 use PDF::API2;

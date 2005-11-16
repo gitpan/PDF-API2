@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BdFont.pm,v 1.7 2005/10/01 22:41:07 fredo Exp $
+#   $Id: BdFont.pm,v 2.0 2005/11/16 02:18:14 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::BdFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA=qw(PDF::API2::Resource::Font);
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.7 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/01 22:41:07 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:14 $
 
     $BmpNum=0;
     
@@ -301,6 +301,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: BdFont.pm,v $
+    Revision 2.0  2005/11/16 02:18:14  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:50  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:27  areibens
+    genesis
+
     Revision 1.7  2005/10/01 22:41:07  fredo
     fixed font-naming race condition for multiple document updates
 

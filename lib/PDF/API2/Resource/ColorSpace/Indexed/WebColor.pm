@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: WebColor.pm,v 1.9 2005/06/17 19:44:03 fredo Exp $
+#   $Id: WebColor.pm,v 2.0 2005/11/16 02:18:14 areibens Exp $
 #
 #=======================================================================
 
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::ColorSpace::Indexed );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.9 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/06/17 19:44:03 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:14 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -129,6 +129,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: WebColor.pm,v $
+    Revision 2.0  2005/11/16 02:18:14  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:50  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:27  areibens
+    genesis
+
     Revision 1.9  2005/06/17 19:44:03  fredo
     fixed CPAN modulefile versioning (again)
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 1.18 2005/10/19 19:06:27 fredo Exp $
+#   $Id: BaseFont.pm,v 2.0 2005/11/16 02:16:04 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.18 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/19 19:06:27 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:04 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -748,6 +748,15 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 2.0  2005/11/16 02:16:04  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:25  areibens
+    genesis
+
     Revision 1.18  2005/10/19 19:06:27  fredo
     added handling of kerning
 

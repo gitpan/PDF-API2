@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 1.28 2005/08/07 02:14:41 fredo Exp $
+#   $Id: Makefile.PL,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
@@ -68,7 +68,7 @@ sub MY::postamble{
     $y.=qq|\t\$(TAR) \$(TARFLAGS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar blib\n|;
     $y.=qq|\t\$(COMPRESS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar\n|;
     $y.=qq|\t\$(CP) \$(DISTNAME).ppd \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
-    $y.=qq|\t\$(ZIP) \$(ZIPFLAGS) \$(DISTNAME)-\$(VERSION).\$(OSNAME)-\$(OSVERS).ppm.zip \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar.gz \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
+    $y.=qq|\t\$(ZIP) \$(ZIPFLAGS) \$(DISTNAME)-\$(VERSION).ppm.zip \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar.gz \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
     $y.=qq|\t\$(RM_RF) \$(DISTNAME)-\$(VERSION)-PPM\n|;
     $y.=qq|\n|;
     return($y);

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Vmtx.pm,v 1.5 2004/06/15 09:14:41 fredo Exp $
+#   $Id: Vmtx.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Vmtx;

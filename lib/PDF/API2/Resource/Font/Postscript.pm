@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Postscript.pm,v 1.13 2005/10/19 23:05:17 fredo Exp $
+#   $Id: Postscript.pm,v 2.0 2005/11/16 02:18:14 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::Postscript;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::Font );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.13 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/19 23:05:17 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:14 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -564,6 +564,15 @@ __END__
 =head1 HISTORY
 
     $Log: Postscript.pm,v $
+    Revision 2.0  2005/11/16 02:18:14  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:50  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:27  areibens
+    genesis
+
     Revision 1.13  2005/10/19 23:05:17  fredo
     silenced 'cannot parse' since it is usually no error
 

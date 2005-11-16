@@ -103,9 +103,7 @@ lib/PDF/API2/Resource/CIDFont/CJKFont/adobemyungjostdmediumacro.pm
 lib/PDF/API2/Resource/CIDFont/CJKFont/adobesongstdlightacro.pm
 lib/PDF/API2/Resource/CIDFont/CJKFont/kozgopromediumacro.pm
 lib/PDF/API2/Resource/CIDFont/CJKFont/kozminproregularacro.pm
-lib/PDF/API2/Content/symbols.pm
 lib/PDF/API2/Content/Text.pm
-lib/PDF/API2/Content/Text/Markup.pm
 lib/PDF/API2/Basic/TTF/AATKern.pm
 lib/PDF/API2/Basic/TTF/AATutils.pm
 lib/PDF/API2/Basic/TTF/Anchor.pm

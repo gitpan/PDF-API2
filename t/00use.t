@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: 00use.t,v 1.2 2003/12/08 13:13:03 Administrator Exp $
+#   $Id: 00use.t,v 2.0 2005/11/16 02:18:23 areibens Exp $
 #
 #=======================================================================
 
@@ -47,6 +47,15 @@ __END__
 =head1 HISTORY
 
     $Log: 00use.t,v $
+    Revision 2.0  2005/11/16 02:18:23  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:50  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:27  areibens
+    genesis
+
     Revision 1.2  2003/12/08 13:13:03  Administrator
     added Log tag
 

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Array.pm,v 1.6 2004/12/16 00:30:52 fredo Exp $
+#   $Id: Array.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Array;

@@ -31,7 +31,7 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: 022_truefonts,v 1.3 2005/09/12 16:55:05 fredo Exp $
+#   $Id: 022_truefonts,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
@@ -215,6 +215,15 @@ __END__
 =head1 HISTORY
 
     $Log: 022_truefonts,v $
+    Revision 2.0  2005/11/16 02:16:00  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:24  areibens
+    genesis
+
     Revision 1.3  2005/09/12 16:55:05  fredo
     various updates
 

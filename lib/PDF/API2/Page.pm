@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Page.pm,v 1.15 2005/11/02 18:18:20 fredo Exp $
+#   $Id: Page.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Page;
@@ -52,7 +52,7 @@ BEGIN {
     use POSIX qw(floor ceil);
     use Math::Trig;
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.15 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/02 18:18:20 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
 
 }
 
@@ -561,6 +561,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Page.pm,v $
+    Revision 2.0  2005/11/16 02:16:00  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:24  areibens
+    genesis
+
     Revision 1.15  2005/11/02 18:18:20  fredo
     added get_(crop/bleed/trim/art)box methods
 

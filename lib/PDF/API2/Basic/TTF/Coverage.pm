@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Coverage.pm,v 1.6 2004/11/25 15:30:37 fredo Exp $
+#   $Id: Coverage.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Coverage;

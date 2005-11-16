@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 1.40 2005/10/19 19:04:43 fredo Exp $
+#   $Id: Content.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
     
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.40 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/19 19:04:43 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
 
 }
 
@@ -2163,6 +2163,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 2.0  2005/11/16 02:16:00  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:24  areibens
+    genesis
+
     Revision 1.40  2005/10/19 19:04:43  fredo
     added extended typographic text handling call
 

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: String.pm,v 1.10 2004/12/16 00:30:53 fredo Exp $
+#   $Id: String.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::String;

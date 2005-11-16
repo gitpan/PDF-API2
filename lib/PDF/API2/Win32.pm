@@ -27,14 +27,14 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Win32.pm,v 1.9 2005/03/14 22:01:06 fredo Exp $
+#   $Id: Win32.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
 package PDF::API2::Win32;
 
     use vars qw($VERSION);
-    ( $VERSION ) = '$Revision: 1.9 $' =~ /Revision: (\S+)\s/; # $Date: 2005/03/14 22:01:06 $
+    ( $VERSION ) = '$Revision: 2.0 $' =~ /Revision: (\S+)\s/; # $Date: 2005/11/16 02:16:00 $
 
     no warnings qw[ deprecated recursion uninitialized ];
 
@@ -120,6 +120,15 @@ __END__
 =head1 HISTORY
 
     $Log: Win32.pm,v $
+    Revision 2.0  2005/11/16 02:16:00  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:24  areibens
+    genesis
+
     Revision 1.9  2005/03/14 22:01:06  fredo
     upd 2005
 

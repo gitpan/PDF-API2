@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: zapfdingbats.pm,v 1.9 2005/09/12 16:56:22 fredo Exp $
+#   $Id: zapfdingbats.pm,v 2.0 2005/11/16 02:18:15 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::CoreFont::zapfdingbats;
@@ -526,6 +526,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: zapfdingbats.pm,v $
+    Revision 2.0  2005/11/16 02:18:15  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:50  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:27  areibens
+    genesis
+
     Revision 1.9  2005/09/12 16:56:22  fredo
     applied mod_perl patch by Paul Schilling <pfschill@sbcglobal.net>
 

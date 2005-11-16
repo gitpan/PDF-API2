@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: symbol.pm,v 1.7 2005/09/12 16:56:22 fredo Exp $
+#   $Id: symbol.pm,v 2.0 2005/11/16 02:18:15 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::CoreFont::symbol;
@@ -513,6 +513,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: symbol.pm,v $
+    Revision 2.0  2005/11/16 02:18:15  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:50  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:27  areibens
+    genesis
+
     Revision 1.7  2005/09/12 16:56:22  fredo
     applied mod_perl patch by Paul Schilling <pfschill@sbcglobal.net>
 

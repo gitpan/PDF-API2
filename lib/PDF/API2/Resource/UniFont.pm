@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniFont.pm,v 1.8 2005/10/19 19:08:44 fredo Exp $
+#   $Id: UniFont.pm,v 2.0 2005/11/16 02:16:04 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::UniFont;
@@ -43,7 +43,7 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.8 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/19 19:08:44 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:04 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Dict.pm,v 1.9 2005/01/21 01:27:18 fredo Exp $
+#   $Id: Dict.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;

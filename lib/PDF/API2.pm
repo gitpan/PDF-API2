@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 1.86 2005/10/21 19:51:05 fredo Exp $
+#   $Id: API2.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 1.86 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2005/10/21 19:51:05 $
+    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2005/11/16 02:16:00 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
@@ -2414,6 +2414,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 2.0  2005/11/16 02:16:00  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:24  areibens
+    genesis
+
     Revision 1.86  2005/10/21 19:51:05  fredo
     fixed proc_pages
 

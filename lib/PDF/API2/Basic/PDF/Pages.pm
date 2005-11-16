@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Pages.pm,v 1.7 2005/06/17 18:37:07 fredo Exp $
+#   $Id: Pages.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::Pages;

@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: Cmap.pm,v 1.6 2005/09/12 16:54:07 fredo Exp $
+#   $Id: Cmap.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::Cmap;

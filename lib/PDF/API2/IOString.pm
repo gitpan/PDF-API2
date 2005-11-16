@@ -33,14 +33,14 @@
 #   Original Copyright 1998-2000 Gisle Aas.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: IOString.pm,v 1.14 2005/10/21 21:42:15 fredo Exp $
+#   $Id: IOString.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::IOString;
 
 require 5.006;
     use vars qw($VERSION $DEBUG $IO_CONSTANTS);
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.14 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/10/21 21:42:15 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
 use Symbol ();
 use FileHandle;
 no warnings qw[ deprecated recursion uninitialized ];

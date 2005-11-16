@@ -21,7 +21,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: GDEF.pm,v 1.6 2005/02/21 22:15:45 fredo Exp $
+#   $Id: GDEF.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::TTF::GDEF;

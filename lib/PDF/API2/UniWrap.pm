@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniWrap.pm,v 1.5 2005/06/17 19:43:47 fredo Exp $
+#   $Id: UniWrap.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
@@ -50,7 +50,7 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 1.5 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/06/17 19:43:47 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
 
 }
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: adobesongstdlightacro.pm,v 1.9 2005/03/16 19:40:46 fredo Exp $
+#   $Id: adobesongstdlightacro.pm,v 2.0 2005/11/16 02:16:04 areibens Exp $
 #
 #=======================================================================
 
@@ -22422,6 +22422,15 @@ __END__
 =head1 HISTORY
 
     $Log: adobesongstdlightacro.pm,v $
+    Revision 2.0  2005/11/16 02:16:04  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:48  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:25  areibens
+    genesis
+
     Revision 1.9  2005/03/16 19:40:46  fredo
     updated to latest spec (gb1-4)
 

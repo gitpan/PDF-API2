@@ -31,7 +31,7 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: pdf-deoptimize.pl,v 1.3 2004/06/07 19:45:04 fredo Exp $
+#   $Id: pdf-deoptimize.pl,v 2.0 2005/11/16 02:16:00 areibens Exp $
 #
 #=======================================================================
 
@@ -121,6 +121,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: pdf-deoptimize.pl,v $
+    Revision 2.0  2005/11/16 02:16:00  areibens
+    revision workaround for SF cvs import not to screw up CPAN
+
+    Revision 1.2  2005/11/16 01:27:47  areibens
+    genesis2
+
+    Revision 1.1  2005/11/16 01:19:24  areibens
+    genesis
+
     Revision 1.3  2004/06/07 19:45:04  fredo
     cleaned out cr+lf for lf
 
