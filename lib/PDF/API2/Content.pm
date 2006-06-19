@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
+#   $Id: Content.pm,v 2.1 2006/06/19 19:25:44 areibens Exp $
 #
 #=======================================================================
 
@@ -43,11 +43,11 @@ BEGIN {
     use PDF::API2::Matrix;
     use Math::Trig;
     use Encode;
-    use Compress::Zlib;
+    use Compress::Zlib qw[];
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
     
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2006/06/19 19:25:44 $
 
 }
 
@@ -2163,6 +2163,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 2.1  2006/06/19 19:25:44  areibens
+    fixed compress vs. Compress::ZLib subs
+
     Revision 2.0  2005/11/16 02:16:00  areibens
     revision workaround for SF cvs import not to screw up CPAN
 
