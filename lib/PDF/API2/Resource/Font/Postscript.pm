@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Postscript.pm,v 2.0 2005/11/16 02:18:14 areibens Exp $
+#   $Id: Postscript.pm,v 2.1 2006/08/14 18:08:16 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::Postscript;
@@ -43,12 +43,12 @@ BEGIN {
     use POSIX;
     use Compress::Zlib;
     use File::Find;
-
+    use IO::File;
     use vars qw(@ISA $VERSION);
 
     @ISA = qw( PDF::API2::Resource::Font );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:14 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2006/08/14 18:08:16 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -337,7 +337,6 @@ sub readAFM
 
 sub readPFM {
     my ($self,$file)=@_;
-    use IO::File;
     if(! -e $file) {die "pfmfile='$file' not existant.";}
     my $fh=IO::File->new();
     my $data={};
@@ -564,6 +563,9 @@ __END__
 =head1 HISTORY
 
     $Log: Postscript.pm,v $
+    Revision 2.1  2006/08/14 18:08:16  areibens
+    moved "use io-file" to begin section
+
     Revision 2.0  2005/11/16 02:18:14  areibens
     revision workaround for SF cvs import not to screw up CPAN
 
