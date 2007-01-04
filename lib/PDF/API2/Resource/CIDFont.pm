@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CIDFont.pm,v 2.1 2006/06/19 19:22:07 areibens Exp $
+#   $Id: CIDFont.pm,v 2.2 2007/01/04 16:02:28 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont;
@@ -49,7 +49,7 @@ BEGIN
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2006/06/19 19:22:07 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/01/04 16:02:28 $
 }
 
 no warnings qw[ deprecated recursion uninitialized ];
@@ -229,22 +229,29 @@ sub textByStr
 
 sub textByStrKern 
 {
-    my ($self,$text,$size)=@_;
-    return($self->text_cid_kern($self->cidsByStr($text),$size));
+    my ($self,$text,$size,$ident)=@_;
+    return($self->text_cid_kern($self->cidsByStr($text),$size,$ident));
 }
 
 sub text 
 { 
-    my ($self,$text,$size)=@_;
+    my ($self,$text,$size,$ident)=@_;
     my $newtext=$self->textByStr($text);
     if(defined $size && $self->{-dokern})
     {
-        $newtext=$self->textByStrKern($text,$size);
+        $newtext=$self->textByStrKern($text,$size,$ident);
         return($newtext);
     }
     elsif(defined $size)
     {
-        return("$newtext Tj");
+        if(defined($ident) && $ident!=0)
+        {
+	        return("[ $ident $newtext ] TJ");
+        }
+        else
+        {
+	        return("$newtext Tj");
+        }        
     }
     else
     {
@@ -275,7 +282,7 @@ sub text_cid
 
 sub text_cid_kern 
 {
-    my ($self,$text,$size)=@_;
+    my ($self,$text,$size,$ident)=@_;
     if(UNIVERSAL::can($self,'fontfile'))
     {
         foreach my $g (unpack('n*',$text)) 
@@ -285,30 +292,44 @@ sub text_cid_kern
     }
     if(defined $size && $self->{-dokern} && $self->haveKernPairs())
     {
-            my $newtext=' ';
-            my $lastglyph=0;
-            my $tBefore=0;
-            foreach my $n (unpack('n*',$text)) 
+        my $newtext=' ';
+        my $lastglyph=0;
+        my $tBefore=0;
+        foreach my $n (unpack('n*',$text)) 
+        {
+            if($self->kernPairCid($lastglyph, $n))
             {
-                if($self->kernPairCid($lastglyph, $n))
-                {
-                    $newtext.='> ' if($tBefore);
-                    $newtext.=sprintf('%i ',$self->kernPairCid($lastglyph, $n));
-                    $tBefore=0;
-                }
-                $lastglyph=$n;
-                my $t=sprintf('%04X',$n);
-                $newtext.='<' if(!$tBefore);
-                $newtext.=$t;
-                $tBefore=1;
+                $newtext.='> ' if($tBefore);
+                $newtext.=sprintf('%i ',$self->kernPairCid($lastglyph, $n));
+                $tBefore=0;
             }
-            $newtext.='> ' if($tBefore);
+            $lastglyph=$n;
+            my $t=sprintf('%04X',$n);
+            $newtext.='<' if(!$tBefore);
+            $newtext.=$t;
+            $tBefore=1;
+        }
+        $newtext.='> ' if($tBefore);
+        if(defined($ident) && $ident!=0)
+        {
+	        return("[ $ident $newtext ] TJ");
+        }
+        else
+        {
             return("[ $newtext ] TJ");
+        }
     }
     elsif(defined $size)
     {
         my $newtext=unpack('H*',$text);
-        return("<$newtext> Tj");
+        if(defined($ident) && $ident!=0)
+        {
+	        return("[ $ident <$newtext> ] TJ");
+        }
+        else
+        {
+	        return("<$newtext> Tj");
+        }
     }
     else
     {
@@ -386,6 +407,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CIDFont.pm,v $
+    Revision 2.2  2007/01/04 16:02:28  areibens
+    applied untested fix for acrobat 8 "<ident> TJ" bug
+
     Revision 2.1  2006/06/19 19:22:07  areibens
     removed dup sub
 

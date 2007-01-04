@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: UniFont.pm,v 2.0 2005/11/16 02:16:04 areibens Exp $
+#   $Id: UniFont.pm,v 2.1 2007/01/04 16:02:28 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::UniFont;
@@ -43,7 +43,7 @@ BEGIN {
 
     use vars qw($VERSION);
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:04 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/01/04 16:02:28 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -269,7 +269,7 @@ sub width {
 
 sub text 
 { 
-    my ($self,$text,$size)=@_;
+    my ($self,$text,$size,$ident)=@_;
     $text=decode($self->{encode},$text) unless(is_utf8($text));
     die 'textsize not specified' unless(defined $size);
     my $newtext='';
@@ -291,7 +291,15 @@ sub text
         if($thisfont!=$lastfont && $lastfont!=-1)
         {
             my $f=$self->fontlist->[$lastfont];
-            $newtext.='/'.$f->name.' '.$size.' Tf '.$f->text(pack('U*',@codes)).' Tj ';
+            if(defined($ident) && $ident!=0)
+            {
+	            $newtext.='/'.$f->name.' '.$size.' Tf ['.$ident.' '.$f->text(pack('U*',@codes)).'] TJ ';
+	            $ident=undef;
+            }
+            else
+            {
+	            $newtext.='/'.$f->name.' '.$size.' Tf '.$f->text(pack('U*',@codes)).' Tj ';
+            }
             @codes=();
         }
         
@@ -302,7 +310,6 @@ sub text
     if(scalar @codes > 0)
     {
         my $f=$self->fontlist->[$lastfont];
-        ## $newtext.='/'.$f->name.' '.$size.' Tf '.$f->text(pack('U*',@codes)).' Tj ';
         $newtext.='/'.$f->name.' '.$size.' Tf '.$f->text(pack('U*',@codes),$size).' ';
     }
 
