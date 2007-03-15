@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 2.1 2006/06/15 20:15:48 areibens Exp $
+#   $Id: File.pm,v 2.4 2007/03/10 11:10:28 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -201,8 +201,7 @@ use PDF::API2::Basic::PDF::Null;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
-    # $Revisioning: 0.40_11 on Mon Oct  6 18:39:40 2003 $
-    ( $VERSION ) = '0.40_10';
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.4 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/10 11:10:28 $
 
 #IMPORTED INTO PDF::API2
 
@@ -442,15 +441,9 @@ sub append_file
     # hack to upgrade pdf-version number to support
     # requested features in higher versions that
     # the pdf was originally created.
-    $fh->seek(7,0);
-    $fh->read($buf, 3);
-    $buf=~s/[^\d]+$//g;
-    $ver=$self->{' version'} || 2;
-    if($buf < $ver) {
-    ##  print STDERR "files version was 1.$buf upgraded to 1.$ver.\n";
-        $fh->seek(0,0);
-        $fh->print("%PDF-1.$ver\n");
-    }
+    $ver=$self->{' version'} || 4;
+    $fh->seek(0,0);
+    $fh->print("%PDF-1.$ver\n");
 
     $tdict = PDFDict();
     $tdict->{'Prev'} = PDFNum($self->{' loc'});
@@ -514,7 +507,7 @@ sub create_file
 
     $self->{' OUTFILE'} = $fh;
     $fh->print('%PDF-1.' . ($self->{' version'} || '2') . "\n");
-    $fh->print("%Çì¢\n");              # and some binary stuff in a comment
+    $fh->print("%\xC7\xEC\xF3\xA2\n");   # and some binary stuff in a comment
     $self;
 }
 
@@ -1254,10 +1247,12 @@ sub readxrtr
         }
     }
 
-    if ($buf !~ /^trailer$cr/oi)
+#    if ($buf !~ /^trailer$cr/oi)
+    if ($buf !~ /^trailer\b/oi)
     { die "Malformed trailer in PDF file $self->{' fname'} at " . ($fh->tell - length($buf)); }
 
-    $buf =~ s/^trailer$cr//oi;
+#    $buf =~ s/^trailer$cr//oi;
+    $buf =~ s/^trailer\b//oi;
 
     ($tdict, $buf) = $self->readval($buf);
     $tdict->{' loc'} = $xpos;

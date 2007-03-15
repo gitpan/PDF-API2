@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
+#   $Id: API2.pm,v 2.3 2007/03/15 14:15:19 areibens Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2005/11/16 02:16:00 $
+    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/03/15 14:15:19 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
@@ -301,7 +301,7 @@ I<-onecolumn>
 I<-twocolumnleft>
 ... Display the pages in two columns, with oddnumbered pages on the left.
 
-I<-twocolumnrigth>
+I<-twocolumnright>
 ... Display the pages in two columns, with oddnumbered pages on the right.
 
 =cut
@@ -431,7 +431,7 @@ sub preferences {
         $self->{catalog}->{PageLayout}=PDFName('OneColumn');
     } elsif($opt{-twocolumnleft}) {
         $self->{catalog}->{PageLayout}=PDFName('TwoColumnLeft');
-    } elsif($opt{-twocolumnrigth}) {
+    } elsif($opt{-twocolumnright}) {
         $self->{catalog}->{PageLayout}=PDFName('TwoColumnRight');
     } else {
         $self->{catalog}->{PageLayout}=PDFName('SinglePage');
@@ -679,6 +679,96 @@ sub xmpMetadata {
         $self->{pdf}->out_obj($md);
     }
     return($md->{' stream'});
+}
+
+=item $pdf->pageLabel $index $options
+
+Sets PageLabel options.
+
+B<Supported Options:>
+
+I<-style> ... 'Roman', 'roman', 'decimal', 'Alpha' or 'alpha'.
+
+I<-start> ... restart numbering at given number.
+
+I<-prefix> ... text prefix for numbering.
+
+B<Example:>
+
+	$pdf->pageLabel( 0, {
+		-style => 'roman',
+	} ); # start with roman numbering
+
+	$pdf->pageLabel( 4, {
+		-style => 'decimal',
+	} ); # switch to arabic
+
+	$pdf->pageLabel( 32, {
+		-start => 1,
+		-prefix => 'A-'
+	} ); # numbering for appendix A
+    
+	$pdf->pageLabel( 36, {
+		-start => 1,
+		-prefix => 'B-'
+	} ); # numbering for appendix B
+    
+	$pdf->pageLabel( 40, {
+		-style => 'Roman'
+		-start => 1,
+		-prefix => 'Index '
+	} ); # numbering for index
+    
+=cut
+
+sub pageLabel {
+    my $self=shift @_;
+
+	$self->{catalog}->{PageLabels}||=PDFDict();
+	$self->{catalog}->{PageLabels}->{Nums}||=PDFArray();
+	
+	my $arr=$self->{catalog}->{PageLabels}->{Nums};
+	while(scalar @_)
+	{
+		my $index=shift @_;
+		my $opts=shift @_;
+		
+		$arr->add_elements(PDFNum($index));
+
+		my $d=PDFDict();
+		if($opts->{-style} eq 'Roman')
+		{
+			$d->{S}=PDFName('R');
+		}
+		elsif($opts->{-style} eq 'roman')
+		{
+			$d->{S}=PDFName('r');
+		}
+		elsif($opts->{-style} eq 'Alpha')
+		{
+			$d->{S}=PDFName('A');
+		}
+		elsif($opts->{-style} eq 'alpha')
+		{
+			$d->{S}=PDFName('a');
+		}
+		else
+		{
+			$d->{S}=PDFName('D');
+		}
+
+		if(defined $opts->{-prefix})
+		{
+			$d->{P}=PDFStr($opts->{-prefix});
+		}
+
+		if(defined $opts->{-start})
+		{
+			$d->{St}=PDFNum($opts->{-start});
+		}
+				
+		$arr->add_elements($d);
+	}
 }
 
 =item $pdf->finishobjects @objects
@@ -1097,6 +1187,8 @@ sub importPageIntoForm {
     my $s_pdf=shift @_;
     my $s_idx=shift @_||0;
 
+	UNIVERSAL::isa($s_pdf, 'PDF::API2') || die "Invalid usage: 1st argument must be PDF::API2 instance, not: ".ref($s_pdf);
+
     my ($s_page,$xo);
 
     $xo=$self->xo_form;
@@ -1197,6 +1289,8 @@ sub importpage {
     my $t_idx=shift @_||0;
     my ($s_page,$t_page);
 
+	UNIVERSAL::isa($s_pdf, 'PDF::API2') || die "Invalid usage: 1st argument must be PDF::API2 instance, not: ".ref($s_pdf);
+	
     if(ref($s_idx) eq 'PDF::API2::Page') {
         $s_page=$s_idx;
     } else {
@@ -2414,6 +2508,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 2.3  2007/03/15 14:15:19  areibens
+    added pageLabel method
+
+    Revision 2.2  2007/03/14 19:30:25  areibens
+    fixed -twocolumnright option typo
+
+    Revision 2.1  2007/02/22 08:00:37  areibens
+    changed import* methods to check its first arg -- thanks alankila2@yahoo.ca
+
     Revision 2.0  2005/11/16 02:16:00  areibens
     revision workaround for SF cvs import not to screw up CPAN
 

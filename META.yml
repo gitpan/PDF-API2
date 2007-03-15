@@ -1,8 +1,8 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         PDF-API2
-version:      0.57
-version_from: lib/PDF/API2/Version.pm
+version:      0.58
+version_from: 
 installdirs:  site
 requires:
     Compress::Zlib:                1

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 2.2 2007/01/04 16:02:28 areibens Exp $
+#   $Id: Content.pm,v 2.4 2007/03/12 16:24:29 areibens Exp $
 #
 #=======================================================================
 
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
     
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/01/04 16:02:28 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.4 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/12 16:24:29 $
 
 }
 
@@ -1290,7 +1290,7 @@ sub textstate
         foreach my $k (qw( charspace hspace wordspace lead rise render )) 
         {
             next unless($state{$k});
-            eval ' $self->'.$k.'($state{$k}); ';
+            $self->can($k)->($self, $state{$k});
         }
         if($state{font} && $state{fontsize}) 
         {
@@ -1345,7 +1345,7 @@ sub textstate2
             next unless($state{$k});
             if($self->{" $k"} ne $state{$k})
             {
-                eval ' $self->'.$k.'($state{$k}); ';
+                $self->can($k)->($self, $state{$k});
             }
         }
         if($state{font} && $state{fontsize}) 
@@ -1695,8 +1695,7 @@ sub advancewidth
             $opts{$k}=$self->{" $k"} unless(defined $opts{$k});
         }
         my $glyph_width=$opts{font}->width($text)*$opts{fontsize};
-        my @txt=split(/\x20/,$text);
-        my $num_space=(scalar @txt)-1;
+        my $num_space = $text =~ y/\x20/\x20/;
         my $num_char=length($text);
         my $word_spaces=$opts{wordspace}*$num_space;
         my $char_spaces=$opts{charspace}*$num_char;
@@ -1706,8 +1705,7 @@ sub advancewidth
     else
     {
         my $glyph_width=$self->{' font'}->width($text)*$self->{' fontsize'};
-        my @txt=split(/\x20/,$text);
-        my $num_space=(scalar @txt)-1;
+        my $num_space = $text =~ y/\x20/\x20/;
         my $num_char=length($text);
         my $word_spaces=$self->wordspace*$num_space;
         my $char_spaces=$self->charspace*$num_char;
@@ -2166,6 +2164,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Content.pm,v $
+    Revision 2.4  2007/03/12 16:24:29  areibens
+    removed eval from state calls
+
+    Revision 2.3  2007/02/14 11:26:21  areibens
+    fixed advancewidth for space calculation
+
     Revision 2.2  2007/01/04 16:02:28  areibens
     applied untested fix for acrobat 8 "<ident> TJ" bug
 
