@@ -485,4 +485,4 @@ Changes from 0.9 to 0.9.1:
 - proper caron shape for dcaron and tcaron
 - minor visual changes
 
-$Id: NEWS 891 2006-05-14 15:26:27Z ben_laenen $
+$Id: NEWS.txt,v 1.1 2007/03/16 15:35:04 areibens Exp $

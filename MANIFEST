@@ -13,7 +13,6 @@ lib/PDF/API2.pm
 lib/PDF/API2/Annotation.pm
 lib/PDF/API2/Content.pm
 lib/PDF/API2/HOWTO.pod
-lib/PDF/API2/IOString.pm
 lib/PDF/API2/Lite.pm
 lib/PDF/API2/Matrix.pm
 lib/PDF/API2/NamedDestination.pm
@@ -206,6 +205,7 @@ lib/PDF/API2/fonts/README.txt
 lib/PDF/API2/fonts/status.txt
 lib/PDF/API2/fonts/unicover.txt
 t/00use.t
+examples/011_open_update
 examples/020_corefonts
 examples/020_textrise
 examples/020_textunderline

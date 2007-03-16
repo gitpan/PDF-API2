@@ -40,18 +40,6 @@ my $versionfile = "lib/PDF/API2/Version.pm";
 
 require "$versionfile";
 
-sub MY::postamble{
-    my $y=qq|ppmdist: pm_to_blib ppd dist\n|;
-    $y.=qq|\t\$(MKPATH) \$(DISTNAME)-\$(VERSION)-PPM\n|;
-    $y.=qq|\t\$(TAR) \$(TARFLAGS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar blib\n|;
-    $y.=qq|\t\$(COMPRESS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar\n|;
-    $y.=qq|\t\$(CP) \$(DISTNAME).ppd \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
-    $y.=qq|\t\$(ZIP) \$(ZIPFLAGS) \$(DISTNAME)-\$(VERSION).ppm.zip \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar.gz \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
-    $y.=qq|\t\$(RM_RF) \$(DISTNAME)-\$(VERSION)-PPM\n|;
-    $y.=qq|\n|;
-    return($y);
-}
-
 my %makehash=( 
     NAME            => "PDF::API2", 
     AUTHOR          => "areibens\@cpan.org", 
@@ -64,8 +52,7 @@ my %makehash=(
     MAN1PODS        => {}, 
     MAN3PODS        => {}, 
     PREREQ_PM       => { 'Compress::Zlib' => 1.0, }, 
-#    VERSION_FROM    => $versionfile,
-    VERSION         => $PDF::API2::Version::CVersion{vPerl},
+    VERSION_FROM    => $versionfile,
     BINARY_LOCATION => q|PDF-API2-|.$PDF::API2::Version::CVersion{vPerl}.q|.ppm.tar.gz|,
 );
 
@@ -75,5 +62,16 @@ print STDERR $PDF::API2::Version::CVersion{vTeX}."\n";
 
 exit;
 
+sub MY::postamble{
+    my $y=qq|ppmdist: pm_to_blib ppd dist\n|;
+    $y.=qq|\t\$(MKPATH) \$(DISTNAME)-\$(VERSION)-PPM\n|;
+    $y.=qq|\t\$(TAR) \$(TARFLAGS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar blib\n|;
+    $y.=qq|\t\$(COMPRESS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar\n|;
+    $y.=qq|\t\$(CP) \$(DISTNAME).ppd \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
+    $y.=qq|\t\$(ZIP) \$(ZIPFLAGS) \$(DISTNAME)-\$(VERSION).ppm.zip \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar.gz \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
+    $y.=qq|\t\$(RM_RF) \$(DISTNAME)-\$(VERSION)-PPM\n|;
+    $y.=qq|\n|;
+    return($y);
+}
 
 __END__
