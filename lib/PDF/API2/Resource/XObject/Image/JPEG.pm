@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: JPEG.pm,v 2.0 2005/11/16 02:18:23 areibens Exp $
+#   $Id: JPEG.pm,v 2.1 2007/03/17 20:38:51 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::JPEG;
@@ -44,7 +44,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:23 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:51 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -80,12 +80,7 @@ sub new
 
     $self->read_jpeg($fh);
 
-    if(ref($file) eq 'PDF::API2::IOString') 
-    {
-        $self->{' stream'}=${*$fh->{buf}};
-        $self->{Length}=PDFNum(length $self->{' stream'});
-    } 
-    elsif(ref $file) 
+    if(ref $file) 
     {
         seek($fh,0,0);
         $self->{' stream'}='';
@@ -178,6 +173,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: JPEG.pm,v $
+    Revision 2.1  2007/03/17 20:38:51  areibens
+    replaced IOString dep. with scalar IO.
+
     Revision 2.0  2005/11/16 02:18:23  areibens
     revision workaround for SF cvs import not to screw up CPAN
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TIFF.pm,v 2.0 2005/11/16 02:18:23 areibens Exp $
+#   $Id: TIFF.pm,v 2.1 2007/03/17 20:38:51 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::TIFF;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:23 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:51 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -381,7 +381,7 @@ sub new {
   my $file=shift @_;
   my $self={};
   bless($self,$class);
-  if(ref($file) eq 'PDF::API2::IOString') {
+  if(ref($file)) {
     $self->{fh} = $file;
     seek($self->{fh},0,0);
   } else {
@@ -641,6 +641,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TIFF.pm,v $
+    Revision 2.1  2007/03/17 20:38:51  areibens
+    replaced IOString dep. with scalar IO.
+
     Revision 2.0  2005/11/16 02:18:23  areibens
     revision workaround for SF cvs import not to screw up CPAN
 

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: CIDFont.pm,v 2.2 2007/01/04 16:02:28 areibens Exp $
+#   $Id: CIDFont.pm,v 2.3 2007/03/17 20:38:50 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont;
@@ -41,7 +41,6 @@ BEGIN
     use PDF::API2::Util;
     use PDF::API2::Basic::PDF::Utils;
     use PDF::API2::Resource::BaseFont;
-    use PDF::API2::IOString;
 
     use POSIX;
 
@@ -49,7 +48,7 @@ BEGIN
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/01/04 16:02:28 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:50 $
 }
 
 no warnings qw[ deprecated recursion uninitialized ];
@@ -407,6 +406,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: CIDFont.pm,v $
+    Revision 2.3  2007/03/17 20:38:50  areibens
+    replaced IOString dep. with scalar IO.
+
     Revision 2.2  2007/01/04 16:02:28  areibens
     applied untested fix for acrobat 8 "<ident> TJ" bug
 

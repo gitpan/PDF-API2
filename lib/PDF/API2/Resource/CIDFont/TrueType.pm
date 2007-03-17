@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 2.0 2005/11/16 02:16:04 areibens Exp $
+#   $Id: TrueType.pm,v 2.1 2007/03/17 20:38:51 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -40,7 +40,6 @@ BEGIN {
     use PDF::API2::Util;
     use PDF::API2::Basic::PDF::Utils;
     use PDF::API2::Resource::CIDFont;
-    use PDF::API2::IOString;
 
     use PDF::API2::Basic::TTF::Font;
     use PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -51,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:04 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:51 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -240,6 +239,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 2.1  2007/03/17 20:38:51  areibens
+    replaced IOString dep. with scalar IO.
+
     Revision 2.0  2005/11/16 02:16:04  areibens
     revision workaround for SF cvs import not to screw up CPAN
 
