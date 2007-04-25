@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 2.5 2007/01/04 16:33:20 areibens Exp $
+#   $Id: BaseFont.pm,v 2.7 2007/04/07 10:25:46 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.5 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/01/04 16:33:20 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.7 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/04/07 10:25:46 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -555,7 +555,9 @@ sub wxByGlyph
     }
     else
     {
-        return ( $self->data->{wx}->[$val] || $self->missingwidth || 300 ); 
+    	my $cid=$self->cidByUni(uniByName($val));
+        return ( $self->data->{wx}->[$cid] || $self->missingwidth || 300 ); 
+    #    return ( $self->data->{wx}->[$val] || $self->missingwidth || 300 ); 
     }
 }
 
@@ -774,6 +776,12 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 2.7  2007/04/07 10:25:46  areibens
+    fixed fix for wxByGlyph not honoring cidfont width arrays
+
+    Revision 2.6  2007/04/07 09:51:16  areibens
+    fix for wxByGlyph not honoring cidfont width arrays
+
     Revision 2.5  2007/01/04 16:33:20  areibens
     fix acro 8 fix
 

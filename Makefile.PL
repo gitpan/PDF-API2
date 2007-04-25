@@ -28,7 +28,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Makefile.PL,v 2.1 2005/11/16 02:52:26 areibens Exp $
+#   $Id: Makefile.PL,v 2.2 2007/03/17 22:41:01 areibens Exp $
 #
 #=======================================================================
 
@@ -58,7 +58,7 @@ my %makehash=(
 
 WriteMakefile( %makehash );
 
-print STDERR $PDF::API2::Version::CVersion{vTeX}."\n";
+print STDERR $PDF::API2::Version::CVersion{vWeb}."\n";
 
 exit;
 
