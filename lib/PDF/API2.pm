@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 2.5 2007/03/17 20:07:21 areibens Exp $
+#   $Id: API2.pm,v 2.6 2007/05/07 20:33:46 areibens Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.5 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/03/17 20:07:21 $
+    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.6 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/05/07 20:33:46 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
@@ -1637,7 +1637,7 @@ sub corefont {
     my $obj=PDF::API2::Resource::Font::CoreFont->new_api($self,$name,@opts);
     $self->resource('Font',$obj->name,$obj);
     $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap;
+    $obj->tounicodemap if($opts{-unicodemap}==1);
     return($obj);
 }
 
@@ -1684,7 +1684,7 @@ sub psfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap;
+    $obj->tounicodemap if($opts{-unicodemap}==1);
     return($obj);
 }
 
@@ -1723,7 +1723,7 @@ sub ttfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap;
+    $obj->tounicodemap if($opts{-unicodemap}==1);
     return($obj);
 }
 
@@ -1756,7 +1756,7 @@ sub cjkfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap;
+    $obj->tounicodemap if($opts{-unicodemap}==1);
     return($obj);
 }
 
@@ -1801,7 +1801,7 @@ sub synfont {
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap;
+    $obj->tounicodemap if($opts{-unicodemap}==1);
     return($obj);
 }
 
@@ -2522,6 +2522,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 2.6  2007/05/07 20:33:46  areibens
+    fix tounicode option
+
     Revision 2.5  2007/03/17 20:07:21  areibens
     fixed open to CORE::open
 

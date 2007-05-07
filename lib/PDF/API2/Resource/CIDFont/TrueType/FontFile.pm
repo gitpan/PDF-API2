@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: FontFile.pm,v 2.2 2007/03/17 20:38:51 areibens Exp $
+#   $Id: FontFile.pm,v 2.3 2007/05/07 20:31:21 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:51 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/05/07 20:31:21 $
     $cmap={};
 }
 no warnings qw[ recursion uninitialized ];
@@ -642,6 +642,8 @@ sub new {
     $data->{altname}=~s/[^a-zA-Z0-9]//og;
     $data->{subname}=~s/[^a-zA-Z0-9]//og;
     
+    $self->subsetByCId(0);
+    
     return($self,$data);
 }
 
@@ -724,6 +726,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: FontFile.pm,v $
+    Revision 2.3  2007/05/07 20:31:21  areibens
+    fix subsetting
+
     Revision 2.2  2007/03/17 20:38:51  areibens
     replaced IOString dep. with scalar IO.
 
