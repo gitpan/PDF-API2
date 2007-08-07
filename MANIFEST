@@ -1,5 +1,4 @@
 AUTHORS
-CHANGELOG
 CONTACT
 COPYING
 INSTALL
@@ -222,5 +221,6 @@ examples/032_separation
 contrib/pdf-deoptimize.pl
 contrib/pdf-optimize.pl
 contrib/pdf-merge.pl
+contrib/text2pdf.pl
 META.yml                                 Module meta-data (added by MakeMaker)
 

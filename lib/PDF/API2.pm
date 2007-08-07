@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 2.6 2007/05/07 20:33:46 areibens Exp $
+#   $Id: API2.pm,v 2.10 2007/08/01 23:12:08 areibens Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.6 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/05/07 20:33:46 $
+    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.10 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/08/01 23:12:08 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
@@ -607,11 +607,14 @@ sub info {
       foreach my $k (@{$self->{infoMeta}}) {
         next unless(defined $self->{pdf}->{'Info'}->{$k});
         $opt{$k}=$self->{pdf}->{'Info'}->{$k}->val;
-        if(unpack('n',$opt{$k})==0xfffe) {
-            my ($mark,@c)=unpack('n*',$opt{$k});
-            $opt{$k}=pack('U*',@c);
-        } elsif(unpack('n',$opt{$k})==0xfeff) {
+        if(unpack('n',$opt{$k})==0xfffe) 
+        {
             my ($mark,@c)=unpack('v*',$opt{$k});
+            $opt{$k}=pack('U*',@c);
+        } 
+        elsif(unpack('n',$opt{$k})==0xfeff) 
+        {
+            my ($mark,@c)=unpack('n*',$opt{$k});
             $opt{$k}=pack('U*',@c);
         }
       }
@@ -1104,7 +1107,7 @@ sub openpage {
 
             ## if we like compress we will do it now to do quicker saves
             if($self->{forcecompress}>0){
-            ##    $content->compress;
+            ##    $content->compressFlate;
                 $content->{' stream'}=dofilter($content->{Filter}, $content->{' stream'});
                 $content->{' nofilt'}=1;
                 delete $content->{-docompress};
@@ -1194,6 +1197,8 @@ B<Example:>
     $gfx->formimage($xo,0,0,1); # put it on page 1 with scale x1
     $pdf->saveas("our/new.pdf");
 
+B<Note:> you can only import a page from an existing pdf-file!
+
 =cut
 
 sub importPageIntoForm {
@@ -1266,7 +1271,7 @@ sub importPageIntoForm {
           # so we just copy it and add the required "qQ"
             $xo->add('q',$k->{' stream'},'Q');
         }
-        $xo->compress if($self->{forcecompress}>0);
+        $xo->compressFlate if($self->{forcecompress}>0);
     }
 
     return($xo);
@@ -1288,8 +1293,10 @@ B<Example:>
 
     $pdf = PDF::API2->new;
     $old = PDF::API2->open('my/old.pdf');
-    $page = $pdf->importPage($old,2); # get page 2 into page 1
+    $page = $pdf->importpage($old,2); # get page 2 into page 1
     $pdf->saveas("our/new.pdf");
+
+B<Note:> you can only import a page from an existing pdf-file!
 
 =cut
 
@@ -2515,6 +2522,10 @@ __END__
 
 =back
 
+=head1 BUGS
+
+This module does not work with perl's -l commandline switch.
+
 =head1 AUTHOR
 
 alfred reibenschuh
@@ -2522,6 +2533,18 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 2.10  2007/08/01 23:12:08  areibens
+    fix BOM in info strings
+
+    Revision 2.9  2007/05/16 21:45:32  areibens
+    fixed importpage doku bug http://rt.cpan.org/Ticket/Display.html?id=27152
+
+    Revision 2.8  2007/05/10 23:38:38  areibens
+    added note on importintoform and importpage for existing pdf-file
+
+    Revision 2.7  2007/05/08 18:32:10  areibens
+    renamed compress to compressFlate
+
     Revision 2.6  2007/05/07 20:33:46  areibens
     fix tounicode option
 

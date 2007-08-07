@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Postscript.pm,v 2.1 2006/08/14 18:08:16 areibens Exp $
+#   $Id: Postscript.pm,v 2.2 2007/06/27 20:54:16 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font::Postscript;
@@ -43,12 +43,12 @@ BEGIN {
     use POSIX;
     use Compress::Zlib;
     use File::Find;
-    use IO::File;
+    use IO::File qw();
     use vars qw(@ISA $VERSION);
 
     @ISA = qw( PDF::API2::Resource::Font );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2006/08/14 18:08:16 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/06/27 20:54:16 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -563,6 +563,9 @@ __END__
 =head1 HISTORY
 
     $Log: Postscript.pm,v $
+    Revision 2.2  2007/06/27 20:54:16  areibens
+    fix exporter warnings of IO::File
+
     Revision 2.1  2006/08/14 18:08:16  areibens
     moved "use io-file" to begin section
 

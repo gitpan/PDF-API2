@@ -95,4 +95,4 @@ dealings in this Font Software without prior written authorization
 from Tavmjong Bah. For further information, contact: tavmjong @ free
 . fr.
 
-$Id: LICENSE.txt,v 1.1 2007/03/16 15:35:06 areibens Exp $
+$Id: LICENSE.txt,v 1.2 2007/07/01 20:30:21 areibens Exp $

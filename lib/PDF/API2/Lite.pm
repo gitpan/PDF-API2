@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Lite.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
+#   $Id: Lite.pm,v 2.1 2007/05/08 18:32:09 areibens Exp $
 #
 #=======================================================================
 
@@ -43,7 +43,7 @@ BEGIN {
 
     use vars qw( $VERSION $hasWeakRef );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/05/08 18:32:09 $
 
 }
 
@@ -94,7 +94,7 @@ sub page {
     $self->{page}=$self->{api}->page;
     $self->{page}->mediabox(@_) if($_[0]);
     $self->{gfx}=$self->{page}->gfx;
-#   $self->{gfx}->compress;
+#   $self->{gfx}->compressFlate;
     return $self;
 }
 
@@ -670,6 +670,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Lite.pm,v $
+    Revision 2.1  2007/05/08 18:32:09  areibens
+    renamed compress to compressFlate
+
     Revision 2.0  2005/11/16 02:16:00  areibens
     revision workaround for SF cvs import not to screw up CPAN
 

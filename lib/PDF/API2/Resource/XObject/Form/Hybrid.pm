@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Hybrid.pm,v 2.0 2005/11/16 02:18:23 areibens Exp $
+#   $Id: Hybrid.pm,v 2.1 2007/05/08 18:32:10 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Form::Hybrid;
@@ -50,7 +50,7 @@ BEGIN {
         'PDF::API2::Resource::XObject::Form'
     );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:23 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/05/08 18:32:10 $
 }
 no warnings qw[ deprecated recursion uninitialized ];
 
@@ -93,7 +93,7 @@ sub new {
     $self->{Resources}=PDFDict();
     $self->{Resources}->{ProcSet}=PDFArray(map { PDFName($_) } qw[ PDF Text ImageB ImageC ImageI ]);
 
-    $self->compress;
+    $self->compressFlate;
 
     return($self);
 }
@@ -135,6 +135,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Hybrid.pm,v $
+    Revision 2.1  2007/05/08 18:32:10  areibens
+    renamed compress to compressFlate
+
     Revision 2.0  2005/11/16 02:18:23  areibens
     revision workaround for SF cvs import not to screw up CPAN
 

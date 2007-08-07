@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 2.5 2007/03/16 15:25:16 areibens Exp $
+#   $Id: File.pm,v 2.7 2007/06/07 10:43:59 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -201,7 +201,7 @@ use PDF::API2::Basic::PDF::Null;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.5 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/16 15:25:16 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.7 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/06/07 10:43:59 $
 
 #IMPORTED INTO PDF::API2
 
@@ -305,10 +305,15 @@ sub open
     $fh->seek(0, 2);            # go to end of file
     $end = $fh->tell();
     $self->{' epos'} = $end;
-#    $fh->seek($end - 1024, 0);
-#    $fh->read($buf, 1024);
-    $fh->seek($end - 64, 0);
-    $fh->read($buf, 64);
+    foreach my $eoff (1..64)
+    {
+    	$fh->seek($end - 16*$eoff, 0);
+    	$fh->read($buf, 16*$eoff);
+    	if ($buf =~ m/startxref$cr\s*\d+$cr\%\%eof.*?/oi)
+    	{
+    		last;
+    	}
+    }
     if ($buf !~ m/startxref$cr\s*([0-9]+)$cr\%\%eof.*?/oi)
     { die "Malformed PDF file $fname"; }
     $xpos = $1;
@@ -1177,8 +1182,26 @@ sub readxrtr
     $fh->seek($xpos, 0);
     $fh->read($buf, 22);
     $buf=update($fh,$buf); # fix for broken JAWS xref calculation.
+    
+    ## seams that some products calculate wrong prev entries (short)
+    ## so we seek ahead to find one -- fredo; save for now
+    #while($buf !~ m/^xref$cr/oi && !eof($fh))
+    #{
+    #	$buf =~ s/^(\s+|\S+|.)//oi;
+	#    $buf=update($fh,$buf);
+    #}
+    
     if ($buf !~ m/^xref$cr/oi)
-    { die "Malformed xref in PDF file $self->{' fname'}"; }
+    { 
+    	#if($self == $root)
+    	#{
+    		die "Malformed xref in PDF file $self->{' fname'}";
+    	#}
+    	#else # be tolerant if its not the root object
+    	#{
+    	#	return undef;
+    	#} 
+    }
     $buf =~ s/^xref$cr//oi;
 
     $xlist = {};
@@ -1210,6 +1233,7 @@ sub readxrtr
     $self->{' maxobj'} = $xmin if $xmin > $self->{' maxobj'};
     $tdict->{' prev'} = $self->readxrtr($tdict->{'Prev'}->val)
                 if (defined $tdict->{'Prev'} && $tdict->{'Prev'}->val != 0);
+    delete $tdict->{' prev'} unless(defined $tdict->{' prev'});
     return $tdict;
 }
 

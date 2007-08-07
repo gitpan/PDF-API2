@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: PNM.pm,v 2.0 2005/11/16 02:18:23 areibens Exp $
+#   $Id: PNM.pm,v 2.1 2007/05/24 19:29:46 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::PNM;
@@ -42,7 +42,7 @@ BEGIN {
 
     use vars qw(@ISA $VERSION);
     @ISA = qw( PDF::API2::Resource::XObject::Image );
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:23 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/05/24 19:29:46 $
 }
 no warnings qw[ deprecated recursion uninitialized ];
 
@@ -174,6 +174,7 @@ sub read_pnm {
         $bpc=1;
         read(INF,$self->{' stream'},($info->{width}*$info->{height}/8));
         $cs='DeviceGray';
+        $self->{Decode}=PDFArray(PDFNum(1),PDFNum(0));
     } elsif($info->{type} == 5) {
         $buf.=<INF>;
         if($info->{max}==255){
@@ -237,6 +238,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: PNM.pm,v $
+    Revision 2.1  2007/05/24 19:29:46  areibens
+    fixed pnm bitmap decoding
+
     Revision 2.0  2005/11/16 02:18:23  areibens
     revision workaround for SF cvs import not to screw up CPAN
 
