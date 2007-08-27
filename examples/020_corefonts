@@ -31,10 +31,10 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: 020_corefonts,v 2.0 2005/11/16 02:16:00 areibens Exp $
+#   $Id: 020_corefonts,v 2.1 2007/08/07 20:40:45 areibens Exp $
 #
 #=======================================================================
-
+use lib '../lib';
 use PDF::API2;
 use PDF::API2::Util;
 
