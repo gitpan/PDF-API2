@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TIFF.pm,v 2.1 2007/03/17 20:38:51 areibens Exp $
+#   $Id: TIFF.pm,v 2.3 2007/09/17 16:03:07 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::XObject::Image::TIFF;
@@ -45,7 +45,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::XObject::Image );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:51 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/09/17 16:03:07 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -362,7 +362,8 @@ returns the value of the internal tiff-tag.
 B<Useful Tags:>
 
     imageDescription, imageId (strings)
-    xRes, yRes (dpi)
+    xRes, yRes (dpi; pixel/cm if resUnit==3)
+    resUnit
 
 =cut
 
@@ -572,6 +573,9 @@ sub readTags {
         $fh->seek($here,0);
         $self->{yRes}=[unpack($self->{rational},$self->{yRes})];
         $self->{yRes}=($self->{yRes}->[0]/$self->{yRes}->[1]);
+      } elsif($valTag==296) {
+        # resolution Unit
+        $self->{resUnit}=$valOffset;
       } elsif($valTag==273) {
         # image data offset/strip offsets
         if($valCount==1) {
@@ -641,6 +645,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TIFF.pm,v $
+    Revision 2.3  2007/09/17 16:03:07  areibens
+    update docs for tiffTag
+
+    Revision 2.2  2007/09/14 15:36:39  areibens
+    also read Tiff Tag 296 and make it available as resUnit
+
     Revision 2.1  2007/03/17 20:38:51  areibens
     replaced IOString dep. with scalar IO.
 
