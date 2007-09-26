@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 2.7 2007/06/07 10:43:59 areibens Exp $
+#   $Id: File.pm,v 2.8 2007/09/26 19:50:14 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -201,7 +201,7 @@ use PDF::API2::Basic::PDF::Null;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.7 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/06/07 10:43:59 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.8 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/09/26 19:50:14 $
 
 #IMPORTED INTO PDF::API2
 
@@ -1220,12 +1220,10 @@ sub readxrtr
         }
     }
 
-#    if ($buf !~ /^trailer$cr/oi)
-    if ($buf !~ /^trailer\b/oi)
+    if ($buf !~ /^\s*trailer\b/oi)
     { die "Malformed trailer in PDF file $self->{' fname'} at " . ($fh->tell - length($buf)); }
 
-#    $buf =~ s/^trailer$cr//oi;
-    $buf =~ s/^trailer\b//oi;
+    $buf =~ s/^\s*trailer\b//oi;
 
     ($tdict, $buf) = $self->readval($buf);
     $tdict->{' loc'} = $xpos;

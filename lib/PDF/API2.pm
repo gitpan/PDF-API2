@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 2.10 2007/08/01 23:12:08 areibens Exp $
+#   $Id: API2.pm,v 2.11 2007/09/18 22:29:31 areibens Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.10 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/08/01 23:12:08 $
+    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.11 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/09/18 22:29:31 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
@@ -352,6 +352,9 @@ I<-afterfullscreenthumbs>
 I<-afterfullscreenoutlines>
         ... Document outline visible after Full-screen mode.
 
+I<-printscalingnone>
+		... Set the default print setting for page scaling to none.
+
 =cut
 
 =pod
@@ -485,6 +488,10 @@ sub preferences {
         $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseOutlines');
     } else {
         $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseNone');
+    }
+
+    if($opt{-printscalingnone}) {
+		$self->{catalog}->{ViewerPreferences}->{PrintScaling}=PDFName("None");
     }
 
     if($opt{-firstpage}) {
@@ -2533,6 +2540,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 2.11  2007/09/18 22:29:31  areibens
+    added -printscalingnone option
+
     Revision 2.10  2007/08/01 23:12:08  areibens
     fix BOM in info strings
 
