@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: BaseFont.pm,v 2.7 2007/04/07 10:25:46 areibens Exp $
+#   $Id: BaseFont.pm,v 2.9 2007/10/16 20:08:19 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::BaseFont;
@@ -46,7 +46,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.7 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/04/07 10:25:46 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.9 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/10/16 20:08:19 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -548,17 +548,34 @@ Returns the glyphs width.
 sub wxByGlyph 
 {
     my $self=shift;
-    my $val=shift; 
+    my $val=shift;
+    my $ret=undef; 
     if(ref($self->data->{wx}) eq 'HASH')
     {
-        return ( $self->data->{wx}->{$val} || $self->missingwidth || 300 ); 
+    	$ret=$self->data->{wx}->{$val};
+    	if(!defined($ret))
+    	{
+    		$ret=$self->missingwidth;
+    	}
+    	if(!defined($ret))
+    	{
+    		$ret=300;
+    	}
     }
     else
     {
     	my $cid=$self->cidByUni(uniByName($val));
-        return ( $self->data->{wx}->[$cid] || $self->missingwidth || 300 ); 
-    #    return ( $self->data->{wx}->[$val] || $self->missingwidth || 300 ); 
+    	$ret=$self->data->{wx}->[$cid];
+    	if(!defined($ret))
+    	{
+    		$ret=$self->missingwidth;
+    	}
+    	if(!defined($ret))
+    	{
+    		$ret=300;
+    	}
     }
+    return $ret;
 }
 
 =item $width = $font->wxByUni $uni
@@ -567,7 +584,22 @@ Returns the unicodes width.
 
 =cut
 
-sub wxByUni { return ( $_[0]->data->{wx}->{$_[0]->glyphByUni($_[1])} || $_[0]->missingwidth || 300  ); }
+sub wxByUni 
+{ 
+    my $self=shift;
+    my $val=shift;
+    my $gid=$self->glyphByUni($val);
+    my $ret=$self->data->{wx}->{$gid}; 
+   	if(!defined($ret))
+   	{
+   		$ret=$self->missingwidth;
+   	}
+   	if(!defined($ret))
+   	{
+   		$ret=300;
+   	}
+    return $ret;
+}
 
 =item $width = $font->wxByEnc $char
 
@@ -575,11 +607,20 @@ Returns the characters width based on the current encoding.
 
 =cut
 
-sub wxByEnc {
+sub wxByEnc 
+{
     my ($self,$e)=@_;
     my $g=$self->glyphByEnc($e);
-    my $w=$self->data->{wx}->{$g} || $self->missingwidth || 300;
-    return ( $w );
+    my $ret=$self->data->{wx}->{$g}; 
+   	if(!defined($ret))
+   	{
+   		$ret=$self->missingwidth;
+   	}
+   	if(!defined($ret))
+   	{
+   		$ret=300;
+   	}
+    return $ret;
 }
 
 =item $width = $font->wxByMap $char
@@ -588,7 +629,21 @@ Returns the characters width based on the fonts default encoding.
 
 =cut
 
-sub wxByMap { return ( $_[0]->data->{wx}->{$_[0]->glyphByMap($_[1])} || $_[0]->missingwidth || 300 ); }
+sub wxByMap
+{
+    my ($self,$m)=@_;
+    my $g=$self->glyphByMap($m);
+    my $ret=$self->data->{wx}->{$g}; 
+   	if(!defined($ret))
+   	{
+   		$ret=$self->missingwidth;
+   	}
+   	if(!defined($ret))
+   	{
+   		$ret=300;
+   	}
+    return $ret;
+}
 
 =item $wd = $font->width $text
 
@@ -761,7 +816,7 @@ sub text
     }
 }
 
-sub isvirtual { return(undef); }
+sub isvirtual { return(0); }
 
 1;
 
@@ -776,6 +831,12 @@ alfred reibenschuh.
 =head1 HISTORY
 
     $Log: BaseFont.pm,v $
+    Revision 2.9  2007/10/16 20:08:19  areibens
+    changed undef safeguards for wx* methods
+
+    Revision 2.8  2007/10/10 06:18:15  areibens
+    fixed noisy undef handling of isvirtual
+
     Revision 2.7  2007/04/07 10:25:46  areibens
     fixed fix for wxByGlyph not honoring cidfont width arrays
 

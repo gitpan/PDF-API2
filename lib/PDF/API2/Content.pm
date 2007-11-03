@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Content.pm,v 2.8 2007/08/07 20:23:37 areibens Exp $
+#   $Id: Content.pm,v 2.9 2007/10/10 06:18:15 areibens Exp $
 #
 #=======================================================================
 
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw(PDF::API2::Basic::PDF::Dict);
     
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.8 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/08/07 20:23:37 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.9 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/10/10 06:18:15 $
 
 }
 
@@ -1461,7 +1461,7 @@ B<Only use fontset if you know what you are doing, there is no super-secret fail
 sub _font
 {
     my ($font,$size)=@_;
-    if($font->isvirtual)
+    if($font->isvirtual == 1)
     {
         return('/'.$font->fontlist->[0]->name.' '.float($size).' Tf');
     }
@@ -1485,7 +1485,7 @@ sub fontset {
   $self->{' fontsize'}=$size;
   $self->{' fontset'}=0;
 
-  if($font->isvirtual)
+  if($font->isvirtual == 1)
   {
     foreach my $f (@{$font->fontlist})
     {

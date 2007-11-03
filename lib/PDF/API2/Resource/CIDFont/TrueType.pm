@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 2.1 2007/03/17 20:38:51 areibens Exp $
+#   $Id: TrueType.pm,v 2.2 2007/10/23 07:45:49 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/17 20:38:51 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/10/23 07:45:49 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -199,12 +199,14 @@ sub outobjdeep
             $notdefbefore=0;
             $ml=PDFArray();
             $wx->add_elements(PDFNum($w),$ml);
-            $ml->add_elements(PDFNum($self->data->{wx}->[$w]));
+        #    $ml->add_elements(PDFNum($self->data->{wx}->[$w]));
+            $ml->add_elements(PDFNum($self->wxByCId($w)));
         } 
         elsif($self->subvec($w) && $notdefbefore==0) 
         {
             $notdefbefore=0;
-            $ml->add_elements(PDFNum($self->data->{wx}->[$w]));
+        #    $ml->add_elements(PDFNum($self->data->{wx}->[$w]));
+            $ml->add_elements(PDFNum($self->wxByCId($w)));
         } 
         else 
         {
@@ -239,6 +241,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 2.2  2007/10/23 07:45:49  areibens
+    fixed width encoding for wrong advance codes
+
     Revision 2.1  2007/03/17 20:38:51  areibens
     replaced IOString dep. with scalar IO.
 
