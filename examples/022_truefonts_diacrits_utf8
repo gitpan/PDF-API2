@@ -60,7 +60,7 @@ foreach $fn (@ARGV) {
 
     print STDERR "\n$fn\n";
 
-    my $font=$pdf->ttfont($fn, -encode => $encoding);
+    my $font=$pdf->ttfont($fn, -encode => $encoding, -kern=>1);
 	$font->data->{nosubset}=1;
     if(1)
     {

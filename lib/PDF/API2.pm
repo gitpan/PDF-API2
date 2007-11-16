@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: API2.pm,v 2.11 2007/09/18 22:29:31 areibens Exp $
+#   $Id: API2.pm,v 2.14 2007/11/16 19:30:31 areibens Exp $
 #
 #=======================================================================
 
@@ -37,7 +37,7 @@ BEGIN {
 
     use vars qw( $VERSION $seq @FontDirs );
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.11 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/09/18 22:29:31 $
+    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.14 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2007/11/16 19:30:31 $
 
     @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
         qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
@@ -66,6 +66,7 @@ BEGIN {
     use PDF::API2::Resource::Font::Postscript;
     use PDF::API2::Resource::Font::BdFont;
     use PDF::API2::Resource::Font::SynFont;
+    use PDF::API2::Resource::Font::neTrueType;
     use PDF::API2::Resource::CIDFont::TrueType;
     use PDF::API2::Resource::CIDFont::CJKFont;
     use PDF::API2::Resource::UniFont;
@@ -997,7 +998,7 @@ sub page {
     if($index==0) {
         $page=PDF::API2::Page->new($self->{pdf},$self->{pages});
     } else {
-        $page=PDF::API2::Page->new($self->{pdf},$self->{pages},$index);
+        $page=PDF::API2::Page->new($self->{pdf},$self->{pages},$index-1);
     }
     $page->{' apipdf'}=$self->{pdf};
     $page->{' api'}=$self;
@@ -1726,6 +1727,8 @@ Valid %options are:
 
   '-dokern' ... enables kerning if data is available.
 
+  '-noembed' ... disables embedding the fontfile.
+
 =cut
 
 sub ttfont {
@@ -1733,6 +1736,19 @@ sub ttfont {
 
     $file=_findFont($file);
     my $obj=PDF::API2::Resource::CIDFont::TrueType->new_api($self,$file,%opts);
+
+    $self->resource('Font',$obj->name,$obj,$self->{reopened});
+
+    $self->{pdf}->out_obj($self->{pages});
+    $obj->tounicodemap if($opts{-unicodemap}==1);
+    return($obj);
+}
+
+sub nettfont {
+    my ($self,$file,%opts)=@_;
+
+    $file=_findFont($file);
+    my $obj=PDF::API2::Resource::Font::neTrueType->new_api($self,$file,%opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
@@ -2540,6 +2556,15 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: API2.pm,v $
+    Revision 2.14  2007/11/16 19:30:31  areibens
+    added -noembed option
+
+    Revision 2.13  2007/11/14 23:01:32  areibens
+    fixed relative page insert
+
+    Revision 2.12  2007/11/14 22:49:49  areibens
+    added non-embedded truetype font (8-bit only) support
+
     Revision 2.11  2007/09/18 22:29:31  areibens
     added -printscalingnone option
 

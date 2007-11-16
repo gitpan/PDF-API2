@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: FontFile.pm,v 2.3 2007/05/07 20:31:21 areibens Exp $
+#   $Id: FontFile.pm,v 2.5 2007/11/16 19:27:32 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
@@ -48,7 +48,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Basic::PDF::Dict );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/05/07 20:31:21 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.5 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/11/16 19:27:32 $
     $cmap={};
 }
 no warnings qw[ recursion uninitialized ];
@@ -472,6 +472,7 @@ sub new {
     $self->{' font'}=$font;
     $self->{' data'}=$data;
 
+	$data->{noembed} = $opts{-noembed}==1 ? 1 : 0;
     $data->{iscff} = (defined $font->{'CFF '}) ? 1 : 0;
 
     $self->{Subtype}=PDFName('Type1C') if($data->{iscff});
@@ -504,7 +505,14 @@ sub new {
     }
     
     $data->{apiname}=$data->{fontname};
-    $data->{apiname}=~s/[^A-Za-z0-9]+/ /og;
+if(0)
+{
+	$data->{apiname}=~s/[^A-Za-z0-9]+/ /og;
+}
+else
+{
+	$data->{apiname}=~s/\s+//og;
+}
     $data->{apiname}=join('',map { $_=~s/[^A-Za-z0-9]+//og; $_=ucfirst(lc(substr($_,0,2))); $_; } split(/\s+/,$data->{apiname}));
     $data->{fontname}=~s/[\x00-\x1f\s]//og;
 
@@ -636,12 +644,22 @@ sub new {
     $data->{kern}=read_kern_table($font,$data->{upem},$self);
     delete $data->{kern} unless(defined $data->{kern});
 
+if(0)
+{
     $data->{fontname}=~s/[^a-zA-Z0-9]//og;
     $data->{fontfamily}=~s/[^a-zA-Z0-9]//og;
     $data->{apiname}=~s/[^a-zA-Z0-9]//og;
     $data->{altname}=~s/[^a-zA-Z0-9]//og;
     $data->{subname}=~s/[^a-zA-Z0-9]//og;
-    
+}
+else
+{
+    $data->{fontname}=~s/\s+//og;
+    $data->{fontfamily}=~s/\s+//og;
+    $data->{apiname}=~s/\s+//og;
+    $data->{altname}=~s/\s+//og;
+    $data->{subname}=~s/\s+//og;
+}    
     $self->subsetByCId(0);
     
     return($self,$data);
@@ -702,13 +720,16 @@ sub outobjdeep {
             }
         }
 
-        $self->{' stream'} = "";
-        my $ffh;
-        CORE::open($ffh, '+>', \$self->{' stream'});
-        binmode($ffh,':raw');
-        $f->out($ffh, 'cmap', 'cvt ', 'fpgm', 'glyf', 'head', 'hhea', 'hmtx', 'loca', 'maxp', 'prep');
-        $self->{'Length1'}=PDFNum(length($self->{' stream'}));
-        CORE::close($ffh);
+		if($self->data->{noembed} != 1)
+		{
+        	$self->{' stream'} = "";
+        	my $ffh;
+        	CORE::open($ffh, '+>', \$self->{' stream'});
+        	binmode($ffh,':raw');
+        	$f->out($ffh, 'cmap', 'cvt ', 'fpgm', 'glyf', 'head', 'hhea', 'hmtx', 'loca', 'maxp', 'prep');
+        	$self->{'Length1'}=PDFNum(length($self->{' stream'}));
+        	CORE::close($ffh);
+		}
     }
 
     $self->SUPER::outobjdeep($fh, $pdf, %opts);
@@ -726,6 +747,12 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: FontFile.pm,v $
+    Revision 2.5  2007/11/16 19:27:32  areibens
+    fixed -noembed option
+
+    Revision 2.4  2007/11/14 20:46:37  areibens
+    added noembed option
+
     Revision 2.3  2007/05/07 20:31:21  areibens
     fix subsetting
 

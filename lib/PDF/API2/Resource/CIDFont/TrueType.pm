@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 2.2 2007/10/23 07:45:49 areibens Exp $
+#   $Id: TrueType.pm,v 2.3 2007/11/16 19:27:32 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/10/23 07:45:49 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/11/16 19:27:32 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -88,10 +88,13 @@ sub new {
 
     $de->{'FontDescriptor'} = $des;
     $de->{'Subtype'} = PDFName($self->iscff ? 'CIDFontType0' : 'CIDFontType2');
-    $de->{'BaseFont'} = PDFName(pdfkey().'+'.($self->fontname).'~'.time());
+    ## $de->{'BaseFont'} = PDFName(pdfkey().'+'.($self->fontname).'~'.time());
+    $de->{'BaseFont'} = PDFName($self->fontname);
     $de->{'DW'} = PDFNum($self->missingwidth);
-    $des->{$self->data->{iscff} ? 'FontFile3' : 'FontFile2'}=$ff;
-
+    if($opts{-noembed} != 1)
+    {
+    	$des->{$self->data->{iscff} ? 'FontFile3' : 'FontFile2'}=$ff;
+    }
     unless($self->issymbol) {
         $self->encodeByName($opts{-encode});
         $self->data->{encode}=$opts{-encode};
@@ -241,6 +244,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 2.3  2007/11/16 19:27:32  areibens
+    fixed -noembed option
+
     Revision 2.2  2007/10/23 07:45:49  areibens
     fixed width encoding for wrong advance codes
 

@@ -5,7 +5,7 @@
 #   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
 #   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
 #
-#   A Perl Module Chain to faciliate the Creation and Modification
+#   A Perl Module Chain o faciliae he Creaion and Modificaion
 #   of High-Quality "Portable Document Format (PDF)" Files.
 #
 #=======================================================================
@@ -23,7 +23,7 @@
 #   This specific module is licensed under the Perl Artistic License.
 #
 #
-#   $Id: File.pm,v 2.8 2007/09/26 19:50:14 areibens Exp $
+#   $Id: File.pm,v 2.9 2007/11/03 20:31:53 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
@@ -201,7 +201,7 @@ use PDF::API2::Basic::PDF::Null;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.8 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/09/26 19:50:14 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.9 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/11/03 20:31:53 $
 
 #IMPORTED INTO PDF::API2
 
@@ -309,12 +309,12 @@ sub open
     {
     	$fh->seek($end - 16*$eoff, 0);
     	$fh->read($buf, 16*$eoff);
-    	if ($buf =~ m/startxref$cr\s*\d+$cr\%\%eof.*?/oi)
+    	if ($buf =~ m/startxref($cr|\s*)\d+($cr|\s*)\%\%eof.*?/oi)
     	{
     		last;
     	}
     }
-    if ($buf !~ m/startxref$cr\s*([0-9]+)$cr\%\%eof.*?/oi)
+    if ($buf !~ m/startxref[^\d]+([0-9]+)($cr|\s*)\%\%eof.*?/oi)
     { die "Malformed PDF file $fname"; }
     $xpos = $1;
 
