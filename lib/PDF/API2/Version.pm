@@ -9,14 +9,14 @@
 package PDF::API2::Version;
 BEGIN {
     use vars qw( $VERSION %CVersion );
-    $VERSION = '0.69';
+    $VERSION = '0.71';
     %CVersion = (
-        'vFredo' => 'PDF::API2 0.69',
-        'vHex' => '0x00045000',
-        'vLong' => '0.69',
-        'vPerl' => '0.69',
-        'vShort' => '0.69',
-        'vWeb' => 'PDF::API2/0.69',
+        'vFredo' => 'PDF::API2 0.71',
+        'vHex' => '0x00047000',
+        'vLong' => '0.71',
+        'vPerl' => '0.71',
+        'vShort' => '0.71',
+        'vWeb' => 'PDF::API2/0.71',
     );
 }
 1;
@@ -32,12 +32,12 @@ PDF::API2::Version
 
 =head1 VERSION
 
-  vFredo: PDF::API2 0.69 
-    vHex: 0x00045000 
-   vLong: 0.69 
-   vPerl: 0.69 
-  vShort: 0.69 
-    vWeb: PDF::API2/0.69 
+  vFredo: PDF::API2 0.71 
+    vHex: 0x00047000 
+   vLong: 0.71 
+   vPerl: 0.71 
+  vShort: 0.71 
+    vWeb: PDF::API2/0.71 
 
 =cut
 
