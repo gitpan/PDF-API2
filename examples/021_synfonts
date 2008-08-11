@@ -31,10 +31,10 @@
 #   OF THE USE OF THIS FILE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #   SUCH DAMAGE.
 #
-#   $Id: 021_synfonts,v 2.0 2005/11/16 02:16:00 areibens Exp $
+#   $Id: 021_synfonts,v 2.1 2008/08/10 15:06:20 areibens Exp $
 #
 #=======================================================================
-
+use lib '../lib';
 use PDF::API2;
 use PDF::API2::Util;
 
