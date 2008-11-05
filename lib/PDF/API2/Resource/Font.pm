@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: Font.pm,v 2.1 2007/03/10 12:05:41 areibens Exp $
+#   $Id: Font.pm,v 2.2 2008/11/04 23:54:51 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::Font;
@@ -47,7 +47,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::BaseFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/03/10 12:05:41 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2008/11/04 23:54:51 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -73,6 +73,7 @@ sub encodeByData {
         my $blk=$1;
         $data->{e2u}=[ map { $blk*256+$_ } (0..255) ];
         $data->{e2n}=[ map { nameByUni($_) || '.notdef' } @{$data->{e2u}} ];
+        $data->{firstchar} = 0;
     }
     elsif(defined $encoding) 
     {
@@ -267,6 +268,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: Font.pm,v $
+    Revision 2.2  2008/11/04 23:54:51  areibens
+    fixed [rt.cpan.org #40648] Unicode text prints text on top of text before it
+
     Revision 2.1  2007/03/10 12:05:41  areibens
     applied improvements to encodeByData proposed by alankila@bel.fi
 
