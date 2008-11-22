@@ -35,6 +35,7 @@
 require 5.008;
 
 use ExtUtils::MakeMaker;
+use File::Basename;
 
 my $versionfile = "lib/PDF/API2/Version.pm";
 
@@ -48,8 +49,6 @@ my %makehash=(
         ZIP         => "zip ", 
         ZIPFLAGS    => " -v -o -r -9 ",
         COMPRESS    => "gzip -9 -f ",
-        TAR         => "perl -Mtarhelper",
-        TARFLAGS    => '-e mytar', 
     }, 
     MAN1PODS        => {}, 
     MAN3PODS        => {}, 
@@ -58,25 +57,17 @@ my %makehash=(
     BINARY_LOCATION => q|PDF-API2-|.$PDF::API2::Version::CVersion{vPerl}.q|.ppm.tar.gz|,
 );
 
+if(-f dirname($0).'/tarhelper.pm')
+{
+$makehash{dist}->{TAR} = "perl -Mtarhelper";
+$makehash{dist}->{TARFLAGS} = "-e mytar";
+}
+
 WriteMakefile( %makehash );
 
 print STDERR $PDF::API2::Version::CVersion{vWeb}."\n";
 
 exit;
 
-sub MY::postamble{
-  return;
-    my $y=<<"EOT";
-\$(DISTVNAME).tar\$(SUFFIX) : distdir
-\t\$(PREOP)
-\t\$(TO_UNIX)
-\t\$(TAR) \$(TARFLAGS) \$(DISTVNAME).tar \$(DISTVNAME)
-\t\$(RM_RF) \$(DISTVNAME)
-\t\$(COMPRESS) \$(DISTVNAME).tar
-\t\$(POSTOP)
-
-EOT
-    return($y);
-}
 
 __END__
