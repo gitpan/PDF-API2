@@ -47,7 +47,9 @@ my %makehash=(
     dist            => { 
         ZIP         => "zip ", 
         ZIPFLAGS    => " -v -o -r -9 ",
-        COMPRESS    => "gzip -9 -f ", 
+        COMPRESS    => "gzip -9 -f ",
+        TAR         => "perl -Mtarhelper",
+        TARFLAGS    => '-e mytar', 
     }, 
     MAN1PODS        => {}, 
     MAN3PODS        => {}, 
@@ -63,14 +65,17 @@ print STDERR $PDF::API2::Version::CVersion{vWeb}."\n";
 exit;
 
 sub MY::postamble{
-    my $y=qq|ppmdist: pm_to_blib ppd dist\n|;
-    $y.=qq|\t\$(MKPATH) \$(DISTNAME)-\$(VERSION)-PPM\n|;
-    $y.=qq|\t\$(TAR) \$(TARFLAGS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar blib\n|;
-    $y.=qq|\t\$(COMPRESS) \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar\n|;
-    $y.=qq|\t\$(CP) \$(DISTNAME).ppd \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
-    $y.=qq|\t\$(ZIP) \$(ZIPFLAGS) \$(DISTNAME)-\$(VERSION).ppm.zip \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME)-\$(VERSION).ppm.tar.gz \$(DISTNAME)-\$(VERSION)-PPM/\$(DISTNAME).ppd\n|;
-    $y.=qq|\t\$(RM_RF) \$(DISTNAME)-\$(VERSION)-PPM\n|;
-    $y.=qq|\n|;
+  return;
+    my $y=<<"EOT";
+\$(DISTVNAME).tar\$(SUFFIX) : distdir
+\t\$(PREOP)
+\t\$(TO_UNIX)
+\t\$(TAR) \$(TARFLAGS) \$(DISTVNAME).tar \$(DISTVNAME)
+\t\$(RM_RF) \$(DISTVNAME)
+\t\$(COMPRESS) \$(DISTVNAME).tar
+\t\$(POSTOP)
+
+EOT
     return($y);
 }
 
