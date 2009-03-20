@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                PDF-API2
-version:             0.72.003
+version:             0.73
 abstract:            TheNextGen PDF Create/Modify API
 license:             ~
 author:              

@@ -27,7 +27,7 @@
 #   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 #   Boston, MA 02111-1307, USA.
 #
-#   $Id: TrueType.pm,v 2.4 2008/11/20 19:51:01 areibens Exp $
+#   $Id: TrueType.pm,v 2.5 2009/03/20 09:54:46 areibens Exp $
 #
 #=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType;
@@ -50,7 +50,7 @@ BEGIN {
 
     @ISA = qw( PDF::API2::Resource::CIDFont );
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.4 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2008/11/20 19:51:01 $
+    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.5 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2009/03/20 09:54:46 $
 
 }
 no warnings qw[ deprecated recursion uninitialized ];
@@ -140,7 +140,7 @@ sub wxByCId
 {
     my $self=shift @_;
     my $g=shift @_;
-    my $tmp = $self->fontobj->{'hmtx'}->read->{'advance'}[$g];
+    my $t = $self->fontobj->{'hmtx'}->read->{'advance'}[$g];
     my $w;
 
     if(defined $t) 
@@ -245,6 +245,9 @@ alfred reibenschuh
 =head1 HISTORY
 
     $Log: TrueType.pm,v $
+    Revision 2.5  2009/03/20 09:54:46  areibens
+    rt.cpan.org #42524: strange space size after update on 0.72.003 from 0.71
+
     Revision 2.4  2008/11/20 19:51:01  areibens
     perf henning.just@datagraf.dk
 
