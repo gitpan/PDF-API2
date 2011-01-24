@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,59 +9,51 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Name.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Name;
 
-use strict;
-use vars qw(@ISA);
-no warnings qw[ deprecated recursion uninitialized ];
+our $VERSION = '2.016';
 
-use PDF::API2::Basic::PDF::String;
-@ISA = qw(PDF::API2::Basic::PDF::String);
+use base 'PDF::API2::Basic::PDF::String';
+
+use strict;
 
 =head1 NAME
 
-PDF::API2::Basic::PDF::Name - Inherits from L<PDF::API2::Basic::PDF::String> and stores PDF names (things
-beginning with /)
+PDF::API2::Basic::PDF::Name - Inherits from L<PDF::API2::Basic::PDF::String>
+and stores PDF names (things beginning with /)
 
 =head1 METHODS
 
 =head2 PDF::API2::Basic::PDF::Name->from_pdf($string)
 
-Creates a new string object (not a full object yet) from a given string.
-The string is parsed according to input criteria with escaping working, particular
-to Names.
+Creates a new string object (not a full object yet) from a given
+string.  The string is parsed according to input criteria with
+escaping working, particular to Names.
 
 =cut
 
-
-sub from_pdf
-{
+sub from_pdf {
     my ($class, $str, $pdf) = @_;
     my ($self) = $class->SUPER::from_pdf($str);
 
-    $self->{'val'} = name_to_string ($self->{'val'}, $pdf);
-    $self;
+    $self->{'val'} = name_to_string($self->{'val'}, $pdf);
+    return $self;
 }
 
 =head2 $n->convert ($str, $pdf)
 
 Converts a name into a string by removing the / and converting any hex
-munging unless $pdf is supplied and its version is less than 1.2.
+munging.
 
 =cut
 
-sub convert
-{
+sub convert {
     my ($self, $str, $pdf) = @_;
 
-    $str = name_to_string ($str, $pdf);
+    $str = name_to_string($str, $pdf);
     return $str;
 }
-
 
 =head2 $s->as_pdf ($pdf)
 
@@ -81,13 +62,12 @@ PDF File object for which the name is intended if supplied.
 
 =cut
 
-sub as_pdf
-{
+sub as_pdf {
     my ($self, $pdf) = @_;
-    my ($str) = $self->{'val'};
+    my $str = $self->{'val'};
 
-    $str = string_to_name ($str, $pdf);
-    return ("/" . $str);
+    $str = string_to_name($str, $pdf);
+    return '/' . $str;
 }
 
 
@@ -98,18 +78,22 @@ sub as_pdf
 =head2 PDF::API2::Basic::PDF::Name->string_to_name ($str, $pdf)
 
 Suitably encode the string $str for output in the File object $pdf
-(the exact format may depend on the version of $pdf).  Prinicipally,
-encode certain characters in hex if the version is greater than 1.1.
+(the exact format may depend on the version of $pdf).
+
+Note: This function only encodes names properly for PDF version 1.2
+and higher.
 
 =cut
 
-sub string_to_name ($;$)
-{
+# Technical Note: The code checking whether this is for version 1.1
+# was commented out before it was entered into version control.  I'm
+# not sure why.  (Steve Simms, 2010-08-28)
+
+sub string_to_name ($;$) {
     my ($str, $pdf) = @_;
- #   if (!(defined ($pdf) && $pdf->{' version'} < 2))
- #     { 
-      $str =~ s|([\x00-\x20\x7f-\xff%()\[\]{}<>#/])|"#".sprintf("%02X", ord($1))|oge; 
- #     }
+#   unless (defined($pdf) and $pdf->{' version'} < 2) { 
+        $str =~ s|([\x00-\x20\x7f-\xff%()\[\]{}<>#/])|'#' . sprintf('%02X', ord($1))|oge; 
+#   }
     return $str;
 }
 
@@ -121,19 +105,21 @@ the hex encoding for PDF versions > 1.1.
 
 =cut
 
-sub name_to_string ($;$)
-{
+sub name_to_string ($;$) {
     my ($str, $pdf) = @_;
     $str =~ s|^/||o;
 
-    if (!(defined ($pdf) && $pdf->{' version'} && $pdf->{' version'} < 2))
-      { $str =~ s/#([0-9a-f]{2})/chr(hex($1))/oige; }
+    unless (defined($pdf) and $pdf->{' version'} and $pdf->{' version'} < 2) {
+        $str =~ s/#([0-9a-f]{2})/chr(hex($1))/oige;
+    }
+
     return $str;
 }
 
-sub outxmldeep
-{
+sub outxmldeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    $opts{-xmlfh}->print("<Name>".$self->val."</Name>\n");
+    $opts{'-xmlfh'}->print('<Name>' . $self->val() . "</Name>\n");
 }
+
+1;

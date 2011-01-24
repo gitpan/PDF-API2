@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain o faciliae he Creaion and Modificaion
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -22,11 +11,10 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: File.pm,v 2.9 2007/11/03 20:31:53 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
+
+our $VERSION = '2.016';
 
 =head1 NAME
 
@@ -155,7 +143,7 @@ BEGIN
 {
     use strict;
     no strict "refs";
-    use vars qw($cr $irreg_char $reg_char $ws_char $delim_char %types $VERSION);
+    use vars qw($cr $irreg_char $reg_char $ws_char $delim_char %types);
     # no warnings qw(uninitialized);
     use strict;
 
@@ -200,8 +188,6 @@ use PDF::API2::Basic::PDF::Pages;
 use PDF::API2::Basic::PDF::Null;
 
 no warnings qw[ deprecated recursion uninitialized ];
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.9 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/11/03 20:31:53 $
 
 #IMPORTED INTO PDF::API2
 

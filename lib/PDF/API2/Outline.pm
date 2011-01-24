@@ -1,54 +1,23 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: Outline.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
-#=======================================================================
-
 package PDF::API2::Outline;
 
-BEGIN {
-    use strict;
-    use vars qw( @ISA $VERSION);
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Basic::PDF::Dict;
+our $VERSION = '2.016';
 
-    @ISA = qw(PDF::API2::Basic::PDF::Dict);
+use base 'PDF::API2::Basic::PDF::Dict';
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
-
-}
+use PDF::API2::Basic::PDF::Utils;
+use PDF::API2::Util;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
-=head1 $otl = PDF::API2::Outline->new $api,$parent,$prev
+=head1 NAME
+
+PDF::API2::Outline
+
+=head1 METHODS
+
+=over
+
+=item $otl = PDF::API2::Outline->new $api,$parent,$prev
 
 Returns a new outline object (called from $otls->outline).
 
@@ -372,60 +341,10 @@ sub outobjdeep {
 
 __END__
 
+=back
+
 =head1 AUTHOR
 
 alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: Outline.pm,v $
-    Revision 2.0  2005/11/16 02:16:00  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:48  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:24  areibens
-    genesis
-
-    Revision 1.13  2005/06/17 19:43:47  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.12  2005/06/17 18:53:33  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.11  2005/03/14 22:01:05  fredo
-    upd 2005
-
-    Revision 1.10  2005/01/03 00:33:32  fredo
-    added named destination support
-
-    Revision 1.9  2004/12/16 00:30:51  fredo
-    added no warn for recursion
-
-    Revision 1.8  2004/07/29 10:47:39  fredo
-    fixed "null vs. 0" bug of -xyz option
-
-    Revision 1.7  2004/06/15 09:11:38  fredo
-    removed cr+lf
-
-    Revision 1.6  2004/06/07 19:44:12  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.5  2004/03/18 06:47:57  fredo
-    fixed yank/paste error in dest method with -xyz parameter
-
-    Revision 1.4  2003/12/08 13:05:19  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.3  2003/11/30 17:13:39  Administrator
-    merged into default
-
-    Revision 1.2.2.1  2003/11/30 16:56:21  Administrator
-    merged into default
-
-    Revision 1.2  2003/11/30 11:32:40  Administrator
-    added CVS id/log
-
 
 =cut

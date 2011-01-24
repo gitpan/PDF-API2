@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,20 +9,19 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Dict.pm,v 2.1 2008/11/04 23:54:51 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Objind';
+
 use strict;
-use vars qw(@ISA $mincache $tempbase $cr);
 no warnings qw[ deprecated recursion uninitialized ];
 
-use PDF::API2::Basic::PDF::Objind;
-@ISA = qw(PDF::API2::Basic::PDF::Objind);
-
-$cr = '(?:\015|\012|(?:\015\012))';
+our $mincache;
+our $tempbase;
+our $cr = '(?:\015|\012|(?:\015\012))';
 
 use PDF::API2::Basic::PDF::Filter;
 use PDF::API2::Basic::PDF::Name;
@@ -54,6 +42,8 @@ PDF::API2::Basic::PDF::Dict - PDF Dictionaries and Streams. Inherits from L<PDF:
 There are various special instance variables which are used to look after,
 particularly, streams. Each begins with a space:
 
+=over
+
 =item stream
 
 Holds the stream contents for output
@@ -67,6 +57,8 @@ not the same as a PDF file stream. The data is stored in its unfiltered form.
 
 If both ' stream' and ' streamfile' are empty, this indicates where in the
 source PDF the stream starts.
+
+=back
 
 =head1 METHODS
 
@@ -411,5 +403,4 @@ Returns the dictionary, which is itself.
 sub val
 { $_[0]; }
 
-
-
+1;

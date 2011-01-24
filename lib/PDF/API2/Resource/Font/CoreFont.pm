@@ -1,47 +1,19 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   THIS LIBRARY IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
-#   MODIFY IT UNDER THE TERMS OF THE GNU LESSER GENERAL PUBLIC
-#   LICENSE AS PUBLISHED BY THE FREE SOFTWARE FOUNDATION; EITHER
-#   VERSION 2 OF THE LICENSE, OR (AT YOUR OPTION) ANY LATER VERSION.
-#
-#   THIS FILE IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
-#   AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-#   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
-#   FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
-#   SHALL THE AUTHORS AND COPYRIGHT HOLDERS AND THEIR CONTRIBUTORS 
-#   BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-#   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-#   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
-#   OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-#   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-#   ARISING IN ANY WAY OUT OF THE USE OF THIS FILE, EVEN IF 
-#   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#   SEE THE GNU LESSER GENERAL PUBLIC LICENSE FOR MORE DETAILS.
-#
-#   YOU SHOULD HAVE RECEIVED A COPY OF THE GNU LESSER GENERAL PUBLIC
-#   LICENSE ALONG WITH THIS LIBRARY; IF NOT, WRITE TO THE
-#   FREE SOFTWARE FOUNDATION, INC., 59 TEMPLE PLACE - SUITE 330,
-#   BOSTON, MA 02111-1307, USA.
-#
-#   $Id: CoreFont.pm,v 2.0 2005/11/16 02:18:14 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::Font::CoreFont;
+
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Resource::Font';
+
+use File::Basename;
+
+use PDF::API2::Util;
+use PDF::API2::Basic::PDF::Utils;
+
+no warnings qw[ deprecated recursion uninitialized ];
+
+our $fonts;
+our $alias;
+our $subs;
 
 =head1 NAME
 
@@ -58,28 +30,7 @@ PDF::API2::Resource::Font::CoreFont - Module for using the 14 PDF built-in Fonts
 
 =head1 METHODS
 
-=over 4
-
-=cut
-
-BEGIN {
-
-    use utf8;
-    use Encode qw(:all);
-
-    use File::Basename;
-
-    use vars qw( @ISA $fonts $alias $subs $encodings $VERSION );
-    use PDF::API2::Resource::Font;
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-
-    @ISA=qw(PDF::API2::Resource::Font);
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:18:14 $
-
-}
-no warnings qw[ deprecated recursion uninitialized ];
+=over
 
 =item $font = PDF::API2::Resource::Font::CoreFont->new $pdf, $fontname, %options
 
@@ -427,7 +378,9 @@ __END__
 
 =head1 SUPPORTED FONTS
 
-=item PDF::API::CoreFont supports the following 'Adobe Core Fonts':
+=over
+
+=item PDF::API2::CoreFont supports the following 'Adobe Core Fonts':
 
   Courier
   Courier-Bold
@@ -444,7 +397,7 @@ __END__
   Times-Roman
   ZapfDingbats
 
-=item PDF::API::CoreFont supports the following 'Windows Fonts':
+=item PDF::API2::CoreFont supports the following 'Windows Fonts':
 
   Georgia
   Georgia,Bold
@@ -457,76 +410,11 @@ __END__
   Webdings
   Wingdings
 
+=back
+
 =head1 AUTHOR
 
-alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: CoreFont.pm,v $
-    Revision 2.0  2005/11/16 02:18:14  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:50  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:27  areibens
-    genesis
-
-    Revision 1.17  2005/10/19 19:15:12  fredo
-    added handling of optional kerning
-
-    Revision 1.16  2005/10/01 22:41:07  fredo
-    fixed font-naming race condition for multiple document updates
-
-    Revision 1.15  2005/09/26 20:07:19  fredo
-    added fontmetric stub
-
-    Revision 1.14  2005/09/12 16:56:20  fredo
-    applied mod_perl patch by Paul Schilling <pfschill@sbcglobal.net>
-
-    Revision 1.13  2005/06/17 19:44:03  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.12  2005/06/17 18:53:34  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.11  2005/05/29 09:47:38  fredo
-    cosmetic changes
-
-    Revision 1.10  2005/03/14 22:01:27  fredo
-    upd 2005
-
-    Revision 1.9  2005/01/21 10:04:15  fredo
-    rewrite fontproxy comment
-
-    Revision 1.8  2004/12/16 00:30:54  fredo
-    added no warn for recursion
-
-    Revision 1.7  2004/11/22 02:08:42  fredo
-    aaa
-
-    Revision 1.6  2004/06/21 22:25:44  fredo
-    added custom corefont handling
-
-    Revision 1.5  2004/06/15 09:14:53  fredo
-    removed cr+lf
-
-    Revision 1.4  2004/06/07 19:44:43  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.3  2003/12/08 13:06:01  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.2  2003/11/30 17:32:48  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.2  2003/11/30 16:57:05  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.1  2003/11/30 14:45:22  Administrator
-    added CVS id/log
-
+Alfred Reibenschuh
 
 =cut
 

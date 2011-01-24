@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,18 +9,14 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Bool.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Bool;
 
-use strict;
-use vars qw(@ISA);
-no warnings qw[ deprecated recursion uninitialized ];
+our $VERSION = '2.016';
 
-use PDF::API2::Basic::PDF::String;
-@ISA = qw(PDF::API2::Basic::PDF::String);
+use base 'PDF::API2::Basic::PDF::String';
+
+use strict;
 
 =head1 NAME
 
@@ -46,9 +31,9 @@ Converts a string into the string which will be stored.
 
 =cut
 
-sub convert
-{ return $_[1] eq "true"; }
-
+sub convert {
+    return $_[1] eq 'true';
+}
 
 =head2 as_pdf
 
@@ -56,15 +41,14 @@ Converts the value to a PDF output form
 
 =cut
 
-sub as_pdf
-{ $_[0]->{'val'} ? "true" : "false"; }
+sub as_pdf {
+    return $_[0]->{'val'} ? 'true' : 'false';
+}
 
-sub outxmldeep
-{
+sub outxmldeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    $opts{-xmlfh}->print("<Bool>".$self->as_pdf."</Bool>\n");
+    $opts{'-xmlfh'}->print('<Bool>' . $self->as_pdf() . "</Bool>\n");
 }
 
 1;
-

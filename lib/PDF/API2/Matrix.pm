@@ -1,29 +1,16 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   Copyright 1999-2001 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#   This library is free software; you can redistribute it
-#   and/or modify it under the same terms as Perl itself.
-#
-#=======================================================================
 #
 #   PDF::API2::Matrix
 #   Original Copyright 1995-96 Ulrich Pfeifer.
 #   modified by Alfred Reibenschuh <areibens@cpan.org> for PDF::API2
 #
-#   $Id: Matrix.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
+#   This library is free software; you can redistribute it
+#   and/or modify it under the same terms as Perl itself.
 #
 #=======================================================================
 package PDF::API2::Matrix;
 
-    use vars qw( $VERSION );
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
+our $VERSION = '2.016';
 
 no warnings qw[ deprecated recursion uninitialized ];
 
@@ -148,6 +135,3 @@ sub print {
 }
 
 1;
-
-__END__
-

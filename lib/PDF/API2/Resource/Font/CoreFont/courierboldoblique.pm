@@ -1,36 +1,6 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: courierboldoblique.pm,v 2.0 2005/11/16 02:18:14 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::Font::CoreFont::courierboldoblique;
+
+our $VERSION = '2.016';
 
 $FONTDATA = {
     'fontname' => 'Courier-BoldOblique',
@@ -541,52 +511,3 @@ $FONTDATA = {
         'fl' => '600',                           # U+0xFB02
     }, # HORIZ. WIDTH TABLE
 };
-
-
-__END__
-
-=head1 AUTHOR
-
-alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: courierboldoblique.pm,v $
-    Revision 2.0  2005/11/16 02:18:14  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:50  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:27  areibens
-    genesis
-
-    Revision 1.8  2005/09/12 16:56:21  fredo
-    applied mod_perl patch by Paul Schilling <pfschill@sbcglobal.net>
-
-    Revision 1.7  2005/06/07 23:21:39  fredo
-    fontkey correction
-
-    Revision 1.6  2005/03/14 22:01:28  fredo
-    upd 2005
-
-    Revision 1.5  2004/06/15 09:14:53  fredo
-    removed cr+lf
-
-    Revision 1.4  2004/06/07 19:44:43  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.3  2003/12/08 13:06:03  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.2  2003/11/30 17:32:49  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.2  2003/11/30 16:57:05  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.1  2003/11/30 15:52:21  Administrator
-    added CVS id/log
-
-
-=cut

@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,11 +9,10 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Objind.pm,v 2.1 2007/03/10 12:18:36 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Objind;
+
+our $VERSION = '2.016';
 
 =head1 NAME
 
@@ -374,4 +362,3 @@ sub copy
 }
 
 1;
-

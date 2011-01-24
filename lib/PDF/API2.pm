@@ -1,151 +1,122 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: API2.pm,v 2.15 2008/01/18 00:11:38 areibens Exp $
-#
-#=======================================================================
-
 package PDF::API2;
 
-BEGIN {
+our $VERSION = '2.016';
 
-    use vars qw( $VERSION $seq @FontDirs );
+use Encode qw(:all);
+use FileHandle;
+use IO::File;
 
-    ($VERSION) = sprintf '%i.%03i', split(/\./,('$Revision: 2.15 $' =~ /Revision: (\S+)\s/)[0]);  # $Date: 2008/01/18 00:11:38 $
+use PDF::API2::Basic::PDF::Utils;
+use PDF::API2::Util;
 
-    @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
-        qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
+use PDF::API2::Basic::PDF::File;
+use PDF::API2::Basic::PDF::Pages;
+use PDF::API2::Page;
 
-    $seq="AA";
+use PDF::API2::Resource::Font::CoreFont;
+use PDF::API2::Resource::Font::Postscript;
+use PDF::API2::Resource::Font::BdFont;
+use PDF::API2::Resource::Font::SynFont;
+use PDF::API2::Resource::Font::neTrueType;
+use PDF::API2::Resource::CIDFont::TrueType;
+use PDF::API2::Resource::CIDFont::CJKFont;
+use PDF::API2::Resource::UniFont;
 
-    require 5.008; # we need this for unicode support
+use PDF::API2::Resource::XObject::Image::JPEG;
+use PDF::API2::Resource::XObject::Image::TIFF;
+use PDF::API2::Resource::XObject::Image::PNM;
+use PDF::API2::Resource::XObject::Image::PNG;
+use PDF::API2::Resource::XObject::Image::GIF;
+use PDF::API2::Resource::XObject::Image::GD;
 
-    use PDF::API2::Basic::PDF::File;
-    use PDF::API2::Basic::PDF::Page;
-    use PDF::API2::Basic::PDF::Utils;
+use PDF::API2::Resource::ColorSpace::Indexed::ACTFile;
+use PDF::API2::Resource::ColorSpace::Indexed::Hue;
+use PDF::API2::Resource::ColorSpace::Indexed::WebColor;
 
-    use PDF::API2::Util;
-    use PDF::API2::Page;
+use PDF::API2::Resource::ColorSpace::Separation;
+use PDF::API2::Resource::ColorSpace::DeviceN;
 
-    use PDF::API2::Outlines;
-    use PDF::API2::NamedDestination;
+use PDF::API2::Resource::XObject::Form::BarCode::int2of5;
+use PDF::API2::Resource::XObject::Form::BarCode::codabar;
+use PDF::API2::Resource::XObject::Form::BarCode::code128;
+use PDF::API2::Resource::XObject::Form::BarCode::code3of9;
+use PDF::API2::Resource::XObject::Form::BarCode::ean13;
 
-    use PDF::API2::Version;
+use PDF::API2::Resource::XObject::Form::Hybrid;
 
-    use PDF::API2::Resource::ExtGState;
-    use PDF::API2::Resource::Pattern;
-    use PDF::API2::Resource::Shading;
+use PDF::API2::Resource::ExtGState;
+use PDF::API2::Resource::Pattern;
+use PDF::API2::Resource::Shading;
 
-    use PDF::API2::Resource::Font::CoreFont;
-    use PDF::API2::Resource::Font::Postscript;
-    use PDF::API2::Resource::Font::BdFont;
-    use PDF::API2::Resource::Font::SynFont;
-    use PDF::API2::Resource::Font::neTrueType;
-    use PDF::API2::Resource::CIDFont::TrueType;
-    use PDF::API2::Resource::CIDFont::CJKFont;
-    use PDF::API2::Resource::UniFont;
-
-    use PDF::API2::Resource::XObject::Image::JPEG;
-    use PDF::API2::Resource::XObject::Image::TIFF;
-    use PDF::API2::Resource::XObject::Image::PNM;
-    use PDF::API2::Resource::XObject::Image::PNG;
-    use PDF::API2::Resource::XObject::Image::GIF;
-    use PDF::API2::Resource::XObject::Image::GD;
-
-    use PDF::API2::Resource::XObject::Form::Hybrid;
-
-    use PDF::API2::Resource::XObject::Form::BarCode::int2of5;
-    use PDF::API2::Resource::XObject::Form::BarCode::codabar;
-    use PDF::API2::Resource::XObject::Form::BarCode::code128;
-    use PDF::API2::Resource::XObject::Form::BarCode::code3of9;
-    use PDF::API2::Resource::XObject::Form::BarCode::ean13;
-
-    use PDF::API2::Resource::ColorSpace::Indexed::ACTFile;
-    use PDF::API2::Resource::ColorSpace::Indexed::Hue;
-    use PDF::API2::Resource::ColorSpace::Indexed::WebColor;
-
-    use PDF::API2::Resource::ColorSpace::Separation;
-    use PDF::API2::Resource::ColorSpace::DeviceN;
-    
-    use Compress::Zlib;
-
-    use Math::Trig;
-
-    use POSIX qw( ceil floor );
-
-    use utf8;
-    use Encode qw(:all);
-
-	use FileHandle;
-}
+use PDF::API2::Outlines;
+use PDF::API2::NamedDestination;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
+our @FontDirs = ( (map { "$_/PDF/API2/fonts" } @INC), 
+                  qw[ /usr/share/fonts /usr/local/share/fonts c:/windows/fonts c:/winnt/fonts ] );
+
 =head1 NAME
 
-PDF::API2 - A Perl Module Chain to faciliate the Creation and Modification of High-Quality "Portable Document Format (aka. PDF)" Files.
+PDF::API2 - Facilitates the creation and modification of PDF files
 
 =head1 SYNOPSIS
 
     use PDF::API2;
-    #
-    $pdf = PDF::API2->new;
+
+    # Create a blank PDF file
+    $pdf = PDF::API2->new();
+
+    # Open an existing PDF file
     $pdf = PDF::API2->open('some.pdf');
-    $page = $pdf->page;
-    $page = $pdf->openpage($pagenum);
-    $img = $pdf->image('some.jpg');
-    $font = $pdf->corefont('Times-Roman');
-    $font = $pdf->ttfont('TimesNewRoman.ttf');
+
+    # Add a blank page
+    $page = $pdf->page();
+
+    # Retrieve an existing page
+    $page = $pdf->openpage($page_number);
+
+    # Set the page size
+    $page->mediabox('Letter');
+
+    # Add a built-in font to the PDF
+    $font = $pdf->corefont('Helvetica-Bold');
+
+    # Add an external TTF font to the PDF
+    $font = $pdf->ttfont('/path/to/font.ttf');
+
+    # Add some text to the page
+    $text = $pdf->text();
+    $text->font($font, 20);
+    $text->translate(200, 700);
+    $text->text('Hello World!');
+
+    # Save the PDF
+    $pdf->saveas('/path/to/new.pdf');
 
 =head1 GENERIC METHODS
 
-=over 4
+=over
 
-=item $pdf = PDF::API->new %opts
+=item $pdf = PDF::API2->new(%options)
 
-Creates a new pdf-file object. If you know beforehand
-to save the pdf to file you can give the '-file' option,
-to minimize possible memory requirements later-on.
+Creates a new PDF object.  If you will be saving it as a file and
+already know the filename, you can give the '-file' option to minimize
+possible memory requirements later on.
 
 B<Example:>
 
     $pdf = PDF::API2->new();
     ...
-    print $pdf->stringify;
+    print $pdf->stringify();
 
     $pdf = PDF::API2->new();
     ...
-    $pdf->saveas("our/new.pdf");
+    $pdf->saveas('our/new.pdf');
 
     $pdf = PDF::API2->new(-file => 'our/new.pdf');
     ...
-    $pdf->save;
+    $pdf->save();
 
 =cut
 
@@ -172,23 +143,23 @@ sub new {
         $self->{pdf}->create_file($opt{-file});
     }
     $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
-    $self->info( 'Producer' => $PDF::API2::Version::CVersion{vFredo}." [$^O]" );
+    $self->info( 'Producer' => "PDF::API2 $VERSION [$^O]" );
     return $self;
 }
 
-=item $pdf = PDF::API->open $pdffile
+=item $pdf = PDF::API2->open($pdf_file)
 
-Opens an existing PDF for modification.
+Opens an existing PDF file.
 
 B<Example:>
 
-    $pdf = PDF::API2->open('my/old.pdf');
+    $pdf = PDF::API2->open('our/old.pdf');
     ...
-    $pdf->saveas("our/new.pdf");
+    $pdf->saveas('our/new.pdf');
 
     $pdf = PDF::API2->open('our/to/be/updated.pdf');
     ...
-    $pdf->update;
+    $pdf->update();
 
 =cut
 
@@ -240,15 +211,18 @@ sub open {
     return $self;
 }
 
-=item $pdf = PDF::API->openScalar $pdfstream
+=item $pdf = PDF::API2->openScalar($pdf_string)
 
-Opens an existing PDF-stream for modification.
+Opens a PDF contained in a string.
 
 B<Example:>
 
-    open($fh,'our/stream.pdf') or die "$@";
-    @pdf = <$fh>;
-    $pdf = PDF::API->openScalar(join('',@pdf));
+    # Read a PDF into a string, for the purpose of demonstration
+    open $fh, 'our/old.pdf' or die $@;
+    undef $/;  # Read the whole file at once
+    $pdf_string = <$fh>;
+
+    $pdf = PDF::API2->openScalar($pdf_string);
     ...
     $pdf->saveas('our/new.pdf');
 
@@ -285,143 +259,168 @@ sub openScalar {
     return $self;
 }
 
-=item $pdf->preferences %opts
+=item $pdf->preferences(%options)
 
-Controls viewing-preferences for the pdf.
-
-=cut
-
-=pod
+Controls viewing preferences for the PDF.
 
 B<Page Mode Options:>
 
-I<-fullscreen>
-... Full-screen mode, with no menu bar, window controls, or any other window visible.
+=over
 
-I<-thumbs>
-... Thumbnail images visible.
+=item -fullscreen
 
-I<-outlines>
-... Document outline visible.
+Full-screen mode, with no menu bar, window controls, or any other window visible.
 
-=cut
+=item -thumbs
 
-=pod
+Thumbnail images visible.
+
+=item -outlines
+
+Document outline visible.
+
+=back
 
 B<Page Layout Options:>
 
-I<-singlepage>
-... Display one page at a time.
+=over
 
-I<-onecolumn>
-... Display the pages in one column.
+=item -singlepage
 
-I<-twocolumnleft>
-... Display the pages in two columns, with oddnumbered pages on the left.
+Display one page at a time.
 
-I<-twocolumnright>
-... Display the pages in two columns, with oddnumbered pages on the right.
+=item -onecolumn
 
-=cut
+Display the pages in one column.
 
-=pod
+=item -twocolumnleft
+
+Display the pages in two columns, with oddnumbered pages on the left.
+
+=item -twocolumnright
+
+Display the pages in two columns, with oddnumbered pages on the right.
+
+=back
 
 B<Viewer Options:>
 
-I<-hidetoolbar>
-        ... Specifying whether to hide tool bars.
+=over
 
-I<-hidemenubar>
-        ... Specifying whether to hide menu bars.
+=item -hidetoolbar
 
-I<-hidewindowui>
-        ... Specifying whether to hide user interface elements.
+Specifying whether to hide tool bars.
 
-I<-fitwindow>
-        ... Specifying whether to resize the document’s window to the size of the displayed page.
+=item -hidemenubar
 
-I<-centerwindow>
-        ... Specifying whether to position the document’s window in the center of the screen.
+Specifying whether to hide menu bars.
 
-I<-displaytitle>
-        ... Specifying whether the window’s title bar should display the document title
-        taken from the Title entry of the document information dictionary.
+=item -hidewindowui
 
-I<-afterfullscreenthumbs>
-        ... Thumbnail images visible after Full-screen mode.
+Specifying whether to hide user interface elements.
 
-I<-afterfullscreenoutlines>
-        ... Document outline visible after Full-screen mode.
+=item -fitwindow
 
-I<-printscalingnone>
-		... Set the default print setting for page scaling to none.
+Specifying whether to resize the document's window to the size of the displayed page.
 
-=cut
+=item -centerwindow
 
-=pod
+Specifying whether to position the document's window in the center of the screen.
 
-B<Initial Page Option:>
+=item -displaytitle
 
-I<-firstpage> => [ $pageobj, %opts]
-        ... Specifying the page to be displayed, plus one of the following options:
+Specifying whether the window's title bar should display the
+document title taken from the Title entry of the document information
+dictionary.
 
-=cut
+=item -afterfullscreenthumbs
 
-=pod
+Thumbnail images visible after Full-screen mode.
 
-B<Initial Page Options:>
+=item -afterfullscreenoutlines
 
-I<-fit> => 1
-            ... Display the page designated by page, with its contents magnified just enough to
-            fit the entire page within the window both horizontally and vertically. If the
-            required horizontal and vertical magnification factors are different, use the
-            smaller of the two, centering the page within the window in the other dimension.
+Document outline visible after Full-screen mode.
 
-I<-fith> => $top
-            ... Display the page designated by page, with the vertical coordinate top positioned
-            at the top edge of the window and the contents of the page magnified just enough
-            to fit the entire width of the page within the window.
+=item -printscalingnone
 
-I<-fitv> => $left
-            ... Display the page designated by page, with the horizontal coordinate left positioned
-            at the left edge of the window and the contents of the page magnified just enough
-            to fit the entire height of the page within the window.
+Set the default print setting for page scaling to none.
 
-I<-fitr> => [ $left, $bottom, $right, $top ]
-            ... Display the page designated by page, with its contents magnified just enough to
-            fit the rectangle specified by the coordinates left, bottom, right, and top
-            entirely within the window both horizontally and vertically. If the required
-            horizontal and vertical magnification factors are different, use the smaller of
-            the two, centering the rectangle within the window in the other dimension.
+=back
 
-I<-fitb> => 1
-            ... Display the page designated by page, with its contents magnified just enough
-            to fit its bounding box entirely within the window both horizontally and
-            vertically. If the required horizontal and vertical magnification factors are
-            different, use the smaller of the two, centering the bounding box within the
-            window in the other dimension.
+B<Initial Page Options>:
 
-I<-fitbh> => $top
-            ... Display the page designated by page, with the vertical coordinate top
-            positioned at the top edge of the window and the contents of the page
-            magnified just enough to fit the entire width of its bounding box
-            within the window.
+=over
 
-I<-fitbv> => $left
-            ... Display the page designated by page, with the horizontal coordinate
-            left positioned at the left edge of the window and the contents of the page
-            magnified just enough to fit the entire height of its bounding box within the
-            window.
+=item -firstpage => [ $page, %options ]
 
-I<-xyz> => [ $left, $top, $zoom ]
-            ... Display the page designated by page, with the coordinates (left, top) positioned
-            at the top-left corner of the window and the contents of the page magnified by
-            the factor zoom. A zero (0) value for any of the parameters left, top, or zoom
-            specifies that the current value of that parameter is to be retained unchanged.
+Specifying the page to be displayed, plus one of the following options:
 
-=cut
+=over
 
-=pod
+=item -fit => 1
+
+Display the page designated by page, with its contents magnified just
+enough to fit the entire page within the window both horizontally and
+vertically. If the required horizontal and vertical magnification
+factors are different, use the smaller of the two, centering the page
+within the window in the other dimension.
+
+=item -fith => $top
+
+Display the page designated by page, with the vertical coordinate top
+positioned at the top edge of the window and the contents of the page
+magnified just enough to fit the entire width of the page within the
+window.
+
+=item -fitv => $left
+
+Display the page designated by page, with the horizontal coordinate
+left positioned at the left edge of the window and the contents of the
+page magnified just enough to fit the entire height of the page within
+the window.
+
+=item -fitr => [ $left, $bottom, $right, $top ]
+
+Display the page designated by page, with its contents magnified just
+enough to fit the rectangle specified by the coordinates left, bottom,
+right, and top entirely within the window both horizontally and
+vertically. If the required horizontal and vertical magnification
+factors are different, use the smaller of the two, centering the
+rectangle within the window in the other dimension.
+
+=item -fitb => 1
+
+Display the page designated by page, with its contents magnified just
+enough to fit its bounding box entirely within the window both
+horizontally and vertically. If the required horizontal and vertical
+magnification factors are different, use the smaller of the two,
+centering the bounding box within the window in the other dimension.
+
+=item -fitbh => $top
+
+Display the page designated by page, with the vertical coordinate top
+positioned at the top edge of the window and the contents of the page
+magnified just enough to fit the entire width of its bounding box
+within the window.
+
+=item -fitbv => $left
+
+Display the page designated by page, with the horizontal coordinate
+left positioned at the left edge of the window and the contents of the
+page magnified just enough to fit the entire height of its bounding
+box within the window.
+
+=item -xyz => [ $left, $top, $zoom ]
+
+Display the page designated by page, with the coordinates (left, top)
+positioned at the top-left corner of the window and the contents of
+the page magnified by the factor zoom. A zero (0) value for any of the
+parameters left, top, or zoom specifies that the current value of that
+parameter is to be retained unchanged.
+
+=back
+
+=back
 
 B<Example:>
 
@@ -429,7 +428,7 @@ B<Example:>
         -fullscreen => 1,
         -onecolumn => 1,
         -afterfullscreenoutlines => 1,
-        -firstpage => [ $pageobj , -fit => 1],
+        -firstpage => [$page, -fit => 1],
     );
 
 =cut
@@ -525,19 +524,31 @@ sub preferences {
     return $self;
 }
 
-=item $val = $pdf->default $parameter
+=item $val = $pdf->default($parameter)
 
-=item $pdf->default $parameter, $val
+=item $pdf->default($parameter, $value)
 
-Gets/Sets default values for the behaviour of ::API2.
+Gets/sets the default value for a behaviour of PDF::API2.
 
 B<Supported Parameters:>
 
-I<nounrotate> ... prohibits API2 from rotating imported/opened page to re-create a default pdf-context.
+=over
 
-I<pageencaps> ... enables than API2 will add save/restore commands upon imported/opened pages to preserve graphics-state for modification.
+=item nounrotate
 
-I<copyannots> ... enables importing of annotations (B<*EXPERIMENTAL*>).
+prohibits API2 from rotating imported/opened page to re-create a
+default pdf-context.
+
+=item pageencaps
+
+enables than API2 will add save/restore commands upon imported/opened
+pages to preserve graphics-state for modification.
+
+=item copyannots
+
+enables importing of annotations (B<*EXPERIMENTAL*>).
+
+=back
 
 =cut
 
@@ -552,9 +563,9 @@ sub default {
     return($temp);
 }
 
-=item $bool = $pdf->isEncrypted
+=item $bool = $pdf->isEncrypted()
 
-Checks if the previously opened pdf is encrypted.
+Checks if the previously opened PDF is encrypted.
 
 =cut
 
@@ -563,14 +574,14 @@ sub isEncrypted {
     return(defined($self->{pdf}->{'Encrypt'}) ? 1 : 0);
 }
     
-=item %infohash = $pdf->info %infohash
+=item %infohash = $pdf->info(%infohash)
 
-Sets/Gets the info structure of the document.
+Gets/sets the info structure of the document.
 
 B<Example:>
 
     %h = $pdf->info(
-        'Author'       => " Alfred Reibenschuh ",
+        'Author'       => "Alfred Reibenschuh",
         'CreationDate' => "D:20020911000000+01'00'",
         'ModDate'      => "D:YYYYMMDDhhmmssOHH'mm'",
         'Creator'      => "fredos-script.pl",
@@ -580,7 +591,6 @@ B<Example:>
         'Keywords'     => "all good things are pdf"
     );
     print "Author: $h{Author}\n";
-    
 
 =cut
 
@@ -624,16 +634,17 @@ sub info {
   return(%opt);
 }
 
-=item @meta_data_attribs = $pdf->infoMetaAttributes @meta_data_attribs
+=item @metadata_attributes = $pdf->infoMetaAttributes(@metadata_attributes)
 
-Sets/Gets the supported info-structure tags.
+Gets/sets the supported info-structure tags.
 
 B<Example:>
 
-    @attrs = $pdf->infoMetaAttributes;
+    @attributes = $pdf->infoMetaAttributes;
     print "Supported Attributes: @attr\n";
-    @attrs = $pdf->infoMetaAttributes('CustomField1');
-    print "Supported Attributes: @attr\n";
+
+    @attributes = $pdf->infoMetaAttributes('CustomField1');
+    print "Supported Attributes: @attributes\n";
 
 =cut
 
@@ -647,30 +658,66 @@ sub infoMetaAttributes
     return(@{$self->{infoMeta}});
 }
 
-=item $xml = $pdf->xmpMetadata $xml
+=item $xml = $pdf->xmpMetadata($xml)
 
-Sets/Gets the XMP XML data-stream.
+Gets/sets the XMP XML data stream.
 
 B<Example:>
 
-    $xml = $pdf->xmpMetadata;
+    $xml = $pdf->xmpMetadata();
     print "PDFs Metadata reads: $xml\n";
     $xml=<<EOT;
-    <?xpacket begin='ï»¿' id='W5M0MpCehiHzreSzNTczkc9d'?>
+    <?xpacket begin='' id='W5M0MpCehiHzreSzNTczkc9d'?>
     <?adobe-xap-filters esc="CRLF"?>
-    <x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='XMP toolkit 2.9.1-14, framework 1.6'>
-    <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns:iX='http://ns.adobe.com/iX/1.0/'>
-    <rdf:Description rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8' xmlns:pdf='http://ns.adobe.com/pdf/1.3/' pdf:Producer='Acrobat Distiller 6.0.1 for Macintosh'></rdf:Description>
-    <rdf:Description rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8' xmlns:xap='http://ns.adobe.com/xap/1.0/' xap:CreateDate='2004-11-14T08:41:16Z' xap:ModifyDate='2004-11-14T16:38:50-08:00' xap:CreatorTool='FrameMaker 7.0' xap:MetadataDate='2004-11-14T16:38:50-08:00'></rdf:Description>
-    <rdf:Description rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8' xmlns:xapMM='http://ns.adobe.com/xap/1.0/mm/' xapMM:DocumentID='uuid:919b9378-369c-11d9-a2b5-000393c97fd8'/>
-    <rdf:Description rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8' xmlns:dc='http://purl.org/dc/elements/1.1/' dc:format='application/pdf'><dc:description><rdf:Alt><rdf:li xml:lang='x-default'>Adobe Portable Document Format (PDF)</rdf:li></rdf:Alt></dc:description><dc:creator><rdf:Seq><rdf:li>Adobe Systems Incorporated</rdf:li></rdf:Seq></dc:creator><dc:title><rdf:Alt><rdf:li xml:lang='x-default'>PDF Reference, version 1.6</rdf:li></rdf:Alt></dc:title></rdf:Description>
-    </rdf:RDF>
+    <x:xmpmeta
+      xmlns:x='adobe:ns:meta/'
+      x:xmptk='XMP toolkit 2.9.1-14, framework 1.6'>
+        <rdf:RDF
+          xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+          xmlns:iX='http://ns.adobe.com/iX/1.0/'>
+            <rdf:Description
+              rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8'
+              xmlns:pdf='http://ns.adobe.com/pdf/1.3/'
+              pdf:Producer='Acrobat Distiller 6.0.1 for Macintosh'></rdf:Description>
+            <rdf:Description
+              rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8'
+              xmlns:xap='http://ns.adobe.com/xap/1.0/'
+              xap:CreateDate='2004-11-14T08:41:16Z'
+              xap:ModifyDate='2004-11-14T16:38:50-08:00'
+              xap:CreatorTool='FrameMaker 7.0'
+              xap:MetadataDate='2004-11-14T16:38:50-08:00'></rdf:Description>
+            <rdf:Description
+              rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8'
+              xmlns:xapMM='http://ns.adobe.com/xap/1.0/mm/'
+              xapMM:DocumentID='uuid:919b9378-369c-11d9-a2b5-000393c97fd8'/></rdf:Description>
+            <rdf:Description
+              rdf:about='uuid:b8659d3a-369e-11d9-b951-000393c97fd8'
+              xmlns:dc='http://purl.org/dc/elements/1.1/'
+              dc:format='application/pdf'>
+                <dc:description>
+                  <rdf:Alt>
+                    <rdf:li xml:lang='x-default'>Adobe Portable Document Format (PDF)</rdf:li>
+                  </rdf:Alt>
+                </dc:description>
+                <dc:creator>
+                  <rdf:Seq>
+                    <rdf:li>Adobe Systems Incorporated</rdf:li>
+                  </rdf:Seq>
+                </dc:creator>
+                <dc:title>
+                  <rdf:Alt>
+                    <rdf:li xml:lang='x-default'>PDF Reference, version 1.6</rdf:li>
+                  </rdf:Alt>
+                </dc:title>
+            </rdf:Description>
+        </rdf:RDF>
     </x:xmpmeta>
     <?xpacket end='w'?>
     EOT
+
     $xml = $pdf->xmpMetadata($xml);
-    print "PDFs Metadata now reads: $xml\n";
-    
+    print "PDF metadata now reads: $xml\n";
+
 =cut
 
 sub xmpMetadata {
@@ -704,44 +751,59 @@ sub xmpMetadata {
     return($md->{' stream'});
 }
 
-=item $pdf->pageLabel $index $options
+=item $pdf->pageLabel($index, $options)
 
-Sets PageLabel options.
+Sets page label options.
 
 B<Supported Options:>
 
-I<-style> ... 'Roman', 'roman', 'decimal', 'Alpha' or 'alpha'.
+=over
 
-I<-start> ... restart numbering at given number.
+=item -style
 
-I<-prefix> ... text prefix for numbering.
+Roman, roman, decimal, Alpha or alpha.
+
+=item -start
+
+Restart numbering at given number.
+
+=item -prefix
+
+Text prefix for numbering.
+
+=back
 
 B<Example:>
 
-	$pdf->pageLabel( 0, {
-		-style => 'roman',
-	} ); # start with roman numbering
+    # Start with Roman Numerals
+    $pdf->pageLabel(0, {
+        -style => 'roman',
+    });
 
-	$pdf->pageLabel( 4, {
-		-style => 'decimal',
-	} ); # switch to arabic
+    # Switch to Arabic
+    $pdf->pageLabel(4, {
+        -style => 'decimal',
+    });
 
-	$pdf->pageLabel( 32, {
-		-start => 1,
-		-prefix => 'A-'
-	} ); # numbering for appendix A
+    # Numbering for Appendix A
+    $pdf->pageLabel(32, {
+        -start => 1,
+        -prefix => 'A-'
+    });
     
-	$pdf->pageLabel( 36, {
-		-start => 1,
-		-prefix => 'B-'
-	} ); # numbering for appendix B
+    # Numbering for Appendix B
+    $pdf->pageLabel( 36, {
+        -start => 1,
+        -prefix => 'B-'
+    });
     
-	$pdf->pageLabel( 40, {
-		-style => 'Roman'
-		-start => 1,
-		-prefix => 'Index '
-	} ); # numbering for index
-    
+    # Numbering for the Index
+    $pdf->pageLabel(40, {
+        -style => 'Roman'
+        -start => 1,
+        -prefix => 'Index '
+    });
+
 =cut
 
 sub pageLabel {
@@ -794,9 +856,9 @@ sub pageLabel {
 	}
 }
 
-=item $pdf->finishobjects @objects
+=item $pdf->finishobjects(@objects)
 
-Force objects to be written to file if available.
+Force objects to be written to file if possible.
 
 B<Example:>
 
@@ -804,7 +866,7 @@ B<Example:>
     ...
     $pdf->finishobjects($page, $gfx, $txt);
     ...
-    $pdf->save;
+    $pdf->save();
 
 =cut
 
@@ -850,15 +912,15 @@ sub proc_pages {
     return(@pglist);
 }
 
-=item $pdf->update
+=item $pdf->update()
 
-Updates a previously "opened" document after all changes have been applied.
+Saves a previously opened document.
 
 B<Example:>
 
     $pdf = PDF::API2->open('our/to/be/updated.pdf');
     ...
-    $pdf->update;
+    $pdf->update();
 
 =cut
 
@@ -867,7 +929,7 @@ sub update {
     $self->saveas($self->{pdf}->{' fname'});
 }
 
-=item $pdf->saveas $file
+=item $pdf->saveas($file)
 
 Saves the document to file.
 
@@ -875,7 +937,7 @@ B<Example:>
 
     $pdf = PDF::API2->new();
     ...
-    $pdf->saveas("our/new.pdf");
+    $pdf->saveas('our/new.pdf');
 
 =cut
 
@@ -917,15 +979,15 @@ sub save_xml {
 }
 
 
-=item $string = $pdf->stringify
+=item $string = $pdf->stringify()
 
-Returns the document in a string.
+Returns the document as a string.
 
 B<Example:>
 
     $pdf = PDF::API2->new();
     ...
-    print $pdf->stringify;
+    print $pdf->stringify();
 
 =cut
 
@@ -947,7 +1009,7 @@ sub stringify {
 
 sub release { $_[0]->end; return(undef);}
 
-=item $pdf->end
+=item $pdf->end()
 
 Destroys the document.
 
@@ -970,19 +1032,35 @@ sub end {
 
 =head1 PAGE METHODS
 
-=over 4
+=over
 
-=item $page = $pdf->page
+=item $page = $pdf->page()
 
-=item $page = $pdf->page $index
+=item $page = $pdf->page($page_number)
 
-Returns a new page object or inserts-and-returns a new page at $index.
+Returns a new page object.  By default, the page is added to the end
+of the document.  If you include an existing page number, the new page
+will be inserted in that position, pushing existing pages back.
 
-B<Note:> on $index
+$page_number can also have one of the following values:
 
-    -1 ... is inserted before the last page
-    1 ... is inserted before page number 1 (the first page)
-    0 ... is simply appended
+=over
+
+=item -1 inserts the new page as the second-last page
+
+=item 0 inserts the page as the last page
+
+=back
+
+B<Example:>
+
+    $pdf = PDF::API2->new();
+
+    # Add a page.  This becomes page 1.
+    $page = $pdf->page();
+
+    # Add a new first page.  $page becomes page 2.
+    $another_page = $pdf->page(1);
 
 =cut
 
@@ -1010,17 +1088,16 @@ sub page {
     return $page;
 }
 
-=item $pageobj = $pdf->openpage $index
+=item $page = $pdf->openpage($page_number)
 
-Returns the pageobject of page $index.
+Returns the L<PDF::API2::Page> object of page $page_number.
 
-B<Note:> on $index
+If $page_number is 0 or -1, it will return the last page in the
+document.
 
-    -1,0 ... returns the last page
-    1 ... returns page number 1
+B<Example:>
 
-B<Example:> (A Document with 99 Pages)
-
+    $pdf = PDF::API2->open('our/99page.pdf');
     $page = $pdf->openpage(1);   # returns the first page
     $page = $pdf->openpage(99);  # returns the last page
     $page = $pdf->openpage(-1);  # returns the last page
@@ -1179,28 +1256,32 @@ sub walk_obj {
     return($tobj);
 }
 
-=item $xoform = $pdf->importPageIntoForm $sourcepdf, $sourceindex
+=item $xoform = $pdf->importPageIntoForm($source_pdf, $source_page_number)
 
-Returns a form-xobject created from $sourcepdf,$sourceindex.
-This is useful if you want to transpose the imported page-description
-somewhat differently onto a page (ie. two-up, four-up, duplex, etc.).
+Returns a Form XObject created by extracting the specified page from $source_pdf.
 
-B<Note:> on $index
+This is useful if you want to transpose the imported page somewhat
+differently onto a page (e.g. two-up, four-up, etc.).
 
-    -1,0 ... returns the last page
-    1 ... returns page number 1
+If $source_page_number is 0 or -1, it will return the last page in the
+document.
 
 B<Example:>
 
-    $pdf = PDF::API2->new;
-    $old = PDF::API2->open('my/old.pdf');
-    $xo = $pdf->importPageIntoForm($old,2); # get page 2
-    $page = $pdf->page;
-    $gfx = $page->gfx;
-    $gfx->formimage($xo,0,0,1); # put it on page 1 with scale x1
-    $pdf->saveas("our/new.pdf");
+    $pdf = PDF::API2->new();
+    $old = PDF::API2->open('our/old.pdf');
+    $page = $pdf->page();
+    $gfx = $page->gfx();
 
-B<Note:> you can only import a page from an existing pdf-file!
+    # Import Page 2 from the old PDF
+    $xo = $pdf->importPageIntoForm($old, 2);
+
+    # Add it to the new PDF's first page at 1/2 scale
+    $gfx->formimage($xo, 0, 0, 0.5); 
+
+    $pdf->saveas('our/new.pdf');
+
+B<Note:> You can only import a page from an existing PDF file.
 
 =cut
 
@@ -1280,31 +1361,31 @@ sub importPageIntoForm {
     return($xo);
 }
 
-=item $pageobj = $pdf->importpage $sourcepdf, $sourceindex, $targetindex
+=item $page = $pdf->importpage($source_pdf, $source_page_number, $target_page_number)
 
-Returns the pageobject of page $targetindex, imported from $sourcepdf,$sourceindex.
+Imports a page from $source_pdf and adds it to the specified position
+in $pdf.
 
-B<Note:> on $index
+If $source_page_number or $target_page_number is 0 or -1, the last
+page in the document is used.
 
-    -1,0 ... returns the last page
-    1 ... returns page number 1
-
-B<Note:> you can specify a page object instead as $targetindex
-so that the contents of the sourcepage will be 'merged into'.
+B<Note:> If you pass a page object instead of a page number for
+$target_page_number, the contents of the page will be merged into the
+existing page.
 
 B<Example:>
 
-    $pdf = PDF::API2->new;
-    $old = PDF::API2->open('my/old.pdf');
-    $page = $pdf->importpage($old,2); # get page 2 into page 1
-    $pdf->saveas("our/new.pdf");
+    $pdf = PDF::API2->new();
+    $old = PDF::API2->open('our/old.pdf');
 
-B<Note:> you can only import a page from an existing pdf-file!
+    # Add page 2 from the old PDF as page 1 of the new PDF
+    $page = $pdf->importpage($old, 2);
+
+    $pdf->saveas('our/new.pdf');
+
+B<Note:> You can only import a page from an existing PDF file.
 
 =cut
-
-# B<Note:> the interactive forms of a page will also be imported, but may
-# cause problems if forms of another document have already been imported.
 
 sub importpage {
     my $self=shift @_;
@@ -1413,7 +1494,7 @@ sub importpage {
     return($t_page);
 }
 
-=item $pagenumber = $pdf->pages
+=item $count = $pdf->pages()
 
 Returns the number of pages in the document.
 
@@ -1424,31 +1505,30 @@ sub pages {
     return scalar @{$self->{pagestack}};
 }
 
-=item $pdf->mediabox $name
+=item $pdf->mediabox($name)
 
-=item $pdf->mediabox $w, $h
+=item $pdf->mediabox($w, $h)
 
-=item $pdf->mediabox $llx, $lly, $urx, $ury
+=item $pdf->mediabox($llx, $lly, $urx, $ury)
 
-Sets the global mediabox. Other methods: cropbox, bleedbox, trimbox and artbox.
+Sets the global mediabox.
 
 B<Example:>
 
-    $pdf = PDF::API2->new;
+    $pdf = PDF::API2->new();
     $pdf->mediabox('A4');
     ...
-    $pdf->saveas("our/new.pdf");
+    $pdf->saveas('our/new.pdf');
+
+    $pdf = PDF::API2->new();
+    $pdf->mediabox(595, 842);
+    ...
+    $pdf->saveas('our/new.pdf');
 
     $pdf = PDF::API2->new;
-    $pdf->mediabox(595,842);
+    $pdf->mediabox(0, 0, 595, 842);
     ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->mediabox(0,0,595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
-
+    $pdf->saveas('our/new.pdf');
 
 =cut
 
@@ -1458,30 +1538,13 @@ sub mediabox {
     $self;
 }
 
-=item $pdf->cropbox $name
+=item $pdf->cropbox($name)
 
-=item $pdf->cropbox $w, $h
+=item $pdf->cropbox($w, $h)
 
-=item $pdf->cropbox $llx, $lly, $urx, $ury
+=item $pdf->cropbox($llx, $lly, $urx, $ury)
 
 Sets the global cropbox.
-
-B<Example:>
-
-    $pdf = PDF::API2->new;
-    $pdf->cropbox('A4');
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->cropbox(595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->cropbox(0,0,595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
 
 =cut
 
@@ -1491,30 +1554,13 @@ sub cropbox {
     $self;
 }
 
-=item $pdf->bleedbox $name
+=item $pdf->bleedbox($name)
 
-=item $pdf->bleedbox $w, $h
+=item $pdf->bleedbox($w, $h)
 
-=item $pdf->bleedbox $llx, $lly, $urx, $ury
+=item $pdf->bleedbox($llx, $lly, $urx, $ury)
 
 Sets the global bleedbox.
-
-B<Example:>
-
-    $pdf = PDF::API2->new;
-    $pdf->bleedbox('A4');
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->bleedbox(595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->bleedbox(0,0,595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
 
 =cut
 
@@ -1524,30 +1570,13 @@ sub bleedbox {
     $self;
 }
 
-=item $pdf->trimbox $name
+=item $pdf->trimbox($name)
 
-=item $pdf->trimbox $w, $h
+=item $pdf->trimbox($w, $h)
 
-=item $pdf->trimbox $llx, $lly, $urx, $ury
+=item $pdf->trimbox($llx, $lly, $urx, $ury)
 
 Sets the global trimbox.
-
-B<Example:>
-
-    $pdf = PDF::API2->new;
-    $pdf->trimbox('A4');
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->trimbox(595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->trimbox(0,0,595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
 
 =cut
 
@@ -1557,30 +1586,13 @@ sub trimbox {
     $self;
 }
 
-=item $pdf->artbox $name
+=item $pdf->artbox($name)
 
-=item $pdf->artbox $w, $h
+=item $pdf->artbox($w, $h)
 
-=item $pdf->artbox $llx, $lly, $urx, $ury
+=item $pdf->artbox($llx, $lly, $urx, $ury)
 
 Sets the global artbox.
-
-B<Example:>
-
-    $pdf = PDF::API2->new;
-    $pdf->artbox('A4');
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->artbox(595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
-
-    $pdf = PDF::API2->new;
-    $pdf->artbox(0,0,595,842);
-    ...
-    $pdf->saveas("our/new.pdf");
 
 =cut
 
@@ -1594,11 +1606,13 @@ sub artbox {
 
 =head1 FONT METHODS
 
-=over 4
+=over
 
-=item @allFontDirs = PDF::API2::addFontDirs $dir1, ..., $dirN
+=item @directories = PDF::API2::addFontDirs($dir1, $dir2, ...)
 
-Adds one or more directories to the search-path for finding font files.
+Adds one or more directories to the search path for finding font
+files.
+
 Returns the list of searched directories.
 
 =cut
@@ -1615,16 +1629,9 @@ sub _findFont {
     return($fonts[0]);
 }
 
-=item $font = $pdf->corefont $fontname [, %options]
+=item $font = $pdf->corefont($fontname, [%options])
 
-Returns a new adobe core font object.
-
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::Font::CoreFont> for an explanation.
-
+Returns a new Adobe core font object.
 
 B<Examples:>
 
@@ -1633,12 +1640,21 @@ B<Examples:>
     $font = $pdf->corefont('Helvetica');
     $font = $pdf->corefont('ZapfDingbats');
 
-
 Valid %options are:
 
-  '-encode' ... changes the encoding of the font from its default.
+=over
 
-  '-dokern' ... enables kerning if data is available.
+=item -encode
+
+Changes the encoding of the font from its default.
+
+=item -dokern
+
+Enables kerning if data is available.
+
+=back
+
+See Also: L<PDF::API2::Resource::Font::CoreFont>.
 
 =cut
 
@@ -1651,33 +1667,37 @@ sub corefont {
     return($obj);
 }
 
-=item $font = $pdf->psfont $psfile  [, %options]
+=item $font = $pdf->psfont($ps_file, [%options])
 
-Returns a new adobe type1 font object.
-
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::Font::Postscript> for an explanation.
+Returns a new Adobe Type1 font object.
 
 B<Examples:>
 
-    $font = $pdf->psfont( 'Times-Book.pfa', -afmfile => 'Times-Book.afm' );
-    $font = $pdf->psfont( '/fonts/Synest-FB.pfb', -pfmfile => '/fonts/Synest-FB.pfm' );
+    $font = $pdf->psfont('Times-Book.pfa', -afmfile => 'Times-Book.afm');
+    $font = $pdf->psfont('/fonts/Synest-FB.pfb', -pfmfile => '/fonts/Synest-FB.pfm');
 
 Valid %options are:
 
-  '-encode' ... changes the encoding of the font from its default.
+=over
 
-  '-afmfile' ... specifies that font metrics to be read from the
-                adobe font metrics file (AFM).
+=item -encode
 
-  '-pfmfile' ... specifies that font metrics to be read from the
-                windows printer font metrics file (PFM).
-                (this option overrides the -encode option)
+Changes the encoding of the font from its default.
 
-  '-dokern' ... enables kerning if data is available.
+=item -afmfile
+
+Specifies the location of the font metrics file.
+
+=item -pfmfile
+
+Specifies the location of the printer font metrics file.  This option
+overrides the -encode option.
+
+=item -dokern
+
+Enables kerning if data is available.
+
+=back
 
 =cut
 
@@ -1698,15 +1718,9 @@ sub psfont {
     return($obj);
 }
 
-=item $font = $pdf->ttfont $ttfile  [, %options]
+=item $font = $pdf->ttfont($ttf_file, [%options])
 
-Returns a new truetype or opentype font object.
-
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::CIDFont::TrueType> for an explanation.
+Returns a new TrueType or OpenType font object.
 
 B<Examples:>
 
@@ -1715,14 +1729,25 @@ B<Examples:>
 
 Valid %options are:
 
-  '-encode' ... changes the encoding of the font from its default.
+=over
 
-  '-isocmap' ... per default the MS Unicode Map is used, if this 
-                 option is given the ISO Unicode Map will be used.
+=item -encode
 
-  '-dokern' ... enables kerning if data is available.
+Changes the encoding of the font from its default.
 
-  '-noembed' ... disables embedding the fontfile.
+=item -isocmap
+
+Use the ISO Unicode Map instead of the default MS Unicode Map.
+
+=item -dokern
+
+Enables kerning if data is available.
+
+=item -noembed
+
+Disables embedding of the font file.
+
+=back
 
 =cut
 
@@ -1752,15 +1777,9 @@ sub nettfont {
     return($obj);
 }
 
-=item $font = $pdf->cjkfont $cjkname  [, %options]
+=item $font = $pdf->cjkfont($cjkname, [%options])
 
-Returns a new cjk font object.
-
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::CIDFont::CJKFont> for an explanation.
+Returns a new CJK font object.
 
 B<Examples:>
 
@@ -1769,7 +1788,15 @@ B<Examples:>
 
 Valid %options are:
 
-  '-encode' ... changes the encoding of the font from its default.
+=over
+
+=item -encode
+
+Changes the encoding of the font from its default.
+
+=back
+
+See Also: L<PDF::API2::Resource::CIDFont::CJKFont>
 
 =cut
 
@@ -1785,36 +1812,40 @@ sub cjkfont {
     return($obj);
 }
 
-=item $font = $pdf->synfont $basefont  [, %options]
+=item $font = $pdf->synfont($basefont, [%options])
 
 Returns a new synthetic font object.
 
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::Font::SynFont> for an explanation.
-
 B<Examples:>
 
-    $cf = $pdf->corefont('Times-Roman',-encode=>'latin1');
-    $sf = $pdf->synfont($cf,-slant=>0.85);  # compressed 85%
-    $sfb= $pdf->synfont($cf,-bold=>1);      # embolden by 10em
-    $sfi= $pdf->synfont($cf,-oblique=>-12); # italic at -12 degrees
+    $cf  = $pdf->corefont('Times-Roman', -encode => 'latin1');
+    $sf  = $pdf->synfont($cf, -slant => 0.85);  # compressed 85%
+    $sfb = $pdf->synfont($cf, -bold => 1);      # embolden by 10em
+    $sfi = $pdf->synfont($cf, -oblique => -12); # italic at -12 degrees
 
 Valid %options are:
 
-I<-slant>
-... slant/expansion factor (0.1-0.9 = slant, 1.1+ = expansion).
+=over
 
-I<-oblique>
-... italic angle (+/-)
+=item -slant
 
-I<-bold>
-... embolding factor (0.1+, bold=1, heavy=2, ...)
+Slant/expansion factor (0.1-0.9 = slant, 1.1+ = expansion).
 
-I<-space>
-... additional charspacing in em (0-1000)
+=item -oblique
+
+Italic angle (+/-)
+
+=item -bold
+
+Emboldening factor (0.1+, bold = 1, heavy = 2, ...)
+
+=item -space
+
+Additional character spacing in ems (0-1000)
+
+=back
+
+See Also: L<PDF::API2::Resource::Font::SynFont>
 
 =cut
 
@@ -1830,15 +1861,11 @@ sub synfont {
     return($obj);
 }
 
-=item $font = $pdf->bdfont $bdffile
+=item $font = $pdf->bdfont($bdf_file)
 
-Returns a new BDF font object, based on the specified adobe-bdf file.
+Returns a new BDF font object, based on the specified Adobe BDF file.
 
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::Font::BdFont> for an explanation.
+See Also: L<PDF::API2::Resource::Font::BdFont>
 
 =cut
 
@@ -1854,21 +1881,23 @@ sub bdfont {
     return($obj);
 }
 
-=item $font = $pdf->unifont @fontspecs, %options
+=item $font = $pdf->unifont(@fontspecs, %options)
 
 Returns a new uni-font object, based on the specified fonts and options.
 
-=cut
+B<BEWARE:> This is not a true pdf-object, but a virtual/abstract font definition!
 
-=pod
-
-B<BEWARE:> This is not a true pdf-object, but a virtual/abstract font-definition !
-
-See L<PDF::API2::Resource::UniFont> for an explanation.
+See Also: L<PDF::API2::Resource::UniFont>.
 
 Valid %options are:
 
-  '-encode' ... changes the encoding of the font from its default.
+=over
+
+=item -encode
+
+Changes the encoding of the font from its default.
+
+=back
 
 =cut
 
@@ -1884,11 +1913,11 @@ sub unifont {
 
 =head1 IMAGE METHODS
 
-=over 4
+=over
 
-=item $jpeg = $pdf->image_jpeg $file
+=item $jpeg = $pdf->image_jpeg($file)
 
-Returns a new jpeg image object.
+Imports and returns a new JPEG image object.
 
 =cut
 
@@ -1903,9 +1932,9 @@ sub image_jpeg {
     return($obj);
 }
 
-=item $tiff = $pdf->image_tiff $file
+=item $tiff = $pdf->image_tiff($file)
 
-Returns a new tiff image object.
+Imports and returns a new TIFF image object.
 
 =cut
 
@@ -1920,9 +1949,9 @@ sub image_tiff {
     return($obj);
 }
 
-=item $pnm = $pdf->image_pnm $file
+=item $pnm = $pdf->image_pnm($file)
 
-Returns a new pnm image object.
+Imports and returns a new PNM image object.
 
 =cut
 
@@ -1937,9 +1966,9 @@ sub image_pnm {
     return($obj);
 }
 
-=item $png = $pdf->image_png $file
+=item $png = $pdf->image_png($file)
 
-Returns a new png image object.
+Imports and returns a new PNG image object.
 
 =cut
 
@@ -1954,9 +1983,9 @@ sub image_png {
     return($obj);
 }
 
-=item $gif = $pdf->image_gif $file
+=item $gif = $pdf->image_gif($file)
 
-Returns a new gif image object.
+Imports and returns a new GIF image object.
 
 =cut
 
@@ -1971,11 +2000,11 @@ sub image_gif {
     return($obj);
 }
 
-=item $gdf = $pdf->image_gd $gdobj, %options
+=item $gdf = $pdf->image_gd($gd_object, %options)
 
-Returns a new image object from GD::Image.
+Imports and returns a new image object from GD::Image.
 
-B<Options:> The only option currently supported is C<-lossless =E<gt> 1>.
+B<Options:> The only option currently supported is C<< -lossless => 1 >>.
 
 =cut
 
@@ -2104,32 +2133,18 @@ sub image_gd {
 #    return($obj);
 #}
 
-=pod
-
-B<Examples:>
-
-    $jpeg = $pdf->image_jpeg('../some/nice/picture.jpeg');
-    $tiff = $pdf->image_tiff('../some/nice/picture.tiff');
-    $pnm = $pdf->image_pnm('../some/nice/picture.pnm');
-    $png = $pdf->image_png('../some/nice/picture.png');
-    $gif = $pdf->image_gif('../some/nice/picture.gif');
-    $gdf = $pdf->image_gd($gdobj);
-
 =back
 
 =head1 COLORSPACE METHODS
 
-=over 4
+=over
 
-=item $cs = $pdf->colorspace_act $file
+=item $cs = $pdf->colorspace_act($file)
 
-Returns a new colorspace-object based on a adobe-color-table file.
+Returns a new colorspace object based on an Adobe Color Table file.
 
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::ColorSpace::Indexed::ACTFile> for an explanation of the file format.
+See L<PDF::API2::Resource::ColorSpace::Indexed::ACTFile> for a
+reference to the file format's specification.
 
 =cut
 
@@ -2144,15 +2159,9 @@ sub colorspace_act {
     return($obj);
 }
 
-=item $cs = $pdf->colorspace_web
+=item $cs = $pdf->colorspace_web()
 
 Returns a new colorspace-object based on the web color palette.
-
-=cut
-
-=pod
-
-See L<PDF::API2::Resource::ColorSpace::Indexed::WebColor> for an explanation.
 
 =cut
 
@@ -2167,13 +2176,9 @@ sub colorspace_web {
     return($obj);
 }
 
-=item $cs = $pdf->colorspace_hue
+=item $cs = $pdf->colorspace_hue()
 
 Returns a new colorspace-object based on the hue color palette.
-
-=cut
-
-=pod
 
 See L<PDF::API2::Resource::ColorSpace::Indexed::Hue> for an explanation.
 
@@ -2190,21 +2195,19 @@ sub colorspace_hue {
     return($obj);
 }
 
-=item $cs = $pdf->colorspace_separation $tint, $color
+=item $cs = $pdf->colorspace_separation($tint, $color)
 
-Returns a new separation colorspace-object based on the parameters.
+Returns a new separation colorspace object based on the parameters.
 
-=cut
+I<$tint> can be any valid ink identifier, including but not limited
+to: 'Cyan', 'Magenta', 'Yellow', 'Black', 'Red', 'Green', 'Blue' or
+'Orange'.
 
-=pod
+I<$color> must be a valid color specification limited to: '#rrggbb',
+'!hhssvv', '%ccmmyykk' or a "named color" (rgb).
 
-I<$tint> can be any valid ink-identifier, including but not limited to:
-'Cyan', 'Magenta', 'Yellow', 'Black', 'Red', 'Green', 'Blue' or 'Orange'.
-
-I<$color> must be a valid color-specification limited to:
-'#rrggbb', '!hhssvv', '%ccmmyykk' or a "named color" (rgb).
-
-The colorspace model for will be automatically chosen based on the specified color.
+The colorspace model will automatically be chosen based on the
+specified color.
 
 =cut
 
@@ -2218,9 +2221,9 @@ sub colorspace_separation {
     return($obj);
 }
 
-=item $cs = $pdf->colorspace_devicen \@tintCSx [, $samples]
+=item $cs = $pdf->colorspace_devicen(\@tintCSx, [$samples])
 
-Returns a new DeviceN colorspace-object based on the parameters.
+Returns a new DeviceN colorspace object based on the parameters.
 
 B<Example:> 
 
@@ -2228,15 +2231,13 @@ B<Example:>
     $ma = $pdf->colorspace_separation('Magenta', '%0f00');
     $ye = $pdf->colorspace_separation('Yellow',  '%00f0');
     $bk = $pdf->colorspace_separation('Black',   '%000f');
+
     $pms023 = $pdf->colorspace_separation('PANTONE 032CV', '%0ff0');
 
     $dncs = $pdf->colorspace_devicen( [ $cy,$ma,$ye,$bk,$pms023 ] );
-    
-=cut
 
-=pod
-
-The colorspace model for will be automatically chosen based on the first colorspace specified.
+The colorspace model will automatically be chosen based on the first
+colorspace specified.
 
 =cut
 
@@ -2256,19 +2257,19 @@ sub colorspace_devicen {
 
 =head1 BARCODE METHODS
 
-=over 4
+=over
 
-=item $bc = $pdf->xo_codabar %opts
+=item $bc = $pdf->xo_codabar(%options)
 
-=item $bc = $pdf->xo_code128 %opts
+=item $bc = $pdf->xo_code128(%options)
 
-=item $bc = $pdf->xo_2of5int %opts
+=item $bc = $pdf->xo_2of5int(%options)
 
-=item $bc = $pdf->xo_3of9 %opts
+=item $bc = $pdf->xo_3of9(%options)
 
-=item $bc = $pdf->xo_ean13 %opts
+=item $bc = $pdf->xo_ean13(%options)
 
-creates the specified barcode object as a form-xo.
+Creates the specified barcode object as a form XObject.
 
 =cut
 
@@ -2331,15 +2332,11 @@ sub xo_ean13 {
 
 =head1 OTHER METHODS
 
-=over 4
+=over
 
-=item $xo = $pdf->xo_form
+=item $xo = $pdf->xo_form()
 
-Returns a new form-xobject.
-
-B<Examples:>
-
-    $xo = $pdf->xo_form;
+Returns a new form XObject.
 
 =cut
 
@@ -2354,13 +2351,9 @@ sub xo_form {
     return($obj);
 }
 
-=item $egs = $pdf->egstate
+=item $egs = $pdf->egstate()
 
 Returns a new extended graphics state object.
-
-B<Examples:>
-
-    $egs = $pdf->egstate;
 
 =cut
 
@@ -2375,9 +2368,9 @@ sub egstate {
     return($obj);
 }
 
-=item $obj = $pdf->pattern
+=item $obj = $pdf->pattern()
 
-Returns a new pattern-object.
+Returns a new pattern object.
 
 =cut
 
@@ -2392,9 +2385,9 @@ sub pattern {
     return($obj);
 }
 
-=item $obj = $pdf->shading
+=item $obj = $pdf->shading()
 
-Returns a new shading-object.
+Returns a new shading object.
 
 =cut
 
@@ -2409,7 +2402,7 @@ sub shading {
     return($obj);
 }
 
-=item $otls = $pdf->outlines
+=item $otls = $pdf->outlines()
 
 Returns a new or existing outlines object.
 
@@ -2429,12 +2422,6 @@ sub outlines {
     return($obj);
 
 }
-
-#=item $dst $pdf->named_destination $category, $name
-#
-#Returns a new or existing outlines object.
-#
-#=cut
 
 sub named_destination
 {
@@ -2473,22 +2460,21 @@ sub named_destination
 
 =head1 RESOURCE METHODS
 
-=over 4
+=over
 
-=item $pdf->resource $type, $key, $obj, $force
+=item $pdf->resource($type, $key, $obj, $force)
 
-Adds a resource to the global pdf tree.
+Adds a resource to the global PDF tree.
 
 B<Example:>
 
-    $pdf->resource('Font',$fontkey,$fontobj);
-    $pdf->resource('XObject',$imagekey,$imageobj);
-    $pdf->resource('Shading',$shadekey,$shadeobj);
-    $pdf->resource('ColorSpace',$spacekey,$speceobj);
+    $pdf->resource('Font', $fontkey, $fontobj);
+    $pdf->resource('XObject', $imagekey, $imageobj);
+    $pdf->resource('Shading', $shadekey, $shadeobj);
+    $pdf->resource('ColorSpace', $spacekey, $speceobj);
 
-B<Note:> You only have to add the required resources, if
-they are NOT handled by the *font*, *image*, *shade* or *space*
-methods.
+B<Note:> You only have to add the required resources if they are NOT
+handled by the font, image, shade or space methods.
 
 =cut
 
@@ -2542,265 +2528,12 @@ __END__
 
 =head1 BUGS
 
-This module does not work with perl's -l commandline switch.
+This module does not work with perl's -l command-line switch.
 
 =head1 AUTHOR
 
-alfred reibenschuh
+PDF::API2 was originally written by Alfred Reibenschuh.
 
-=head1 HISTORY
-
-    $Log: API2.pm,v $
-    Revision 2.15  2008/01/18 00:11:38  areibens
-    fixed catalog update and infohash utf16 from http://bugs.debian.org/461167
-
-    Revision 2.14  2007/11/16 19:30:31  areibens
-    added -noembed option
-
-    Revision 2.13  2007/11/14 23:01:32  areibens
-    fixed relative page insert
-
-    Revision 2.12  2007/11/14 22:49:49  areibens
-    added non-embedded truetype font (8-bit only) support
-
-    Revision 2.11  2007/09/18 22:29:31  areibens
-    added -printscalingnone option
-
-    Revision 2.10  2007/08/01 23:12:08  areibens
-    fix BOM in info strings
-
-    Revision 2.9  2007/05/16 21:45:32  areibens
-    fixed importpage doku bug http://rt.cpan.org/Ticket/Display.html?id=27152
-
-    Revision 2.8  2007/05/10 23:38:38  areibens
-    added note on importintoform and importpage for existing pdf-file
-
-    Revision 2.7  2007/05/08 18:32:10  areibens
-    renamed compress to compressFlate
-
-    Revision 2.6  2007/05/07 20:33:46  areibens
-    fix tounicode option
-
-    Revision 2.5  2007/03/17 20:07:21  areibens
-    fixed open to CORE::open
-
-    Revision 2.4  2007/03/16 15:28:30  areibens
-    replaced IOString dep. with scalar IO.
-
-    Revision 2.3  2007/03/15 14:15:19  areibens
-    added pageLabel method
-
-    Revision 2.2  2007/03/14 19:30:25  areibens
-    fixed -twocolumnright option typo
-
-    Revision 2.1  2007/02/22 08:00:37  areibens
-    changed import* methods to check its first arg -- thanks alankila2@yahoo.ca
-
-    Revision 2.0  2005/11/16 02:16:00  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:48  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:24  areibens
-    genesis
-
-    Revision 1.86  2005/10/21 19:51:05  fredo
-    fixed proc_pages
-
-    Revision 1.85  2005/10/20 21:06:39  fredo
-    documented '-dokern' option for ttfonts
-
-    Revision 1.84  2005/10/19 21:23:26  fredo
-    documented '-dokern' option for core- and psfonts
-
-    Revision 1.83  2005/09/12 16:54:21  fredo
-    added -isocmap option
-
-    Revision 1.82  2005/06/17 19:43:45  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.81  2005/06/17 18:53:04  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.80  2005/06/10 16:12:49  fredo
-    documentation update
-
-    Revision 1.79  2005/03/23 16:42:06  fredo
-    fixed typo in infoMetaAttributes
-
-    Revision 1.78  2005/03/21 22:36:36  fredo
-    fix for landscape imports
-
-    Revision 1.77  2005/03/15 17:31:06  fredo
-    corrected utf8 handling in info tags
-
-    Revision 1.76  2005/03/14 23:53:51  fredo
-    added xmpMetadata method to get/set XMP document data
-
-    Revision 1.75  2005/03/14 22:01:05  fredo
-    upd 2005
-
-    Revision 1.74  2005/02/25 18:07:48  fredo
-    no message
-
-    Revision 1.73  2005/02/17 07:03:14  fredo
-    added 'pageencaps' default option to fix unusual styled content streams
-
-    Revision 1.72  2005/02/14 20:09:48  fredo
-    fixed an openpage recompression bug / thanks to steve_wu@iinet.net.au
-
-    Revision 1.71  2005/01/03 03:47:52  fredo
-    fixed use named destination
-
-    Revision 1.70  2005/01/03 03:46:25  fredo
-    added named destination support
-
-    Revision 1.69  2004/12/31 03:12:09  fredo
-    no message
-
-    Revision 1.68  2004/12/16 00:30:51  fredo
-    added no warn for recursion
-
-    Revision 1.67  2004/11/29 15:19:23  fredo
-    added docs for bdfont, synfont and unifont
-
-    Revision 1.66  2004/11/24 20:09:57  fredo
-    added unifont
-
-    Revision 1.65  2004/10/17 03:57:21  fredo
-    added ToUnicode call for supported fonts
-
-    Revision 1.64  2004/10/01 01:39:24  fredo
-    reverted annotations import fix
-
-    Revision 1.63  2004/09/30 23:57:26  fredo
-    versioning beautify
-
-    Revision 1.62  2004/09/30 22:40:41  fredo
-    fixed pdf-producer to include OS
-
-    Revision 1.61  2004/09/30 21:18:21  fredo
-    changed file version back to cvs
-
-    Revision 1.60  2004/09/20 11:22:18  fredo
-    added default param to fix import-rotation
-    added default param to fix annotation-import
-
-    Revision 1.59  2004/09/03 12:35:09  fredo
-    pop'd to new version
-
-    Revision 1.58  2004/08/25 02:59:25  fredo
-    disabled memoize since long-running scripts bug from reused adresses
-
-    Revision 1.57  2004/07/24 23:10:55  fredo
-    fixed memoize bug for bdf fonts
-
-    Revision 1.56  2004/07/24 23:09:26  fredo
-    added bdf fonts
-
-    Revision 1.55  2004/07/23 13:41:11  fredo
-    fixed in decoding info dictionary
-
-    Revision 1.54  2004/07/21 08:07:17  fredo
-    added devicen colorspace
-
-    Revision 1.53  2004/07/15 14:28:21  fredo
-    added devicen colorspace
-
-    Revision 1.52  2004/06/22 01:33:43  fredo
-    corrected spelling
-
-    Revision 1.51  2004/06/21 22:33:10  fredo
-    added basic pattern/shading handling
-
-    Revision 1.50  2004/06/15 09:06:26  fredo
-    forced version to 1.50 for beta state
-
-    Revision 1.30  2004/06/15 08:09:07  fredo
-    fixed memoized bug
-
-    Revision 1.29  2004/06/01 00:09:57  fredo
-    memoized *font methods for braindead invokers
-
-    Revision 1.28  2004/05/28 11:29:01  fredo
-    added -lossless param to gd images
-
-    Revision 1.27  2004/05/21 10:12:29  fredo
-    fixed slight importpage quirk
-
-    Revision 1.26  2004/04/18 18:07:19  fredo
-    fixed _findFont method
-
-    Revision 1.25  2004/04/07 17:38:00  fredo
-    added infoMetaAttributes and support code
-
-    Revision 1.24  2004/04/07 10:48:53  fredo
-    fixed handling of ColorSpace/Separation
-
-    Revision 1.23  2004/04/06 21:00:52  fredo
-    separation colorspace now a full resource
-
-    Revision 1.22  2004/04/04 23:42:10  fredo
-    fixed 270 degree rotation in openpage
-
-    Revision 1.21  2004/04/04 23:36:33  fredo
-    added simple separation colorspace
-
-    Revision 1.20  2004/03/20 09:11:45  fredo
-    modified font search path methodname
-
-    Revision 1.19  2004/03/20 08:38:38  fredo
-    added isEncrypted determinator
-
-    Revision 1.18  2004/03/18 09:43:32  fredo
-    added font search path handling
-
-    Revision 1.17  2004/02/12 14:38:33  fredo
-    added openScalar method
-
-    Revision 1.16  2004/02/05 13:18:39  fredo
-    corrected info hash utf8 usage
-
-    Revision 1.15  2004/02/04 23:43:53  fredo
-    pdf info method now properly recognized utf8 parameters
-
-    Revision 1.14  2004/01/21 12:29:06  fredo
-    moved release versioning to PDF::API2::Version
-
-    Revision 1.13  2004/01/19 14:16:32  fredo
-    update for 0.40_16
-
-    Revision 1.12  2004/01/15 21:26:04  fredo
-    docbug: fixed inconsistent links
-
-    Revision 1.11  2004/01/14 18:25:41  fredo
-    release update 0.40_15
-
-    Revision 1.10  2004/01/12 13:52:41  fredo
-    update for 0.40_14
-
-    Revision 1.9  2004/01/08 23:56:20  fredo
-    corrected producer tag versioning, updated to release 0.40_13
-
-    Revision 1.8  2003/12/08 13:05:18  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.7  2003/12/08 11:47:38  Administrator
-    change step 3 for proper module versioning
-
-    Revision 1.6  2003/12/08 11:46:25  Administrator
-    change step 2 for proper module versioning
-
-    Revision 1.5  2003/12/08 11:43:10  Administrator
-    change step 1 for proper module versioning
-
-    Revision 1.4  2003/11/30 19:00:43  Administrator
-    added Code128/EAN128
-
-    Revision 1.3  2003/11/30 17:07:11  Administrator
-    merged into default
-
+It is currently being maintained by Steve Simms.
 
 =cut
-

@@ -1,54 +1,15 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: SynFont.pm,v 2.2 2008/08/10 14:43:08 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::Font::SynFont;
 
-BEGIN {
+our $VERSION = '2.016';
 
-    use utf8;
-    use Encode qw(:all);
+use base 'PDF::API2::Resource::Font';
 
-    use vars qw( @ISA $VERSION );
-    use PDF::API2::Resource::Font;
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-    use Math::Trig;
-    use Unicode::UCD 'charinfo';
+use Math::Trig;
+use Unicode::UCD 'charinfo';
 
-    @ISA=qw(PDF::API2::Resource::Font);
+use PDF::API2::Util;
+use PDF::API2::Basic::PDF::Utils;
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2008/08/10 14:43:08 $
-
-}
 no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
@@ -205,8 +166,6 @@ sub new
       $self->{'Encoding'}=$font->{Encoding};
     }
 
-    #use Data::Dumper;
-    #print Dumper($self->data);
     my @widths=();
     foreach my $w ($first..$last) 
     {
@@ -310,76 +269,6 @@ __END__
 =head1 AUTHOR
 
 alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: SynFont.pm,v $
-    Revision 2.2  2008/08/10 14:43:08  areibens
-    update dejavu to 2.25
-
-    Revision 2.1  2007/04/18 05:26:48  areibens
-    fixed unicode caos handling for some broken fonts having no unicode for a glyph
-
-    Revision 2.0  2005/11/16 02:18:14  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:50  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:27  areibens
-    genesis
-
-    Revision 1.17  2005/06/17 19:44:03  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.16  2005/06/17 18:53:34  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.14  2004/12/29 01:13:21  fredo
-    documented -caps option
-
-    Revision 1.13  2004/12/16 00:30:54  fredo
-    added no warn for recursion
-
-    Revision 1.12  2004/11/29 10:00:54  fredo
-    added charspacer docs
-
-    Revision 1.11  2004/11/26 15:14:59  fredo
-    fixed docs
-
-    Revision 1.10  2004/11/26 15:10:38  fredo
-    added spacer mod option
-
-    Revision 1.9  2004/06/15 09:14:53  fredo
-    removed cr+lf
-
-    Revision 1.8  2004/06/07 19:44:43  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.7  2004/02/10 15:55:42  fredo
-    fixed glyph generation for .notdef glyphs
-
-    Revision 1.6  2004/02/01 22:06:26  fredo
-    beautified caps generation
-
-    Revision 1.5  2004/02/01 19:27:18  fredo
-    fixed width calc for caps
-
-    Revision 1.4  2004/02/01 19:04:31  fredo
-    added caps capability
-
-    Revision 1.3  2003/12/08 13:06:01  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.2  2003/11/30 17:32:48  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.2  2003/11/30 16:57:05  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.1  2003/11/30 14:45:23  Administrator
-    added CVS id/log
-
 
 =cut
 

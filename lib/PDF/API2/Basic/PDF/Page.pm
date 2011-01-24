@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,18 +9,17 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Page.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Page;
 
-use strict;
-use vars qw(@ISA);
-@ISA = qw(PDF::API2::Basic::PDF::Pages);
-no warnings qw[ deprecated recursion uninitialized ];
-use PDF::API2::Basic::PDF::Pages;
+our $VERSION = '2.016';
 
+use base 'PDF::API2::Basic::PDF::Pages';
+
+use strict;
+no warnings qw[ deprecated recursion uninitialized ];
+
+use PDF::API2::Basic::PDF::Dict;
 use PDF::API2::Basic::PDF::Utils;
 
 =head1 NAME
@@ -50,9 +38,13 @@ structurally quite different.
 
 A page has various working variables:
 
+=over
+
 =item curstrm
 
 The currently open stream
+
+=back
 
 =head1 METHODS
 
@@ -135,4 +127,4 @@ sub ship_out
     $self;
 }
 
-
+1;

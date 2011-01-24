@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,11 +9,10 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Filter.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Filter;
+
+our $VERSION = '2.016';
 
 no warnings qw[ deprecated recursion uninitialized ];
 
@@ -117,9 +105,11 @@ sub release
 
 package PDF::API2::Basic::PDF::ASCII85Decode;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Filter';
+
 use strict;
-use vars qw(@ISA);
-@ISA = qw(PDF::API2::Basic::PDF::Filter);
 no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
@@ -207,9 +197,11 @@ sub infilt
 
 package PDF::API2::Basic::PDF::RunLengthDecode;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Filter';
+
 use strict;
-use vars qw(@ISA);
-@ISA = qw(PDF::API2::Basic::PDF::Filter);
 no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
@@ -297,9 +289,11 @@ sub infilt
 
 package PDF::API2::Basic::PDF::ASCIIHexDecode;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Filter';
+
 use strict;
-use vars qw(@ISA);
-@ISA = qw(PDF::API2::Basic::PDF::Filter);
 no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
@@ -331,10 +325,15 @@ sub infilt
 
 package PDF::API2::Basic::PDF::FlateDecode;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Filter';
+
 use strict;
-use vars qw(@ISA $havezlib);
 no warnings qw[ deprecated recursion uninitialized ];
-@ISA = qw(PDF::API2::Basic::PDF::Filter);
+
+our $havezlib;
+
 BEGIN
 {
     eval {require "Compress/Zlib.pm";};
@@ -374,10 +373,13 @@ sub infilt
 
 package PDF::API2::Basic::PDF::LZWDecode;
 
-use vars qw(@ISA @basedict);
-@ISA = qw(PDF::API2::Basic::PDF::FlateDecode);
-@basedict = map {pack("C", $_)} (0 .. 255, 0, 0);
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::FlateDecode';
+
 no warnings qw[ deprecated recursion uninitialized ];
+
+our @basedict = map {pack("C", $_)} (0 .. 255, 0, 0);
 
 sub new
 {
@@ -481,4 +483,3 @@ sub read_dat
 }
 
 1;
-

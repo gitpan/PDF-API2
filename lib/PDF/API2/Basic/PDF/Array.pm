@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,19 +9,14 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Array.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Array;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Objind';
+
 use strict;
-use vars qw(@ISA);
-
-use PDF::API2::Basic::PDF::Objind;
-@ISA = qw(PDF::API2::Basic::PDF::Objind);
-
-no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
@@ -44,9 +28,13 @@ This object is not an array but an associative array containing the array of
 elements. Thus, there are special instance variables for an array object, beginning
 with a space
 
+=over
+
 =item var
 
 Contains the actual array of elements
+
+=back
 
 =head1 METHODS
 
@@ -57,16 +45,15 @@ initialise the array with.
 
 =cut
 
-sub new
-{
+sub new {
     my ($class, @vals) = @_;
-    my ($self);
+    my $self = {};
 
     $self->{' val'} = [@vals];
     $self->{' realised'} = 1;
     bless $self, $class;
+    return $self;
 }
-
 
 =head2 $a->outobjdeep($fh, $pdf)
 
@@ -74,32 +61,25 @@ Outputs an array as a PDF array to the given filehandle.
 
 =cut
 
-sub outobjdeep
-{
+sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
-    my ($obj);
 
-    $fh->print("[ ");
-    foreach $obj (@{$self->{' val'}})
-    {
+    $fh->print('[ ');
+    foreach my $obj (@{$self->{' val'}}) {
         $obj->outobj($fh, $pdf);
-        $fh->print(" ");
+        $fh->print(' ');
     }
-    $fh->print("]");
+    $fh->print(']');
 }
 
-sub outxmldeep
-{
+sub outxmldeep {
     my ($self, $fh, $pdf, %opts) = @_;
-    my ($obj);
 
-    $opts{-xmlfh}->print("<Array>\n");
-    foreach $obj (@{$self->{' val'}})
-    {
+    $opts{'-xmlfh'}->print("<Array>\n");
+    foreach my $obj (@{$self->{' val'}}) {
         $obj->outxml($fh, $pdf, %opts);
     }
-    $opts{-xmlfh}->print("</Array>\n");
-
+    $opts{'-xmlfh'}->print("</Array>\n");
 }
 
 =head2 $a->removeobj($elem)
@@ -108,13 +88,11 @@ Removes all occurrences of an element from an array.
 
 =cut
 
-sub removeobj
-{
+sub removeobj {
     my ($self, $elem) = @_;
 
     $self->{' val'} = [grep($_ ne $elem, @{$self->{' val'}})];
 }
-
 
 =head2 $a->elementsof
 
@@ -123,9 +101,9 @@ not the array itself but the elements in the array.
 
 =cut
 
-sub elementsof
-{ wantarray ? @{$_[0]->{' val'}} : scalar @{$_[0]->{' val'}}; }
-
+sub elementsof {
+    return wantarray ? @{$_[0]->{' val'}} : scalar @{$_[0]->{' val'}};
+}
 
 =head2 $a->add_elements
 
@@ -134,16 +112,14 @@ is defined.
 
 =cut
 
-sub add_elements
-{
-    my ($self) = shift;
-    my ($e);
+sub add_elements {
+    my $self = shift();
 
-    foreach $e (@_)
-    { push (@{$self->{' val'}}, $e) if defined $e; }
-    $self;
+    foreach my $e (@_) {
+        push @{$self->{' val'}}, $e if defined $e;
+    }
+    return $self;
 }
-
 
 =head2 $a->val
 
@@ -152,9 +128,9 @@ containing the elements.
 
 =cut
 
-sub val
-{ $_[0]->{' val'}; }
-
+sub val {
+    return $_[0]->{' val'};
+}
 
 =head2 $a->copy($pdf)
 
@@ -163,23 +139,20 @@ with respect to a particular $pdf output context
 
 =cut
 
-sub copy
-{
+sub copy {
     my ($self, $pdf) = @_;
-    my ($res) = $self->SUPER::copy($pdf);
-    my ($e);
+    my $res = $self->SUPER::copy($pdf);
 
     $res->{' val'} = [];
-    foreach $e (@{$self->{' val'}})
-    {
-        if (UNIVERSAL::can($e, "is_obj") && !$e->is_obj($pdf))
-        { push(@{$res->{' val'}}, $e->copy($pdf)); }
-        else
-        { push(@{$res->{' val'}}, $e); }
+    foreach my $e (@{$self->{' val'}}) {
+        if (ref($e) and $e->can('is_obj') and not $e->is_obj($pdf)) {
+            push(@{$res->{' val'}}, $e->copy($pdf));
+        }
+        else {
+            push(@{$res->{' val'}}, $e);
+        }
     }
-    $res;
+    return $res;
 }
 
 1;
-
-

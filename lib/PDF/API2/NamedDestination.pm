@@ -1,77 +1,23 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   THIS LIBRARY IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
-#   MODIFY IT UNDER THE TERMS OF THE GNU LESSER GENERAL PUBLIC
-#   LICENSE AS PUBLISHED BY THE FREE SOFTWARE FOUNDATION; EITHER
-#   VERSION 2 OF THE LICENSE, OR (AT YOUR OPTION) ANY LATER VERSION.
-#
-#   THIS FILE IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
-#   AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-#   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
-#   FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
-#   SHALL THE AUTHORS AND COPYRIGHT HOLDERS AND THEIR CONTRIBUTORS 
-#   BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-#   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-#   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
-#   OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-#   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-#   ARISING IN ANY WAY OUT OF THE USE OF THIS FILE, EVEN IF 
-#   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#   SEE THE GNU LESSER GENERAL PUBLIC LICENSE FOR MORE DETAILS.
-#
-#   YOU SHOULD HAVE RECEIVED A COPY OF THE GNU LESSER GENERAL PUBLIC
-#   LICENSE ALONG WITH THIS LIBRARY; IF NOT, WRITE TO THE
-#   FREE SOFTWARE FOUNDATION, INC., 59 TEMPLE PLACE - SUITE 330,
-#   BOSTON, MA 02111-1307, USA.
-#
-#   $Id: NamedDestination.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::NamedDestination;
+
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Dict';
+
+use Encode qw(:all);
+
+use PDF::API2::Util;
+use PDF::API2::Basic::PDF::Utils;
+
+no warnings qw[ recursion uninitialized ];
 
 =head1 NAME
 
 PDF::API2::NamedDestination
 
-=head1 SYNOPSIS
-
 =head1 METHODS
 
-=over 4
-
-=cut
-
-BEGIN 
-{
-    use utf8;
-    use Encode qw(:all);
-
-    use vars qw( @ISA $VERSION );
-
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Basic::PDF::Dict;
-    
-    @ISA=qw(PDF::API2::Basic::PDF::Dict);
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.0 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2005/11/16 02:16:00 $
-}
-
-no warnings qw[ recursion uninitialized ];
+=over
 
 =item $dest = PDF::API2::NamedDestination->new $pdf
 
@@ -324,37 +270,10 @@ sub dest
 
 __END__
 
+=back
+
 =head1 AUTHOR
 
-alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: NamedDestination.pm,v $
-    Revision 2.0  2005/11/16 02:16:00  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:48  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:24  areibens
-    genesis
-
-    Revision 1.5  2005/06/17 19:43:47  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.4  2005/06/17 18:53:33  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.3  2005/03/14 22:01:05  fredo
-    upd 2005
-
-    Revision 1.2  2005/01/03 04:17:46  fredo
-    fixed dict creation
-
-    Revision 1.1  2005/01/03 03:31:41  fredo
-    genesis
-
-
+Alfred Reibenschuh
 
 =cut

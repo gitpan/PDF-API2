@@ -1,52 +1,25 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: UniFont.pm,v 2.1 2007/01/04 16:02:28 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::UniFont;
+
+our $VERSION = '2.016';
 
 BEGIN {
 
-    use utf8;
     use Encode qw(:all);
 
     use PDF::API2::Util;
 
     use POSIX;
 
-    use vars qw($VERSION);
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/01/04 16:02:28 $
-
 }
 no warnings qw[ deprecated recursion uninitialized ];
+
+=head1 NAME
+
+PDF::API2::Resource::UniFont
+
+=head1 METHODS
+
+=over
 
 =item $font = PDF::API2::Resource::UniFont->new $pdf, @fontspecs, %options
 
@@ -319,3 +292,5 @@ sub text
 1;
 
 __END__
+
+=back

@@ -1,64 +1,25 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: FontFile.pm,v 2.6 2008/01/04 08:08:39 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
 
-BEGIN {
+our $VERSION = '2.016';
 
-    use utf8;
-    use Encode qw(:all);
-    use PDF::API2::Util;
+use base 'PDF::API2::Basic::PDF::Dict';
 
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Basic::PDF::Dict;
-    use PDF::API2::Basic::TTF::Font;
-    use Data::Dumper;
-    use POSIX;
+use Encode qw(:all);
+use Font::TTF::Font;
+use POSIX qw(ceil floor);
 
-    use vars qw( @ISA $VERSION $cmap );
+use PDF::API2::Util;
+use PDF::API2::Basic::PDF::Utils;
 
-    @ISA = qw( PDF::API2::Basic::PDF::Dict );
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.6 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2008/01/04 08:08:39 $
-    $cmap={};
-}
 no warnings qw[ recursion uninitialized ];
 
+our $cmap = {};
 
 sub _look_for_cmap ($) {
     my $fname=lc(shift);
     $fname=~s/[^a-z0-9]+//gi;
     return({%{$cmap->{$fname}}}) if(defined $cmap->{$fname});
-    eval "require PDF::API2::Resource::CIDFont::CMap::$fname; ";
+    eval "require 'PDF/API2/Resource/CIDFont/CMap/$fname.cmap'";
     unless($@){
         return({%{$cmap->{$fname}}});
     } else {
@@ -385,7 +346,6 @@ sub read_kern_table
             read($fh, $buf, $len);
         }
     }
-    ##print Dumper($data);
     return($data);
 }
 
@@ -462,7 +422,7 @@ sub new {
     my $data={};
 
     die "cannot find font '$file' ..." unless(-f $file);
-    my $font=PDF::API2::Basic::TTF::Font->open($file);
+    my $font=Font::TTF::Font->open($file);
     $data->{obj}=$font;
 
     $class = ref $class if ref $class;
@@ -720,105 +680,3 @@ sub outobjdeep {
 
 
 1;
-
-__END__
-
-=head1 AUTHOR
-
-alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: FontFile.pm,v $
-    Revision 2.6  2008/01/04 08:08:39  areibens
-    apiname fix
-
-    Revision 2.5  2007/11/16 19:27:32  areibens
-    fixed -noembed option
-
-    Revision 2.4  2007/11/14 20:46:37  areibens
-    added noembed option
-
-    Revision 2.3  2007/05/07 20:31:21  areibens
-    fix subsetting
-
-    Revision 2.2  2007/03/17 20:38:51  areibens
-    replaced IOString dep. with scalar IO.
-
-    Revision 2.1  2007/01/04 17:39:40  areibens
-    fixed [rt.cpan.org #24203] Incompatibility in Wide character handling
-
-    Revision 2.0  2005/11/16 02:18:14  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:50  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:26  areibens
-    genesis
-
-    Revision 1.20  2005/11/02 18:21:29  fredo
-    added kerning lookup strategy
-
-    Revision 1.19  2005/10/22 19:56:55  fredo
-    added mor agressive kerning strategy
-
-    Revision 1.18  2005/10/20 21:05:14  fredo
-    added handling of optional kerning
-
-    Revision 1.17  2005/09/12 16:52:59  fredo
-    added -isocmap option; fixed cmap handling for fallback entries
-
-    Revision 1.16  2005/06/17 19:44:03  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.15  2005/06/17 18:53:34  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.14  2005/03/20 23:24:23  fredo
-    added workaround for broken truetype naming-tables
-
-    Revision 1.13  2005/03/14 22:01:27  fredo
-    upd 2005
-
-    Revision 1.12  2005/01/21 10:00:43  fredo
-    added handling of nosubset option
-
-    Revision 1.11  2004/12/29 01:12:27  fredo
-    fixed no warn for recursion
-
-    Revision 1.10  2004/12/16 00:30:53  fredo
-    added no warn for recursion
-
-    Revision 1.9  2004/11/22 21:07:55  fredo
-    fixed multibyte-encoding support to work consistently acress cjk/ttf/otf
-
-    Revision 1.8  2004/11/22 02:25:05  fredo
-    added advanced attributes
-
-    Revision 1.7  2004/08/25 03:03:27  fredo
-    removed fuss
-
-    Revision 1.6  2004/06/15 09:14:52  fredo
-    removed cr+lf
-
-    Revision 1.5  2004/06/07 19:44:43  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.4  2004/04/20 09:46:25  fredo
-    added glyph->read fix for subset-vector
-
-    Revision 1.3  2003/12/08 13:06:01  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.2  2003/11/30 17:31:41  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.2  2003/11/30 16:57:02  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.1  2003/11/30 14:16:39  Administrator
-    added CVS id/log
-
-
-=cut

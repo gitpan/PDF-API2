@@ -1,51 +1,19 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: Win32.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
-#=======================================================================
-
 package PDF::API2::Win32;
 
-    use vars qw($VERSION);
-    ( $VERSION ) = '$Revision: 2.0 $' =~ /Revision: (\S+)\s/; # $Date: 2005/11/16 02:16:00 $
+our $VERSION = '2.016';
 
-    no warnings qw[ deprecated recursion uninitialized ];
+no warnings qw[ deprecated recursion uninitialized ];
+
 
 package PDF::API2;
 
-use vars qw( $wf );
+our $VERSION = '2.016';
+
 use Win32::TieRegistry;
 
 no warnings qw[ recursion uninitialized ];
 
-$wf={};
+our $wf = {};
 
 $Registry->Delimiter("/");
 
@@ -114,47 +82,3 @@ sub winfont {
 }
 
 1;
-
-__END__
-
-=head1 HISTORY
-
-    $Log: Win32.pm,v $
-    Revision 2.0  2005/11/16 02:16:00  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:48  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:24  areibens
-    genesis
-
-    Revision 1.9  2005/03/14 22:01:06  fredo
-    upd 2005
-
-    Revision 1.8  2004/12/29 01:45:41  fredo
-    fixed no warn for recursion
-
-    Revision 1.7  2004/12/16 00:30:52  fredo
-    added no warn for recursion
-
-    Revision 1.6  2004/06/15 09:11:38  fredo
-    removed cr+lf
-
-    Revision 1.5  2004/06/07 19:44:13  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.4  2003/12/08 13:05:20  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.3  2003/11/30 17:21:13  Administrator
-    merged into default
-
-    Revision 1.2.2.1  2003/11/30 16:56:22  Administrator
-    merged into default
-
-    Revision 1.2  2003/11/29 23:31:21  Administrator
-    added CVS id/log
-
-
-=cut

@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,21 +9,21 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Pages.pm,v 2.1 2007/05/10 06:44:43 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Pages;
 
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Dict';
+
 use strict;
-use vars qw(@ISA %inst);
-@ISA = qw(PDF::API2::Basic::PDF::Dict);
 no warnings qw[ deprecated recursion uninitialized ];
 
+use PDF::API2::Basic::PDF::Array;
 use PDF::API2::Basic::PDF::Dict;
 use PDF::API2::Basic::PDF::Utils;
 
-%inst = map {$_ => 1} qw(Parent Type);
+our %inst = map {$_ => 1} qw(Parent Type);
 
 =head1 NAME
 
@@ -432,5 +421,3 @@ sub get_top
 }
 
 1;
-__END__
-

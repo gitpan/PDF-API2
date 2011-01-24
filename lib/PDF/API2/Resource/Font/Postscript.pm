@@ -1,63 +1,16 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: Postscript.pm,v 2.2 2007/06/27 20:54:16 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::Font::Postscript;
 
-BEGIN {
+our $VERSION = '2.016';
 
-    use utf8;
-    use Encode qw(:all);
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Resource::Font;
+use base 'PDF::API2::Resource::Font';
 
-    use POSIX;
-    use Compress::Zlib;
-    use File::Find;
-    use IO::File qw();
-    use vars qw(@ISA $VERSION);
+use Encode qw(:all);
+use IO::File qw();
 
-    @ISA = qw( PDF::API2::Resource::Font );
+use PDF::API2::Util;
+use PDF::API2::Basic::PDF::Utils;
 
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.2 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/06/27 20:54:16 $
-
-}
 no warnings qw[ deprecated recursion uninitialized ];
-
-=item $font = PDF::API2::Resource::Font::Postscript->new @parameters
-
-Returns a adobe type1 font object (called from $pdf->psfont).
-
-=cut
 
 sub new {
     my ($class, $pdf, $psfile, %opts) = @_;
@@ -481,8 +434,6 @@ sub readPFM {
         $df{KernPairs},
         $df{KernTracks} ) = unpack('v*',$buf);
 
-#use Data::Dumper;
-#    print STDERR Dumper(\%df);
     $data->{fontname}=$df{psName};
     $data->{fontname}=~s/[^A-Za-z0-9]+//og;
     $data->{apiname}=$df{windowsName};
@@ -555,76 +506,4 @@ sub readXFM {
     return($data);
 }
 
-
 1;
-
-__END__
-
-=head1 HISTORY
-
-    $Log: Postscript.pm,v $
-    Revision 2.2  2007/06/27 20:54:16  areibens
-    fix exporter warnings of IO::File
-
-    Revision 2.1  2006/08/14 18:08:16  areibens
-    moved "use io-file" to begin section
-
-    Revision 2.0  2005/11/16 02:18:14  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:50  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:27  areibens
-    genesis
-
-    Revision 1.13  2005/10/19 23:05:17  fredo
-    silenced 'cannot parse' since it is usually no error
-
-    Revision 1.12  2005/10/19 19:12:35  fredo
-    added handling of optional kerning
-
-    Revision 1.11  2005/10/01 23:38:00  fredo
-    added kerning+composite parsing
-    added nonembedding check
-
-    Revision 1.10  2005/10/01 22:41:07  fredo
-    fixed font-naming race condition for multiple document updates
-
-    Revision 1.9  2005/06/17 19:44:03  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.8  2005/06/17 18:53:34  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.7  2005/03/14 22:01:28  fredo
-    upd 2005
-
-    Revision 1.6  2004/12/16 00:30:54  fredo
-    added no warn for recursion
-
-    Revision 1.5  2004/06/15 09:14:53  fredo
-    removed cr+lf
-
-    Revision 1.4  2004/06/07 19:44:43  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.3  2003/12/08 13:06:01  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.2  2003/11/30 17:32:48  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.2  2003/11/30 16:57:05  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.1  2003/11/30 14:45:22  Administrator
-    added CVS id/log
-
-
- =head1 AUTHOR
-
-alfred reibenschuh
-
-=cut
-

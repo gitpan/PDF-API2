@@ -1,64 +1,29 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: Page.pm,v 2.1 2007/05/08 18:32:09 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Page;
 
-BEGIN {
+our $VERSION = '2.016';
 
-    use strict;
-    use vars qw(@ISA %pgsz $VERSION);
+use base 'PDF::API2::Basic::PDF::Pages';
 
-    @ISA = qw(PDF::API2::Basic::PDF::Pages);
-    use PDF::API2::Basic::PDF::Pages;
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Util;
+use POSIX qw(floor);
 
-    use PDF::API2::Annotation;
+use PDF::API2::Annotation;
+use PDF::API2::Content;
+use PDF::API2::Content::Text;
 
-    use PDF::API2::Content;
-    use PDF::API2::Content::Text;
-
-    use PDF::API2::Util;
-
-    use POSIX qw(floor ceil);
-    use Math::Trig;
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.1 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/05/08 18:32:09 $
-
-}
+use PDF::API2::Basic::PDF::Utils;
+use PDF::API2::Util;
 
 no warnings qw[ deprecated recursion uninitialized ];
 
-=head1 $page = PDF::API2::Page->new $pdf, $parent, $index
+=head1 NAME
+
+PDF::API2::Page
+
+=head1 METHODS
+
+=over
+
+=item $page = PDF::API2::Page->new $pdf, $parent, $index
 
 Returns a page object (called from $pdf->page).
 
@@ -118,22 +83,32 @@ Sets the mediabox.  This method supports the following aliases:
 
 =cut
 
-sub mediabox {
-    my ($self,$x1,$y1,$x2,$y2) = @_;
-    if(defined $x2) {
-        $self->{'MediaBox'}=PDFArray(
-            map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
-        );
-    } elsif(defined $y1) {
-        $self->{'MediaBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,$x1,$y1)
-        );
-    } else {
-        $self->{'MediaBox'}=PDFArray(
-            (map { PDFNum(float($_)) } page_size($x1))
-        );
+sub _set_bbox {
+    my ($box, $self, @values) = @_;
+    $self->{$box} = PDFArray( map { PDFNum(float($_)) } page_size(@values) );
+    return $self;
+}
+
+sub _get_bbox {
+    my ($self, $box_order) = @_;
+
+    # Default to letter
+    my @media = (0, 0, 612, 792);
+
+    foreach my $mediatype (@{$box_order}) {
+        my $mediaobj = $self->find_prop($mediatype);
+        if ($mediaobj) {
+            @media = map { $_->val } $mediaobj->elementsof;
+            last;
+        }
     }
-    return($self);
+
+    return @media;
+}
+
+
+sub mediabox {
+    return _set_bbox('MediaBox', @_);
 }
 
 =item ($llx, $lly, $urx, $ury) = $page->get_mediabox
@@ -143,19 +118,8 @@ Gets the mediabox based one best estimates or the default.
 =cut
 
 sub get_mediabox {
-    my ($self) = @_;
-    my $media = [ 0, 0, 612, 792 ];
-    foreach my $mediatype (
-        qw( MediaBox CropBox BleedBox TrimBox ArtBox )
-    ) {
-        my $mediaobj = undef;
-        if($mediaobj = $self->find_prop($mediatype)) {
-            $media = [ map{ $_->val } $mediaobj->elementsof ];
-            last;
-        }
-    }
-
-    return(@{$media});
+    my $self = shift();
+    return _get_bbox($self, [qw(MediaBox CropBox BleedBox TrimBox ArtBox)]);
 }
 
 =item $page->cropbox $w, $h
@@ -169,21 +133,7 @@ Sets the cropbox.  This method supports the same aliases as mediabox.
 =cut
 
 sub cropbox {
-    my ($self,$x1,$y1,$x2,$y2) = @_;
-    if(defined $x2) {
-        $self->{'CropBox'}=PDFArray(
-            map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
-        );
-    } elsif(defined $y1) {
-        $self->{'CropBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,$x1,$y1)
-        );
-    } else {
-        $self->{'CropBox'}=PDFArray(
-            (map { PDFNum(float($_)) } page_size($x1))
-        );
-    }
-    $self;
+    return _set_bbox('CropBox', @_);
 }
 
 =item ($llx, $lly, $urx, $ury) = $page->get_cropbox
@@ -192,21 +142,9 @@ Gets the cropbox based one best estimates or the default.
 
 =cut
 
-sub get_cropbox 
-{
-    my ($self) = @_;
-    my $media = [ 0, 0, 612, 792 ];
-    foreach my $mediatype (qw[CropBox BleedBox TrimBox ArtBox MediaBox])
-    {
-        my $mediaobj = undef;
-        if($mediaobj = $self->find_prop($mediatype)) 
-        {
-            $media = [ map{ $_->val } $mediaobj->elementsof ];
-            last;
-        }
-    }
-
-    return(@{$media});
+sub get_cropbox {
+    my $self = shift();
+    return _get_bbox($self, [qw(CropBox BleedBox TrimBox ArtBox MediaBox)]);
 }
 
 =item $page->bleedbox $w, $h
@@ -220,21 +158,7 @@ Sets the bleedbox.  This method supports the same aliases as mediabox.
 =cut
 
 sub bleedbox {
-    my ($self,$x1,$y1,$x2,$y2) = @_;
-    if(defined $x2) {
-        $self->{'BleedBox'}=PDFArray(
-            map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
-        );
-    } elsif(defined $y1) {
-        $self->{'BleedBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,$x1,$y1)
-        );
-    } else {
-        $self->{'BleedBox'}=PDFArray(
-            (map { PDFNum(float($_)) } page_size($x1))
-        );
-    }
-    $self;
+    return _set_bbox('BleedBox', @_);
 }
 
 =item ($llx, $lly, $urx, $ury) = $page->get_bleedbox
@@ -243,21 +167,9 @@ Gets the bleedbox based one best estimates or the default.
 
 =cut
 
-sub get_bleedbox 
-{
-    my ($self) = @_;
-    my $media = [ 0, 0, 612, 792 ];
-    foreach my $mediatype (qw[BleedBox TrimBox ArtBox MediaBox CropBox])
-    {
-        my $mediaobj = undef;
-        if($mediaobj = $self->find_prop($mediatype)) 
-        {
-            $media = [ map{ $_->val } $mediaobj->elementsof ];
-            last;
-        }
-    }
-
-    return(@{$media});
+sub get_bleedbox {
+    my $self = shift();
+    return _get_bbox($self, [qw(BleedBox TrimBox ArtBox MediaBox CropBox)]);
 }
 
 =item $page->trimbox $w, $h
@@ -269,21 +181,7 @@ Sets the trimbox.  This method supports the same aliases as mediabox.
 =cut
 
 sub trimbox {
-    my ($self,$x1,$y1,$x2,$y2) = @_;
-    if(defined $x2) {
-        $self->{'TrimBox'}=PDFArray(
-            map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
-        );
-    } elsif(defined $y1) {
-        $self->{'TrimBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,$x1,$y1)
-        );
-    } else {
-        $self->{'TrimBox'}=PDFArray(
-            (map { PDFNum(float($_)) } page_size($x1))
-        );
-    }
-    $self;
+    return _set_bbox('TrimBox', @_);
 }
 
 =item ($llx, $lly, $urx, $ury) = $page->get_trimbox
@@ -292,21 +190,9 @@ Gets the trimbox based one best estimates or the default.
 
 =cut
 
-sub get_trimbox 
-{
-    my ($self) = @_;
-    my $media = [ 0, 0, 612, 792 ];
-    foreach my $mediatype (qw[TrimBox ArtBox MediaBox CropBox BleedBox])
-    {
-        my $mediaobj = undef;
-        if($mediaobj = $self->find_prop($mediatype)) 
-        {
-            $media = [ map{ $_->val } $mediaobj->elementsof ];
-            last;
-        }
-    }
-
-    return(@{$media});
+sub get_trimbox {
+    my $self = shift();
+    return _get_bbox($self, [qw(TrimBox ArtBox MediaBox CropBox BleedBox)]);
 }
 
 =item $page->artbox $w, $h
@@ -320,21 +206,7 @@ Sets the artbox.  This method supports the same aliases as mediabox.
 =cut
 
 sub artbox {
-    my ($self,$x1,$y1,$x2,$y2) = @_;
-    if(defined $x2) {
-        $self->{'ArtBox'}=PDFArray(
-            map { PDFNum(float($_)) } ($x1,$y1,$x2,$y2)
-        );
-    } elsif(defined $y1) {
-        $self->{'ArtBox'}=PDFArray(
-            map { PDFNum(float($_)) } (0,0,$x1,$y1)
-        );
-    } else {
-        $self->{'ArtBox'}=PDFArray(
-            (map { PDFNum(float($_)) } page_size($x1))
-        );
-    }
-    $self;
+    return _set_bbox('ArtBox', @_);
 }
 
 =item ($llx, $lly, $urx, $ury) = $page->get_artbox
@@ -343,21 +215,9 @@ Gets the artbox based one best estimates or the default.
 
 =cut
 
-sub get_artbox 
-{
-    my ($self) = @_;
-    my $media = [ 0, 0, 612, 792 ];
-    foreach my $mediatype (qw[ArtBox TrimBox BleedBox CropBox MediaBox])
-    {
-        my $mediaobj = undef;
-        if($mediaobj = $self->find_prop($mediatype)) 
-        {
-            $media = [ map{ $_->val } $mediaobj->elementsof ];
-            last;
-        }
-    }
-
-    return(@{$media});
+sub get_artbox {
+    my $self = shift();
+    return _get_bbox($self, [qw(ArtBox TrimBox BleedBox CropBox MediaBox)]);
 }
 
 =item $page->rotate $deg
@@ -554,69 +414,10 @@ sub outobjdeep {
 
 __END__
 
+=back
+
 =head1 AUTHOR
 
-alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: Page.pm,v $
-    Revision 2.1  2007/05/08 18:32:09  areibens
-    renamed compress to compressFlate
-
-    Revision 2.0  2005/11/16 02:16:00  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:48  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:24  areibens
-    genesis
-
-    Revision 1.15  2005/11/02 18:18:20  fredo
-    added get_(crop/bleed/trim/art)box methods
-
-    Revision 1.14  2005/08/06 20:59:10  fredo
-    fixed anotation pdf-array again for other braindead softs
-
-    Revision 1.13  2005/06/17 19:43:47  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.12  2005/06/17 18:53:33  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.11  2005/06/14 12:54:16  fredo
-    fix for existing annotation dictionary (ex. ScanSoft PDF)
-
-    Revision 1.10  2005/03/14 22:01:05  fredo
-    upd 2005
-
-    Revision 1.9  2004/12/16 00:30:52  fredo
-    added no warn for recursion
-
-    Revision 1.8  2004/09/13 15:27:59  fredo
-    added rotate for acrobat-wise pdf-creators
-
-    Revision 1.7  2004/06/15 09:11:38  fredo
-    removed cr+lf
-
-    Revision 1.6  2004/06/09 16:29:12  fredo
-    fixed named page size handling for *box methods
-
-    Revision 1.5  2004/06/07 19:44:12  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.4  2003/12/08 13:05:19  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.3  2003/11/30 17:17:37  Administrator
-    merged into default
-
-    Revision 1.2.2.1  2003/11/30 16:56:22  Administrator
-    merged into default
-
-    Revision 1.2  2003/11/30 11:32:33  Administrator
-    added CVS id/log
-
+Alfred Reibenschuh
 
 =cut

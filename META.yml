@@ -1,14 +1,19 @@
---- #YAML:1.0
-name:                PDF-API2
-version:             0.73
-abstract:            TheNextGen PDF Create/Modify API
-license:             ~
-author:              
-    - areibens@cpan.org
-generated_by:        ExtUtils::MakeMaker version 6.42_01
-distribution_type:   module
-requires:     
-    Compress::Zlib:                1
+---
+abstract: 'Facilitates the creation and modification of PDF files'
+author:
+  - 'Steve Simms <steve@deefs.net>'
+build_requires: {}
+configure_requires:
+  ExtUtils::MakeMaker: 6.31
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.101900, CPAN::Meta::Converter version 2.102160'
+license: lgpl
 meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: PDF-API2
+requires:
+  Compress::Zlib: 1.0
+  Font::TTF: 0
+  perl: v5.8.1
+version: 2.016

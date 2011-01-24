@@ -1,54 +1,23 @@
-#=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#   Copyright 1999-2005 Alfred Reibenschuh <areibens@cpan.org>.
-#
-#=======================================================================
-#
-#   This library is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU Lesser General Public
-#   License as published by the Free Software Foundation; either
-#   version 2 of the License, or (at your option) any later version.
-#
-#   This library is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#   Lesser General Public License for more details.
-#
-#   You should have received a copy of the GNU Lesser General Public
-#   License along with this library; if not, write to the
-#   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-#   Boston, MA 02111-1307, USA.
-#
-#   $Id: TIFF.pm,v 2.3 2007/09/17 16:03:07 areibens Exp $
-#
-#=======================================================================
 package PDF::API2::Resource::XObject::Image::TIFF;
 
-BEGIN {
+our $VERSION = '2.016';
 
-    use PDF::API2::Util;
-    use PDF::API2::Basic::PDF::Utils;
-    use PDF::API2::Resource::XObject::Image;
+use base 'PDF::API2::Resource::XObject::Image';
 
-    use POSIX;
-    use Compress::Zlib;
+use Compress::Zlib;
 
-    use vars qw(@ISA $VERSION);
+use PDF::API2::Basic::PDF::Utils;
+use PDF::API2::Util;
 
-    @ISA = qw( PDF::API2::Resource::XObject::Image );
-
-    ( $VERSION ) = sprintf '%i.%03i', split(/\./,('$Revision: 2.3 $' =~ /Revision: (\S+)\s/)[0]); # $Date: 2007/09/17 16:03:07 $
-
-}
 no warnings qw[ deprecated recursion uninitialized ];
+
+=head1 NAME
+
+PDF::API2::Resource::XObject::Image::TIFF
+
+=head1 METHODS
+
+=over
 
 =item  $res = PDF::API2::Resource::XObject::Image::TIFF->new $pdf, $file [, $name]
 
@@ -375,6 +344,8 @@ sub tiffTag {
 
 package TiffFile;
 
+our $VERSION = '2.016';
+
 use IO::File;
 
 sub new {
@@ -638,66 +609,10 @@ sub readTags {
 
 __END__
 
+=back
+
 =head1 AUTHOR
 
-alfred reibenschuh
-
-=head1 HISTORY
-
-    $Log: TIFF.pm,v $
-    Revision 2.3  2007/09/17 16:03:07  areibens
-    update docs for tiffTag
-
-    Revision 2.2  2007/09/14 15:36:39  areibens
-    also read Tiff Tag 296 and make it available as resUnit
-
-    Revision 2.1  2007/03/17 20:38:51  areibens
-    replaced IOString dep. with scalar IO.
-
-    Revision 2.0  2005/11/16 02:18:23  areibens
-    revision workaround for SF cvs import not to screw up CPAN
-
-    Revision 1.2  2005/11/16 01:27:50  areibens
-    genesis2
-
-    Revision 1.1  2005/11/16 01:19:27  areibens
-    genesis
-
-    Revision 1.11  2005/06/17 19:44:04  fredo
-    fixed CPAN modulefile versioning (again)
-
-    Revision 1.10  2005/06/17 18:53:35  fredo
-    fixed CPAN modulefile versioning (dislikes cvs)
-
-    Revision 1.9  2005/03/14 22:01:31  fredo
-    upd 2005
-
-    Revision 1.8  2005/01/20 19:58:03  fredo
-    cleaned up handler and ccitt mode
-
-    Revision 1.7  2004/12/16 00:30:55  fredo
-    added no warn for recursion
-
-    Revision 1.6  2004/06/15 09:14:54  fredo
-    removed cr+lf
-
-    Revision 1.5  2004/06/07 19:44:44  fredo
-    cleaned out cr+lf for lf
-
-    Revision 1.4  2004/04/19 22:01:33  fredo
-    additional tag handling and tag-accessor
-
-    Revision 1.3  2003/12/08 13:06:11  Administrator
-    corrected to proper licencing statement
-
-    Revision 1.2  2003/11/30 17:37:17  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.2  2003/11/30 16:57:10  Administrator
-    merged into default
-
-    Revision 1.1.1.1.2.1  2003/11/30 16:00:42  Administrator
-    added CVS id/log
-
+Alfred Reibenschuh
 
 =cut

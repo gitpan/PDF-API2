@@ -1,17 +1,6 @@
 #=======================================================================
-#    ____  ____  _____              _    ____ ___   ____
-#   |  _ \|  _ \|  ___|  _   _     / \  |  _ \_ _| |___ \
-#   | |_) | | | | |_    (_) (_)   / _ \ | |_) | |    __) |
-#   |  __/| |_| |  _|    _   _   / ___ \|  __/| |   / __/
-#   |_|   |____/|_|     (_) (_) /_/   \_\_|  |___| |_____|
-#
-#   A Perl Module Chain to faciliate the Creation and Modification
-#   of High-Quality "Portable Document Format (PDF)" Files.
-#
-#=======================================================================
 #
 #   THIS IS A REUSED PERL MODULE, FOR PROPER LICENCING TERMS SEE BELOW:
-#
 #
 #   Copyright Martin Hosken <Martin_Hosken@sil.org>
 #
@@ -20,11 +9,14 @@
 #
 #   This specific module is licensed under the Perl Artistic License.
 #
-#
-#   $Id: Null.pm,v 2.0 2005/11/16 02:16:00 areibens Exp $
-#
 #=======================================================================
 package PDF::API2::Basic::PDF::Null;
+
+our $VERSION = '2.016';
+
+use base 'PDF::API2::Basic::PDF::Objind';
+
+use strict;
 
 =head1 NAME
 
@@ -35,17 +27,8 @@ PDF::API2::Basic::PDF::Objind and cannot be subclassed.
 
 =cut
 
-use strict;
-
-use vars qw(@ISA);
-@ISA = qw(PDF::API2::Basic::PDF::Objind);
-
-no warnings qw[ deprecated recursion uninitialized ];
-
 # There is only one null object  (section 3.2.8).
-my ($null_obj) = {};
-bless $null_obj, "PDF::API2::Basic::PDF::Null";
-
+my $null_obj = bless {}, 'PDF::API2::Basic::PDF::Null';
 
 =head2 PDF::API2::Basic::PDF::Null->new
 
@@ -73,17 +56,15 @@ Output the object in PDF format.
 
 =cut
 
-sub outobjdeep
-{
+sub outobjdeep {
     my ($self, $fh, $pdf) = @_;
-    $fh->print ("null");
+    $fh->print('null');
 }
 
-sub outxmldeep
-{
+sub outxmldeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    $opts{-xmlfh}->print("<Null/>\n");
+    $opts{'-xmlfh'}->print("<Null/>\n");
 }
 
 =head2 $s->is_obj
@@ -112,8 +93,7 @@ Return undef.
 
 =cut
 
-sub val
-{
+sub val {
     return undef;
 }
 
