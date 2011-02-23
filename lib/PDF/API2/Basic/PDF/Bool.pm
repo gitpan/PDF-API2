@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Bool;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::String';
 
@@ -43,12 +43,6 @@ Converts the value to a PDF output form
 
 sub as_pdf {
     return $_[0]->{'val'} ? 'true' : 'false';
-}
-
-sub outxmldeep {
-    my ($self, $fh, $pdf, %opts) = @_;
-
-    $opts{'-xmlfh'}->print('<Bool>' . $self->as_pdf() . "</Bool>\n");
 }
 
 1;

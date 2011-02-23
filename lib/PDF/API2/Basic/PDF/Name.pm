@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Name;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::String';
 
@@ -114,12 +114,6 @@ sub name_to_string ($;$) {
     }
 
     return $str;
-}
-
-sub outxmldeep {
-    my ($self, $fh, $pdf, %opts) = @_;
-
-    $opts{'-xmlfh'}->print('<Name>' . $self->val() . "</Name>\n");
 }
 
 1;

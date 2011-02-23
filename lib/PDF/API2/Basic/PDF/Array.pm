@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Array;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -70,16 +70,6 @@ sub outobjdeep {
         $fh->print(' ');
     }
     $fh->print(']');
-}
-
-sub outxmldeep {
-    my ($self, $fh, $pdf, %opts) = @_;
-
-    $opts{'-xmlfh'}->print("<Array>\n");
-    foreach my $obj (@{$self->{' val'}}) {
-        $obj->outxml($fh, $pdf, %opts);
-    }
-    $opts{'-xmlfh'}->print("</Array>\n");
 }
 
 =head2 $a->removeobj($elem)

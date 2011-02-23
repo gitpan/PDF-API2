@@ -1,6 +1,6 @@
 package PDF::API2::Util;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 no warnings qw[ recursion uninitialized ];
 
@@ -655,28 +655,6 @@ sub getPaperSizes {
     }
     return %sizes;
 }
-
-sub xmlMarkupDecl
-{
-    my $xml=<<EOT;
-<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<!DOCTYPE p [
-EOT
-    foreach my $n (sort {lc($a) cmp lc($b)} keys %n2u)
-    {
-        next if($n eq 'apos');
-        next if($n eq 'amp');
-        next if($n eq 'quot');
-        next if($n eq 'gt');
-        next if($n eq 'lt');
-        next if($n eq '.notdef');
-        next if($n2u{$n}<32);
-        $xml.=sprintf('<!ENTITY %s "&#x%04X;">',$n,$n2u{$n})."\n";
-    }
-    $xml.="\n]>\n";
-    return($xml);
-}
-
 
 1;
 

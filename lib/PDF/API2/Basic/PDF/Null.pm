@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Null;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -59,12 +59,6 @@ Output the object in PDF format.
 sub outobjdeep {
     my ($self, $fh, $pdf) = @_;
     $fh->print('null');
-}
-
-sub outxmldeep {
-    my ($self, $fh, $pdf, %opts) = @_;
-
-    $opts{'-xmlfh'}->print("<Null/>\n");
 }
 
 =head2 $s->is_obj

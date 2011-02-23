@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Resource::Font';
 
@@ -103,32 +103,6 @@ sub deep_copy
     { 
     die "what type is $_?";
     }
-}
-
-sub _look_for_fontfile ($) 
-{
-    my $fname=shift;
-    my $fpath=undef;
-    foreach my $dir (@INC) 
-    {
-        $fpath="$dir/PDF/API2/Resource/Font/CoreFont/$fname";
-        last if(-f $fpath);
-        $fpath=undef;
-    }
-    return($fpath);
-}
-
-sub _look_for_fontmetricfile ($) 
-{
-    my $fname=shift;
-    my $fpath=undef;
-    foreach my $dir (@INC) 
-    {
-        $fpath="$dir/PDF/API2/Resource/Font/CoreFont/$fname.fm";
-        last if(-f $fpath);
-        $fpath=undef;
-    }
-    return($fpath);
 }
 
 sub new 

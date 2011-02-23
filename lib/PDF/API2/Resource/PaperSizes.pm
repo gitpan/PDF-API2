@@ -1,6 +1,6 @@
 package PDF::API2::Resource::PaperSizes;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use strict;
 use warnings;

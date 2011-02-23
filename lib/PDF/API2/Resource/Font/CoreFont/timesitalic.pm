@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::timesitalic;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 $FONTDATA = {
     'fontname' => 'Times-Italic',

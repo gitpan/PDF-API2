@@ -1,3 +1,36 @@
+2.017     2011-02-22
+
+    - The DejaVu fonts have been removed from the distribution, since
+      they were only used by one example script.  If you need them for
+      your project, you can download them from http://dejavu-fonts.org
+
+    - Fix: Content->bogen() didn't behave as documented if $move was
+      set (it started drawing from the center of the circle rather
+      than [x1, y1]).
+
+    - The undocumented nettfont method has been removed, along with
+      the supporting PDF::API2::Resource::Font::neTrueType module.
+
+    - The undocumented save_xml method has been removed, along with
+      the supporting functions in PDF::API2::Basic::*.
+
+    - The undocumented textstate2 method has been removed from
+      PDF::API2::Content.
+
+    - [RT #58386] Fix create_egs call in Lite.pm (J Greely)
+
+    - [RT #62922] Fix string interpolation in pdf-merge.pl
+      (Guillaume Rousse and Jerome Quelin)
+
+    - [RT #65458] Fix an error in the synopsis (Frank Ammeter)
+
+    - [RT #66054] Fix rename of .cmap files so that they actually work
+      now. (cnhacktnt)
+
+    - The test suite has grown to nearly 200 tests, covering about 40%
+      of the codebase.  There's still plenty of room for improvement.
+
+
 2.016     2011-01-24
 
     - New Maintainer: Steve Simms (http://deefs.net)

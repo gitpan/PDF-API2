@@ -16,4 +16,4 @@ requires:
   Compress::Zlib: 1.0
   Font::TTF: 0
   perl: v5.8.1
-version: 2.016
+version: 2.017

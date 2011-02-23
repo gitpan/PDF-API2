@@ -1,6 +1,6 @@
 package PDF::API2::Content;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::Dict';
 
@@ -484,11 +484,15 @@ sub meterlimit {
     $this->add(_meterlimit($limit));
 }
 
-=item $content->linedash($on_off)
+=item $content->linedash()
+
+=item $content->linedash($length)
 
 =item $content->linedash($on, $off)
 
 Sets the line dash pattern.
+
+If passed without any arguments, a solid line will be drawn.
 
 If passed with one argument, the strokes and spaces will have equal
 lengths.
@@ -505,6 +509,8 @@ sub _linedash {
     } 
     else {
         if ($a[0]=~/^\-/) {
+            # Note: This is undocumented, and will probably go away in
+            # the future.
             my %a=@a;
             $a{-pattern}=[$a{-full}||0,$a{-clear}||0] unless(ref $a{-pattern});
             return ('[',floats(@{$a{-pattern}}),']',($a{-shift}||0),'d');
@@ -807,11 +813,13 @@ path instead of the continuation of an existing path.
 Set C<$outer> to a true value to draw the larger arc between the two
 points instead of the smaller one.
 
-Set C<$reverse> to a true value to start from the end of the arc and
-extend to the beginning.
+Set C<$reverse> to a true value to draw the mirror image of the
+specified arc.
 
-Note: 2*r cannot be smaller than the distance from C<[x1, y1]> to
+C<$radius * 2> cannot be smaller than the distance from C<[x1, y1]> to
 C<[x2, y2]>.
+
+Note: The curve will not appear until you call C<stroke>.
 
 =cut
 
@@ -854,7 +862,7 @@ sub bogen {
     $x=$x1-$p0_x;
     $y=$y1-$p0_y;
 
-    $self->move($x,$y) if($move);
+    $self->move($x1,$y1) if($move);
 
     while(scalar @points > 0) {
         $p1_x= $x + shift @points;
@@ -1507,40 +1515,6 @@ sub textstate {
         $state{scale}=[@{$self->{" scale"}}];
         $state{skew}=[@{$self->{" skew"}}];
         $state{translate}=[@{$self->{" translate"}}];
-        $state{fillcolor}=[@{$self->{" fillcolor"}}];
-        $state{strokecolor}=[@{$self->{" strokecolor"}}];
-    }
-    return %state;
-}
-
-sub textstate2 {
-    my $self = shift;
-    my %state;
-    if (scalar @_) {
-        %state = @_;
-        foreach my $k (qw[ charspace hspace wordspace lead rise render ]) {
-            next unless($state{$k});
-            if ($self->{" $k"} ne $state{$k}) {
-                $self->can($k)->($self, $state{$k});
-            }
-        }
-        if ($state{font} && $state{fontsize}) {
-            if ($self->{" font"} ne $state{font} || $self->{" fontsize"} ne $state{fontsize}) {
-                $self->font($state{font},$state{fontsize});
-            }
-        }
-        if($state{fillcolor}) {
-            $self->fillcolor(@{$state{fillcolor}});
-        }
-        if($state{strokecolor}) {
-            $self->strokecolor(@{$state{strokecolor}});
-        }
-        %state = ();
-    }
-    else {
-        foreach my $k (qw[ font fontsize charspace hspace wordspace lead rise render ]) {
-            $state{$k}=$self->{" $k"};
-        }
         $state{fillcolor}=[@{$self->{" fillcolor"}}];
         $state{strokecolor}=[@{$self->{" strokecolor"}}];
     }

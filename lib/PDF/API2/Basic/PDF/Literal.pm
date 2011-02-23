@@ -1,7 +1,7 @@
 # Literal PDF Object for Dirty Hacks ...
 package PDF::API2::Basic::PDF::Literal;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -78,12 +78,6 @@ sub outobjdeep
     {
         $fh->print($self->{-literal}); # next is endobj which has the final cr
     }
-}
-
-sub outxmldeep
-{
-    my ($self, $fh, $pdf, %opts) = @_;
-    $opts{-xmlfh}->print("<Literal>NOT HANDLED HERE.</Literal>\n");
 }
 
 sub val

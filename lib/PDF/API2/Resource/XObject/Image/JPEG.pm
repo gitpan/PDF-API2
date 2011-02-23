@@ -1,9 +1,10 @@
 package PDF::API2::Resource::XObject::Image::JPEG;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Resource::XObject::Image';
 
+use IO::File;
 use PDF::API2::Util;
 use PDF::API2::Basic::PDF::Utils;
 

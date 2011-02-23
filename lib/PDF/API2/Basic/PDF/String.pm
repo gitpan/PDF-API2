@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::String;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -171,12 +171,6 @@ sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
     $fh->print($self->as_pdf($pdf));
-}
-
-sub outxmldeep {
-    my ($self, $fh, $pdf, %opts) = @_;
-
-    $opts{'-xmlfh'}->print('<String>' . $self->val() . "</String>\n");
 }
 
 1;

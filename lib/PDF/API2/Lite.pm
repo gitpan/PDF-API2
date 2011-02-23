@@ -1,6 +1,6 @@
 package PDF::API2::Lite;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 BEGIN {
 
@@ -198,7 +198,7 @@ B<Examples:>
 
 sub create_egs {
     my ($self)=@_;
-    return $self->{api}->extgstate;
+    return $self->{api}->egstate;
 }
 
 =item $img = $pdf->image_jpeg $file

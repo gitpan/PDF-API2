@@ -1,6 +1,6 @@
 package PDF::API2::Resource::CIDFont::CJKFont;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use base 'PDF::API2::Resource::CIDFont';
 
@@ -77,7 +77,7 @@ sub _look_for_cmap ($) {
     my $fname=lc(shift);
     $fname=~s/[^a-z0-9]+//gi;
     return({%{$cmap->{$fname}}}) if(defined $cmap->{$fname});
-    eval "require PDF::API2::Resource::CIDFont::CMap::$fname; ";
+    eval "require \"PDF/API2/Resource/CIDFont/CMap/$fname.cmap\"";
     unless($@){
         return({%{$cmap->{$fname}}});
     } else {

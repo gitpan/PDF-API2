@@ -1,10 +1,9 @@
 package PDF::API2;
 
-our $VERSION = '2.016';
+our $VERSION = '2.017';
 
 use Encode qw(:all);
 use FileHandle;
-use IO::File;
 
 use PDF::API2::Basic::PDF::Utils;
 use PDF::API2::Util;
@@ -12,15 +11,6 @@ use PDF::API2::Util;
 use PDF::API2::Basic::PDF::File;
 use PDF::API2::Basic::PDF::Pages;
 use PDF::API2::Page;
-
-use PDF::API2::Resource::Font::CoreFont;
-use PDF::API2::Resource::Font::Postscript;
-use PDF::API2::Resource::Font::BdFont;
-use PDF::API2::Resource::Font::SynFont;
-use PDF::API2::Resource::Font::neTrueType;
-use PDF::API2::Resource::CIDFont::TrueType;
-use PDF::API2::Resource::CIDFont::CJKFont;
-use PDF::API2::Resource::UniFont;
 
 use PDF::API2::Resource::XObject::Image::JPEG;
 use PDF::API2::Resource::XObject::Image::TIFF;
@@ -35,12 +25,6 @@ use PDF::API2::Resource::ColorSpace::Indexed::WebColor;
 
 use PDF::API2::Resource::ColorSpace::Separation;
 use PDF::API2::Resource::ColorSpace::DeviceN;
-
-use PDF::API2::Resource::XObject::Form::BarCode::int2of5;
-use PDF::API2::Resource::XObject::Form::BarCode::codabar;
-use PDF::API2::Resource::XObject::Form::BarCode::code128;
-use PDF::API2::Resource::XObject::Form::BarCode::code3of9;
-use PDF::API2::Resource::XObject::Form::BarCode::ean13;
 
 use PDF::API2::Resource::XObject::Form::Hybrid;
 
@@ -86,7 +70,7 @@ PDF::API2 - Facilitates the creation and modification of PDF files
     $font = $pdf->ttfont('/path/to/font.ttf');
 
     # Add some text to the page
-    $text = $pdf->text();
+    $text = $page->text();
     $text->font($font, 20);
     $text->translate(200, 700);
     $text->text('Hello World!');
@@ -807,53 +791,34 @@ B<Example:>
 =cut
 
 sub pageLabel {
-    my $self=shift @_;
+    my $self = shift();
 
-	$self->{catalog}->{PageLabels}||=PDFDict();
-	$self->{catalog}->{PageLabels}->{Nums}||=PDFArray();
-	
-	my $arr=$self->{catalog}->{PageLabels}->{Nums};
-	while(scalar @_)
-	{
-		my $index=shift @_;
-		my $opts=shift @_;
-		
-		$arr->add_elements(PDFNum($index));
+    $self->{'catalog'}->{'PageLabels'} ||= PDFDict();
+    $self->{'catalog'}->{'PageLabels'}->{'Nums'} ||= PDFArray();
 
-		my $d=PDFDict();
-		if($opts->{-style} eq 'Roman')
-		{
-			$d->{S}=PDFName('R');
-		}
-		elsif($opts->{-style} eq 'roman')
-		{
-			$d->{S}=PDFName('r');
-		}
-		elsif($opts->{-style} eq 'Alpha')
-		{
-			$d->{S}=PDFName('A');
-		}
-		elsif($opts->{-style} eq 'alpha')
-		{
-			$d->{S}=PDFName('a');
-		}
-		else
-		{
-			$d->{S}=PDFName('D');
-		}
+    my $nums = $self->{'catalog'}->{'PageLabels'}->{'Nums'};
+    while (scalar @_) {
+        my $index = shift();
+        my $opts = shift();
 
-		if(defined $opts->{-prefix})
-		{
-			$d->{P}=PDFStr($opts->{-prefix});
-		}
+        $nums->add_elements(PDFNum($index));
 
-		if(defined $opts->{-start})
-		{
-			$d->{St}=PDFNum($opts->{-start});
-		}
-				
-		$arr->add_elements($d);
-	}
+        my $d = PDFDict();
+        $d->{'S'} = PDFName($opts->{'-style'} eq 'Roman' ? 'R' :
+                            $opts->{'-style'} eq 'roman' ? 'r' :
+                            $opts->{'-style'} eq 'Alpha' ? 'A' :
+                            $opts->{'-style'} eq 'alpha' ? 'a' : 'D');
+                          
+        if (defined $opts->{'-prefix'}) {
+            $d->{'P'} = PDFStr($opts->{'-prefix'});
+        }
+
+        if (defined $opts->{'-start'}) {
+            $d->{'St'} = PDFNum($opts->{'-start'});
+        }
+
+        $nums->add_elements($d);
+    }
 }
 
 =item $pdf->finishobjects(@objects)
@@ -968,16 +933,6 @@ sub save {
     }
     $self->end;
 }
-
-sub save_xml {
-    my ($self,$file)=@_;
-    my $fh=IO::File->new;
-    $fh->open("> $file");
-    $self->{pdf}->save_xml($fh);
-    $fh->close;
-    $self->end;
-}
-
 
 =item $string = $pdf->stringify()
 
@@ -1660,6 +1615,7 @@ See Also: L<PDF::API2::Resource::Font::CoreFont>.
 
 sub corefont {
     my ($self,$name,@opts)=@_;
+    require PDF::API2::Resource::Font::CoreFont;
     my $obj=PDF::API2::Resource::Font::CoreFont->new_api($self,$name,@opts);
     $self->resource('Font',$obj->name,$obj);
     $self->{pdf}->out_obj($self->{pages});
@@ -1709,6 +1665,7 @@ sub psfont {
         $opts{$o}=_findFont($opts{$o});
     }
     $psf=_findFont($psf);
+    require PDF::API2::Resource::Font::Postscript;
     my $obj=PDF::API2::Resource::Font::Postscript->new_api($self,$psf,%opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
@@ -1755,20 +1712,8 @@ sub ttfont {
     my ($self,$file,%opts)=@_;
 
     $file=_findFont($file);
+    require PDF::API2::Resource::CIDFont::TrueType;
     my $obj=PDF::API2::Resource::CIDFont::TrueType->new_api($self,$file,%opts);
-
-    $self->resource('Font',$obj->name,$obj,$self->{reopened});
-
-    $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap if($opts{-unicodemap}==1);
-    return($obj);
-}
-
-sub nettfont {
-    my ($self,$file,%opts)=@_;
-
-    $file=_findFont($file);
-    my $obj=PDF::API2::Resource::Font::neTrueType->new_api($self,$file,%opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
 
@@ -1803,6 +1748,7 @@ See Also: L<PDF::API2::Resource::CIDFont::CJKFont>
 sub cjkfont {
     my ($self,$name,%opts)=@_;
 
+    require PDF::API2::Resource::CIDFont::CJKFont;
     my $obj=PDF::API2::Resource::CIDFont::CJKFont->new_api($self,$name,%opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
@@ -1852,6 +1798,7 @@ See Also: L<PDF::API2::Resource::Font::SynFont>
 sub synfont {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::Font::SynFont;
     my $obj=PDF::API2::Resource::Font::SynFont->new_api($self,@opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
@@ -1872,6 +1819,7 @@ See Also: L<PDF::API2::Resource::Font::BdFont>
 sub bdfont {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::Font::BdFont;
     my $obj=PDF::API2::Resource::Font::BdFont->new_api($self,@opts);
 
     $self->resource('Font',$obj->name,$obj,$self->{reopened});
@@ -1904,6 +1852,7 @@ Changes the encoding of the font from its default.
 sub unifont {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::UniFont;
     my $obj=PDF::API2::Resource::UniFont->new_api($self,@opts);
 
     return($obj);
@@ -2018,120 +1967,6 @@ sub image_gd {
     $self->{pdf}->out_obj($self->{pages});
     return($obj);
 }
-
-#=item $img = $pdf->image_rgb $file_or_ref, %options
-#
-#Returns a new image object from a raw RGB image.
-#
-#B<Options:> C<-width>, C<-height>, C<-bits> (required).
-#
-#=cut
-#
-#sub image_rgb {
-#    my ($self,$rgb,@opts)=@_;
-#
-#    my $obj=PDF::API2::Resource::XObject::Image::RGBA->new_api($self,$rgb,-alpha=>0,@opts);
-#
-#    $self->resource('XObject',$obj->name,$obj);
-#
-#    $self->{pdf}->out_obj($self->{pages});
-#    return($obj);
-#}
-
-#=item $img = $pdf->image_rgba $file_or_ref, %options
-#
-#Returns a new image object from a raw RGBA image.
-#
-#B<Options:> C<-width>, C<-height>, C<-bits> (required).
-#
-#=cut
-#
-#sub image_rgba {
-#    my ($self,$rgb,@opts)=@_;
-#
-#    my $obj=PDF::API2::Resource::XObject::Image::RGBA->new_api($self,$rgb,-alpha=>1,@opts);
-#
-#    $self->resource('XObject',$obj->name,$obj);
-#
-#    $self->{pdf}->out_obj($self->{pages});
-#    return($obj);
-#}
-
-#=item $img = $pdf->image_cmyk $file_or_ref, %options
-#
-#Returns a new image object from a raw CMYK image.
-#
-#B<Options:> C<-width>, C<-height>, C<-bits> (required).
-#
-#=cut
-#
-#sub image_cmyk {
-#    my ($self,$rgb,@opts)=@_;
-#
-#    my $obj=PDF::API2::Resource::XObject::Image::CMYKA->new_api($self,$rgb,-alpha=>0,@opts);
-#
-#    $self->resource('XObject',$obj->name,$obj);
-#
-#    $self->{pdf}->out_obj($self->{pages});
-#    return($obj);
-#}
-
-#=item $img = $pdf->image_cmyka $file_or_ref, %options
-#
-#Returns a new image object from a raw CMYKA image.
-#
-#B<Options:> C<-width>, C<-height>, C<-bits> (required).
-#
-#=cut
-#
-#sub image_cmyka {
-#    my ($self,$rgb,@opts)=@_;
-#
-#    my $obj=PDF::API2::Resource::XObject::Image::CMYKA->new_api($self,$rgb,-alpha=>1,@opts);
-#
-#    $self->resource('XObject',$obj->name,$obj);
-#
-#    $self->{pdf}->out_obj($self->{pages});
-#    return($obj);
-#}
-
-#=item $img = $pdf->image_indexed $file_or_ref, %options
-#
-#Returns a new image object from a raw indexed image.
-#
-#B<Options:> C<-width>, C<-height>, C<-bits>, C<-colorspace> (required).
-#
-#=cut
-#
-#sub image_indexed {
-#    my ($self,$rgb,@opts)=@_;
-#
-#    my $obj=PDF::API2::Resource::XObject::Image::Indexed->new_api($self,$rgb,-alpha=>0,@opts);
-#
-#    $self->resource('XObject',$obj->name,$obj);
-#
-#    $self->{pdf}->out_obj($self->{pages});
-#    return($obj);
-#}
-
-#=item $img = $pdf->image_indexedalpha $file_or_ref, %options
-#
-#Returns a new image object from a raw indexed-alpha image.
-#
-#B<Options:> C<-width>, C<-height>, C<-bits>, C<-colorspace> (required).
-#
-#=cut
-#
-#sub image_indexedalpha {
-#    my ($self,$rgb,@opts)=@_;
-#
-#    my $obj=PDF::API2::Resource::XObject::Image::Indexed->new_api($self,$rgb,-alpha=>1,@opts);
-#
-#    $self->resource('XObject',$obj->name,$obj);
-#
-#    $self->{pdf}->out_obj($self->{pages});
-#    return($obj);
-#}
 
 =back
 
@@ -2276,6 +2111,7 @@ Creates the specified barcode object as a form XObject.
 sub xo_code128 {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::XObject::Form::BarCode::coda128;
     my $obj=PDF::API2::Resource::XObject::Form::BarCode::code128->new_api($self,@opts);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -2287,6 +2123,7 @@ sub xo_code128 {
 sub xo_codabar {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::XObject::Form::BarCode::codabar;
     my $obj=PDF::API2::Resource::XObject::Form::BarCode::codabar->new_api($self,@opts);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -2298,6 +2135,7 @@ sub xo_codabar {
 sub xo_2of5int {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::XObject::Form::BarCode::int2of5;
     my $obj=PDF::API2::Resource::XObject::Form::BarCode::int2of5->new_api($self,@opts);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -2309,6 +2147,7 @@ sub xo_2of5int {
 sub xo_3of9 {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::XObject::Form::BarCode::code3of9;
     my $obj=PDF::API2::Resource::XObject::Form::BarCode::code3of9->new_api($self,@opts);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -2320,6 +2159,7 @@ sub xo_3of9 {
 sub xo_ean13 {
     my ($self,@opts)=@_;
 
+    require PDF::API2::Resource::XObject::Form::BarCode::ean13;
     my $obj=PDF::API2::Resource::XObject::Form::BarCode::ean13->new_api($self,@opts);
 
     $self->resource('XObject',$obj->name,$obj);
