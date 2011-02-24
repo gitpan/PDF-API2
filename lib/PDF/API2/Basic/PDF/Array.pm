@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Array;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use base 'PDF::API2::Basic::PDF::Objind';
 

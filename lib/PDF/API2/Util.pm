@@ -1,6 +1,6 @@
 package PDF::API2::Util;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 no warnings qw[ recursion uninitialized ];
 
@@ -135,9 +135,17 @@ sub float {
         # just in case we have an integer
         return sprintf('%i',$f);
     } elsif($ad>0){
-        return sprintf('%f',$f);
+        my $value = sprintf('%f',$f);
+        # Remove trailing zeros
+        $value =~ s/(\.\d*?)0+$/$1/;
+        $value =~ s/\.$//;
+        return $value;
     } else {
-        return sprintf('%.'.abs($ad).'f',$f);
+        my $value = sprintf('%.'.abs($ad).'f',$f);
+        # Remove trailing zeros
+        $value =~ s/(\.\d*?)0+$/$1/;
+        $value =~ s/\.$//;
+        return $value;
     }
 }
 sub floats { return map { float($_); } @_; }

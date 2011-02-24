@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::courierboldoblique;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 $FONTDATA = {
     'fontname' => 'Courier-BoldOblique',

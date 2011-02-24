@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Filter;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 no warnings qw[ deprecated recursion uninitialized ];
 
@@ -105,7 +105,7 @@ sub release
 
 package PDF::API2::Basic::PDF::ASCII85Decode;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use base 'PDF::API2::Basic::PDF::Filter';
 
@@ -197,7 +197,7 @@ sub infilt
 
 package PDF::API2::Basic::PDF::RunLengthDecode;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use base 'PDF::API2::Basic::PDF::Filter';
 
@@ -289,7 +289,7 @@ sub infilt
 
 package PDF::API2::Basic::PDF::ASCIIHexDecode;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use base 'PDF::API2::Basic::PDF::Filter';
 
@@ -325,7 +325,7 @@ sub infilt
 
 package PDF::API2::Basic::PDF::FlateDecode;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use base 'PDF::API2::Basic::PDF::Filter';
 
@@ -373,7 +373,7 @@ sub infilt
 
 package PDF::API2::Basic::PDF::LZWDecode;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use base 'PDF::API2::Basic::PDF::FlateDecode';
 

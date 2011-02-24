@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::timesroman;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 $FONTDATA = {
     'fontname' => 'Times-Roman',

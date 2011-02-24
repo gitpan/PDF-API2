@@ -1,6 +1,6 @@
 package PDF::API2::Outlines;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 use warnings;
 use strict;

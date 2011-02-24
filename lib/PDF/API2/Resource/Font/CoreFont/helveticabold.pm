@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::helveticabold;
 
-our $VERSION = '2.017';
+our $VERSION = '2.018';
 
 $FONTDATA = {
     'fontname' => 'Helvetica-Bold',
