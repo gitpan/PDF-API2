@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Image::PNM;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 # For spec details, see man pages pam(5), pbm(5), pgm(5), pnm(5),
 # ppm(5), which were pasted into the __END__ of this file in an

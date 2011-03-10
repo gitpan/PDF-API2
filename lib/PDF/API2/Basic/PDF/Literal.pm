@@ -1,7 +1,7 @@
 # Literal PDF Object for Dirty Hacks ...
 package PDF::API2::Basic::PDF::Literal;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use base 'PDF::API2::Basic::PDF::Objind';
 

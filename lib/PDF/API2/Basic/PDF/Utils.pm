@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Utils;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 =head1 NAME
 

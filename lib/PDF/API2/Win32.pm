@@ -1,13 +1,13 @@
 package PDF::API2::Win32;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 no warnings qw[ deprecated recursion uninitialized ];
 
 
 package PDF::API2;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use Win32::TieRegistry;
 

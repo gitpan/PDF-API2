@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Pages;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use base 'PDF::API2::Basic::PDF::Dict';
 

@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Image::TIFF;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use base 'PDF::API2::Resource::XObject::Image';
 
@@ -30,7 +30,7 @@ sub new
     my ($class,$pdf,$file,$name) = @_;
     my $self;
 
-    my $tif=TiffFile->new($file);
+    my $tif=PDF::API2::Resource::XObject::Image::Tiff::File->new($file);
     
     # in case of problematic things 
     #  proxy to other modules
@@ -342,9 +342,9 @@ sub tiffTag {
     return($self->{' tiff'}->{$tag});
 }
 
-package TiffFile;
+package PDF::API2::Resource::XObject::Image::Tiff::File;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use IO::File;
 

@@ -23,7 +23,7 @@ my %WriteMakefileArgs = (
     'Compress::Zlib' => '1.0',
     'Font::TTF' => '0'
   },
-  'VERSION' => '2.018',
+  'VERSION' => '2.019',
   'test' => {
     'TESTS' => 't/*.t'
   }

@@ -1,6 +1,6 @@
 package PDF::API2::Outline;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use base 'PDF::API2::Basic::PDF::Dict';
 

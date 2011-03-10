@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::webdings;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 $FONTDATA = {
     'fontname' => 'Webdings',

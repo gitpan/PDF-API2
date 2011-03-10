@@ -1,6 +1,6 @@
 package PDF::API2;
 
-our $VERSION = '2.018';
+our $VERSION = '2.019';
 
 use Encode qw(:all);
 use FileHandle;
@@ -11,13 +11,6 @@ use PDF::API2::Util;
 use PDF::API2::Basic::PDF::File;
 use PDF::API2::Basic::PDF::Pages;
 use PDF::API2::Page;
-
-use PDF::API2::Resource::XObject::Image::JPEG;
-use PDF::API2::Resource::XObject::Image::TIFF;
-use PDF::API2::Resource::XObject::Image::PNM;
-use PDF::API2::Resource::XObject::Image::PNG;
-use PDF::API2::Resource::XObject::Image::GIF;
-use PDF::API2::Resource::XObject::Image::GD;
 
 use PDF::API2::Resource::ColorSpace::Indexed::ACTFile;
 use PDF::API2::Resource::ColorSpace::Indexed::Hue;
@@ -32,7 +25,6 @@ use PDF::API2::Resource::ExtGState;
 use PDF::API2::Resource::Pattern;
 use PDF::API2::Resource::Shading;
 
-use PDF::API2::Outlines;
 use PDF::API2::NamedDestination;
 
 no warnings qw[ deprecated recursion uninitialized ];
@@ -1873,6 +1865,7 @@ Imports and returns a new JPEG image object.
 sub image_jpeg {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::XObject::Image::JPEG;
     my $obj=PDF::API2::Resource::XObject::Image::JPEG->new_api($self,$file);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -1890,6 +1883,7 @@ Imports and returns a new TIFF image object.
 sub image_tiff {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::XObject::Image::TIFF;
     my $obj=PDF::API2::Resource::XObject::Image::TIFF->new_api($self,$file);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -1907,6 +1901,7 @@ Imports and returns a new PNM image object.
 sub image_pnm {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::XObject::Image::PNM;
     my $obj=PDF::API2::Resource::XObject::Image::PNM->new_api($self,$file);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -1924,6 +1919,7 @@ Imports and returns a new PNG image object.
 sub image_png {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::XObject::Image::PNG;
     my $obj=PDF::API2::Resource::XObject::Image::PNG->new_api($self,$file);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -1941,6 +1937,7 @@ Imports and returns a new GIF image object.
 sub image_gif {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::XObject::Image::GIF;
     my $obj=PDF::API2::Resource::XObject::Image::GIF->new_api($self,$file);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -1960,6 +1957,7 @@ B<Options:> The only option currently supported is C<< -lossless => 1 >>.
 sub image_gd {
     my ($self,$gd,%opts)=@_;
 
+    require PDF::API2::Resource::XObject::Image::GD;
     my $obj=PDF::API2::Resource::XObject::Image::GD->new_api($self,$gd,undef,%opts);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -2111,7 +2109,7 @@ Creates the specified barcode object as a form XObject.
 sub xo_code128 {
     my ($self,@opts)=@_;
 
-    require PDF::API2::Resource::XObject::Form::BarCode::coda128;
+    require PDF::API2::Resource::XObject::Form::BarCode::code128;
     my $obj=PDF::API2::Resource::XObject::Form::BarCode::code128->new_api($self,@opts);
 
     $self->resource('XObject',$obj->name,$obj);
@@ -2249,17 +2247,18 @@ Returns a new or existing outlines object.
 =cut
 
 sub outlines {
-    my ($self)=@_;
+    my $self = shift();
 
-    $self->{pdf}->{Root}->{Outlines}||=PDF::API2::Outlines->new($self);
+    require PDF::API2::Outlines;
+    $self->{pdf}->{Root}->{Outlines} ||= PDF::API2::Outlines->new($self);
 
-    my $obj=$self->{pdf}->{Root}->{Outlines};
+    my $obj = $self->{pdf}->{Root}->{Outlines};
 
-    $self->{pdf}->new_obj($obj) if(!$obj->is_obj($self->{pdf}));
+    $self->{pdf}->new_obj($obj) unless $obj->is_obj($self->{pdf});
     $self->{pdf}->out_obj($obj);
     $self->{pdf}->out_obj($self->{pdf}->{Root});
 
-    return($obj);
+    return $obj;
 
 }
 
