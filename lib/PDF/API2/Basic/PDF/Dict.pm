@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -122,8 +122,8 @@ sub outobjdeep
             $fh->print(" ");
         }
     }
-    while (($key, $val) = each %{$self})
-    {
+    foreach $key (sort keys %$self) {
+        $val = $self->{$key};
         next if ($key =~ m/^[\s\-]/o || $specs{$key});
         next if (($val || '') eq '');
         $key = PDF::API2::Basic::PDF::Name::string_to_name ($key, $pdf);
@@ -162,7 +162,7 @@ sub outobjdeep
                 $self->{'Filter'}{' val'}[$i]{'val'} = $temp;      # !!!
             } elsif ($temp eq 'FlateDecode')
             { $hasflate = -2; }
-            $temp1 = "PDF::API2::Basic::PDF::$temp";
+            $temp1 = "PDF::API2::Basic::PDF::Filter::$temp";
             push (@filts, $temp1->new);
         }
         splice(@{$self->{'Filter'}{' val'}}, $hasflate, 1) if ($hasflate > -1);
@@ -246,7 +246,7 @@ sub read_stream
     {
         foreach $f ($self->{'Filter'}->elementsof)
         {
-            my ($temp) = "PDF::API2::Basic::PDF::" . $f->val;
+            my ($temp) = "PDF::API2::Basic::PDF::Filter::" . $f->val;
             push(@filts, $temp->new());
         }
     }

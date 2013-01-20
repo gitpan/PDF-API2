@@ -2,30 +2,30 @@
 use strict;
 use warnings;
 
-BEGIN { require v5.8.1; }
+use 5.008001;
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Facilitates the creation and modification of PDF files',
-  'AUTHOR' => 'Steve Simms <steve@deefs.net>',
-  'BUILD_REQUIRES' => {},
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+  "ABSTRACT" => "Facilitates the creation and modification of PDF files",
+  "AUTHOR" => "Steve Simms <steve\@deefs.net>",
+  "BUILD_REQUIRES" => {},
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'PDF-API2',
-  'EXE_FILES' => [],
-  'LICENSE' => 'lgpl',
-  'NAME' => 'PDF::API2',
-  'PREREQ_PM' => {
-    'Compress::Zlib' => '1.0',
-    'Font::TTF' => '0'
+  "DISTNAME" => "PDF-API2",
+  "EXE_FILES" => [],
+  "LICENSE" => "lgpl",
+  "NAME" => "PDF::API2",
+  "PREREQ_PM" => {
+    "Compress::Zlib" => "1.0",
+    "Font::TTF" => 0
   },
-  'VERSION' => '2.019',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "2.020",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 

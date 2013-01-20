@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Image::TIFF;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 use base 'PDF::API2::Resource::XObject::Image';
 
@@ -343,8 +343,6 @@ sub tiffTag {
 }
 
 package PDF::API2::Resource::XObject::Image::Tiff::File;
-
-our $VERSION = '2.019';
 
 use IO::File;
 

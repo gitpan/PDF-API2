@@ -1,6 +1,6 @@
 package PDF::API2::Resource::ColorSpace::Indexed::WebColor;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 use base 'PDF::API2::Resource::ColorSpace::Indexed';
 
@@ -26,13 +26,10 @@ sub new {
 
     $csd->{' stream'}='';
 
-    my %cc=();
-
     foreach my $r (0,0x33,0x66,0x99,0xCC,0xFF) {
         foreach my $g (0,0x33,0x66,0x99,0xCC,0xFF) {
             foreach my $b (0,0x33,0x66,0x99,0xCC,0xFF) {
                 $csd->{' stream'}.=pack('CCC',$r,$g,$b);
-                $cc{sprintf('%02X%02X%02X',$r,$g,$b)}=1;
             }
         }
     } # 0-215
@@ -54,15 +51,6 @@ sub new {
     $self->{' csd'}=$csd;
 
     return($self);
-}
-
-sub new_api {
-    my ($class,$api,@opts)=@_;
-
-    my $obj=$class->new($api->{pdf},@opts);
-    $self->{' api'}=$api;
-
-    return($obj);
 }
 
 1;

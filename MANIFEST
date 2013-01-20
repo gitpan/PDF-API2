@@ -1,6 +1,5 @@
 CONTACT
 Changes
-HACKING
 LICENSE
 MANIFEST
 META.yml
@@ -38,6 +37,11 @@ lib/PDF/API2/Basic/PDF/Bool.pm
 lib/PDF/API2/Basic/PDF/Dict.pm
 lib/PDF/API2/Basic/PDF/File.pm
 lib/PDF/API2/Basic/PDF/Filter.pm
+lib/PDF/API2/Basic/PDF/Filter/ASCII85Decode.pm
+lib/PDF/API2/Basic/PDF/Filter/ASCIIHexDecode.pm
+lib/PDF/API2/Basic/PDF/Filter/FlateDecode.pm
+lib/PDF/API2/Basic/PDF/Filter/LZWDecode.pm
+lib/PDF/API2/Basic/PDF/Filter/RunLengthDecode.pm
 lib/PDF/API2/Basic/PDF/Literal.pm
 lib/PDF/API2/Basic/PDF/Name.pm
 lib/PDF/API2/Basic/PDF/Null.pm
@@ -144,6 +148,8 @@ t/annotate.t
 t/barcode.t
 t/cmap.t
 t/content.t
+t/cs-webcolor.t
+t/filter-asciihexdecode.t
 t/font-ttf.t
 t/font-type1.t
 t/gd.t
@@ -151,7 +157,6 @@ t/gif.t
 t/jpg.t
 t/lite.t
 t/outline.t
-t/outline.t~
 t/page.t
 t/pdf.t
 t/png.t

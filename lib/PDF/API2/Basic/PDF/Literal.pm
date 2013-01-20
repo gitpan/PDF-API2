@@ -1,7 +1,7 @@
 # Literal PDF Object for Dirty Hacks ...
 package PDF::API2::Basic::PDF::Literal;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -23,7 +23,7 @@ sub new
     if(scalar @opts > 1) {
         $self->{-isdict}=1;
         my %opt=@opts;
-        foreach my $k (sort keys %opt) {
+        foreach my $k (keys %opt) {
             $self->{$k} = $opt{$k};
         }
     } elsif(scalar @opts == 1) {

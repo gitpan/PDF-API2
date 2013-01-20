@@ -1,6 +1,6 @@
 package PDF::API2::Util;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 no warnings qw[ recursion uninitialized ];
 
@@ -34,7 +34,6 @@ BEGIN {
     @ISA = qw(Exporter);
     @EXPORT = qw(
         pdfkey
-        pdfkey2
         float floats floats5 intg intgs
         mMin mMax
         HSVtoRGB RGBtoHSV HSLtoRGB RGBtoHSL RGBtoLUM
@@ -46,7 +45,6 @@ BEGIN {
     );
     @EXPORT_OK = qw(
         pdfkey
-        pdfkey2
         digest digestx digest16 digest32
         float floats floats5 intg intgs
         mMin mMax
@@ -74,10 +72,6 @@ BEGIN {
 
 sub pdfkey {
     return($PDF::API2::Util::key_var++);
-}
-
-sub pdfkey2 {
-    return($PDF::API2::Util::key_var.($PDF::API2::Util::key_var2++));
 }
 
 sub digestx {
@@ -564,7 +558,7 @@ sub unfilter
         my ($hasflate) = -1;
         my ($temp, $i, $temp1);
 
-        @filts=(map { ("PDF::API2::Basic::PDF::".($_->val))->new } $filter->elementsof);
+        @filts=(map { ("PDF::API2::Basic::PDF::Filter::".($_->val))->new } $filter->elementsof);
 
         foreach my $f (@filts) 
         {
@@ -587,7 +581,7 @@ sub dofilter {
         my ($hasflate) = -1;
         my ($temp, $i, $temp1);
 
-        @filts=(map { ("PDF::API2::Basic::PDF::".($_->val))->new } $filter->elementsof);
+        @filts=(map { ("PDF::API2::Basic::PDF::Filter::".($_->val))->new } $filter->elementsof);
 
         foreach my $f (@filts) {
             $stream = $f->outfilt($stream, 1);

@@ -1,6 +1,6 @@
 package PDF::API2::Resource::ColorSpace::Indexed::Hue;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 use base 'PDF::API2::Resource::ColorSpace::Indexed';
 
@@ -43,15 +43,6 @@ sub new {
     $self->{' csd'}=$csd;
 
     return($self);
-}
-
-sub new_api {
-    my ($class,$api,@opts)=@_;
-
-    my $obj=$class->new($api->{pdf},@opts);
-    $self->{' api'}=$api;
-
-    return($obj);
 }
 
 1;

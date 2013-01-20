@@ -4,9 +4,9 @@ author:
   - 'Steve Simms <steve@deefs.net>'
 build_requires: {}
 configure_requires:
-  ExtUtils::MakeMaker: 6.31
+  ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.101900, CPAN::Meta::Converter version 2.102160'
+generated_by: 'Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921'
 license: lgpl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,4 +16,4 @@ requires:
   Compress::Zlib: 1.0
   Font::TTF: 0
   perl: v5.8.1
-version: 2.019
+version: 2.020

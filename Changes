@@ -1,3 +1,34 @@
+2.020     2013-01-20
+
+    - Give a more informative error message when a PDF file using a
+      cross-reference stream is encountered.  The Known Issues section
+      of the documentation includes pointers on how to add support in
+      case someone else can get to this before I do.
+
+    - Text using TrueType fonts is now searchable again.  In version
+      0.61, an undocumented -unicodemap option was added to nearly all
+      of the font resource methods, which only included a ToUnicode
+      CMap if it was set (and it's required in order for PDF readers
+      to be able to identify individual characters if BaseEncoding
+      isn't present, which it isn't for TrueType fonts).
+
+      I've left the -unicodemap option in place, and it's still
+      undocumented (except here), but it's now on by default.  Call
+      $pdf->ttfont($fontfile, -unicodemap => 0) if you want to disable
+      it for performance or file size reasons.
+
+    - Add a note to the stringify method's documentation saying that
+      it's a destructive operation.
+
+    - The various filter types have their own classes in the
+      PDF::API2::Basic::PDF::Filter namespace now, rather than having
+      all of the packages in Filter.pm.
+
+    - To facilitate testing and ensure that identically-generated PDFs
+      have identical output in Perl 5.17.5 or later, PDF dictionary
+      keys are now sorted during output.
+
+
 2.019     2011-03-10
 
     - [RT #66167] Fix a typo in the require statement for code128

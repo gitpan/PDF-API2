@@ -14,7 +14,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 =head1 NAME
 
@@ -312,54 +312,52 @@ sub open
 
 =head2 $p->release()
 
-Releases ALL of the memory used by the PDF document and all of its component
-objects.  After calling this method, do B<NOT> expect to have anything left in
-the C<PDF::API2::Basic::PDF::File> object (so if you need to save, be sure to do it before
-calling this method).
+Releases ALL of the memory used by the PDF document and all of its
+component objects.  After calling this method, do B<NOT> expect to
+have anything left in the C<PDF::API2::Basic::PDF::File> object (so if
+you need to save, be sure to do it before calling this method).
 
 B<NOTE>, that it is important that you call this method on any
-C<PDF::API2::Basic::PDF::File> object when you wish to destruct it and free up its memory.
-Internally, PDF files have an enormous number of cross-references and this
-causes circular references within the internal data structures.  Calling
-'C<release()>' forces a brute-force cleanup of the data structures, freeing up
-all of the memory.  Once you've called this method, though, don't expect to be
-able to do anything else with the C<PDF::API2::Basic::PDF::File> object; it'll have B<no>
-internal state whatsoever.
-
-B<Developer note:> As part of the brute-force cleanup done here, this method
-will throw a warning message whenever unexpected key values are found within
-the C<PDF::API2::Basic::PDF::File> object.  This is done to help ensure that any unexpected
-and unfreed values are brought to your attention so that you can bug us to keep
-the module updated properly; otherwise the potential for memory leaks due to
-dangling circular references will exist.
+C<PDF::API2::Basic::PDF::File> object when you wish to destruct it and
+free up its memory.  Internally, PDF files have an enormous number of
+cross-references and this causes circular references within the
+internal data structures.  Calling 'C<release()>' forces a brute-force
+cleanup of the data structures, freeing up all of the memory.  Once
+you've called this method, though, don't expect to be able to do
+anything else with the C<PDF::API2::Basic::PDF::File> object; it'll
+have B<no> internal state whatsoever.
 
 =cut
 
-sub release
-{
-    my ($self,$explicitDestruct) = @_;
+# Maintainer's Question: Couldn't this be handled by a DESTROY method
+# instead of requiring an explicit call to release()?
+sub release {
+    my $self = shift();
 
-    return($self) unless(ref $self);
-    my @tofree = values %{$self};
-    map { $self->{$_}=undef; delete $self->{$_}; } keys %{$self};
-    while (my $item = shift @tofree)
-    {
-        if (UNIVERSAL::can($item,'release'))
-        {
+    return $self unless ref($self);
+    my @tofree = values %$self;
+
+    foreach my $key (keys %$self) {
+        $self->{$key} = undef;
+        delete $self->{$key};
+    }
+
+    while (my $item = shift @tofree) {
+        if (UNIVERSAL::can($item, 'release')) {
             $item->release(1);
         }
-        elsif (ref($item) eq 'ARRAY')
-        {
-            push( @tofree, @{$item} );
+        elsif (ref($item) eq 'ARRAY') {
+            push @tofree, @$item;
         }
-        elsif (ref($item) eq 'HASH')
-        {
-            push( @tofree, values %{$item} );
-            map { $item->{$_}=undef; delete $item->{$_}; } keys %{$item};
+        elsif (ref($item) eq 'HASH') {
+            push @tofree, values %$item;
+            foreach my $key (keys %$item) {
+                $item->{$key} = undef;
+                delete $item->{$key};
+            }
         }
-        else
-        {
-            $item=undef;
+        else {
+            $item = undef;
         }
     }
 }
@@ -1133,16 +1131,13 @@ sub readxrtr
 	#    $buf=update($fh,$buf);
     #}
     
-    if ($buf !~ m/^xref$cr/oi)
-    { 
-    	#if($self == $root)
-    	#{
-    		die "Malformed xref in PDF file $self->{' fname'}";
-    	#}
-    	#else # be tolerant if its not the root object
-    	#{
-    	#	return undef;
-    	#} 
+    if ($buf !~ m/^xref$cr/oi) { 
+        if ($buf =~ m/^\d+\s+\d+\s+obj/i) {
+            die "The PDF file uses a cross-reference stream, which is not yet supported (see Known Issues in the PDF::API2 documentation)";
+        }
+        else {
+            die "Malformed xref in PDF file $self->{' fname'}";
+        }
     }
     $buf =~ s/^xref$cr//oi;
 

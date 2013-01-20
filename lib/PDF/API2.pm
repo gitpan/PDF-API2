@@ -1,6 +1,6 @@
 package PDF::API2;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 use Encode qw(:all);
 use FileHandle;
@@ -11,13 +11,6 @@ use PDF::API2::Util;
 use PDF::API2::Basic::PDF::File;
 use PDF::API2::Basic::PDF::Pages;
 use PDF::API2::Page;
-
-use PDF::API2::Resource::ColorSpace::Indexed::ACTFile;
-use PDF::API2::Resource::ColorSpace::Indexed::Hue;
-use PDF::API2::Resource::ColorSpace::Indexed::WebColor;
-
-use PDF::API2::Resource::ColorSpace::Separation;
-use PDF::API2::Resource::ColorSpace::DeviceN;
 
 use PDF::API2::Resource::XObject::Form::Hybrid;
 
@@ -928,7 +921,7 @@ sub save {
 
 =item $string = $pdf->stringify()
 
-Returns the document as a string.
+Returns the document as a string and destroys the object.
 
 B<Example:>
 
@@ -937,6 +930,16 @@ B<Example:>
     print $pdf->stringify();
 
 =cut
+
+# Maintainer's note: The object is being destroyed because it contains
+# circular references that would otherwise result in memory not being
+# freed if the object merely goes out of scope.  If possible, the
+# circular references should be eliminated so that stringify doesn't
+# need to be destructive.
+#
+# I've opted not to just require a separate call to release() because
+# it would likely introduce memory leaks in many existing programs
+# that use this module.
 
 sub stringify {
     my ($self)=@_;
@@ -1701,17 +1704,23 @@ Disables embedding of the font file.
 =cut
 
 sub ttfont {
-    my ($self,$file,%opts)=@_;
+    my ($self, $file, %opts) = @_;
 
-    $file=_findFont($file);
+    # PDF::API2 doesn't set BaseEncoding for TrueType fonts, so text
+    # isn't searchable unless a ToUnicode CMap is included.  Include
+    # the ToUnicode CMap by default, but allow it to be disabled (for
+    # performance and file size reasons) by setting -unicodemap to 0.
+    $opts{-unicodemap} = 1 unless exists $opts{-unicodemap};
+
+    $file = _findFont($file);
     require PDF::API2::Resource::CIDFont::TrueType;
-    my $obj=PDF::API2::Resource::CIDFont::TrueType->new_api($self,$file,%opts);
+    my $obj = PDF::API2::Resource::CIDFont::TrueType->new_api($self, $file, %opts);
 
-    $self->resource('Font',$obj->name,$obj,$self->{reopened});
+    $self->resource('Font', $obj->name, $obj, $self->{reopened});
 
     $self->{pdf}->out_obj($self->{pages});
-    $obj->tounicodemap if($opts{-unicodemap}==1);
-    return($obj);
+    $obj->tounicodemap if $opts{-unicodemap};
+    return $obj;
 }
 
 =item $font = $pdf->cjkfont($cjkname, [%options])
@@ -1984,6 +1993,7 @@ reference to the file format's specification.
 sub colorspace_act {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::ColorSpace::Indexed::ACTFile;
     my $obj=PDF::API2::Resource::ColorSpace::Indexed::ACTFile->new_api($self,$file);
 
     $self->resource('ColorSpace',$obj->name,$obj);
@@ -2001,6 +2011,7 @@ Returns a new colorspace-object based on the web color palette.
 sub colorspace_web {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::ColorSpace::Indexed::WebColor;
     my $obj=PDF::API2::Resource::ColorSpace::Indexed::WebColor->new_api($self);
 
     $self->resource('ColorSpace',$obj->name,$obj);
@@ -2020,6 +2031,7 @@ See L<PDF::API2::Resource::ColorSpace::Indexed::Hue> for an explanation.
 sub colorspace_hue {
     my ($self,$file,%opts)=@_;
 
+    require PDF::API2::Resource::ColorSpace::Indexed::Hue;
     my $obj=PDF::API2::Resource::ColorSpace::Indexed::Hue->new_api($self);
 
     $self->resource('ColorSpace',$obj->name,$obj);
@@ -2046,6 +2058,8 @@ specified color.
 
 sub colorspace_separation {
     my ($self,$name,@clr)=@_;
+
+    require PDF::API2::Resource::ColorSpace::Separation;
     my $obj=PDF::API2::Resource::ColorSpace::Separation->new_api($self,$name,@clr);
 
     $self->resource('ColorSpace',$obj->name,$obj);
@@ -2078,6 +2092,7 @@ sub colorspace_devicen {
     my ($self,$clrs,$samples)=@_;
     $samples||=2;
     
+    require PDF::API2::Resource::ColorSpace::DeviceN;
     my $obj=PDF::API2::Resource::ColorSpace::DeviceN->new_api($self,$clrs,$samples);
 
     $self->resource('ColorSpace',$obj->name,$obj);
@@ -2365,9 +2380,16 @@ __END__
 
 =back
 
-=head1 BUGS
+=head1 KNOWN ISSUES
 
 This module does not work with perl's -l command-line switch.
+
+PDFs using cross-reference streams instead of cross-reference tables
+are not yet supported.  Cross-reference streams were added as an
+option in version 1.5 of the PDF spec, but were only used infrequently
+until Adobe Acrobat 9 started using them by default.  A patch would be
+welcome -- see the PDF 1.7 specification, sections 7.5.4 and 7.5.8 for
+implementation details.
 
 =head1 AUTHOR
 

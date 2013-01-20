@@ -1,6 +1,6 @@
 package PDF::API2::Lite;
 
-our $VERSION = '2.019';
+our $VERSION = '2.020'; # VERSION
 
 BEGIN {
 
