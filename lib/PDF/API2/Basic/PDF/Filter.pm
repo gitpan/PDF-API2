@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Filter;
 
-our $VERSION = '2.020'; # VERSION
+our $VERSION = '2.020_01'; # VERSION
 
 use PDF::API2::Basic::PDF::Filter::ASCII85Decode;
 use PDF::API2::Basic::PDF::Filter::ASCIIHexDecode;

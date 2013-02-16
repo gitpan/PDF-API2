@@ -1,6 +1,6 @@
 package PDF::API2::Resource::CIDFont;
 
-our $VERSION = '2.020'; # VERSION
+our $VERSION = '2.020_01'; # VERSION
 
 use base 'PDF::API2::Resource::BaseFont';
 

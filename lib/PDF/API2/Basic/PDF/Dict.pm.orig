@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
 
-our $VERSION = '2.020_01'; # VERSION
+# VERSION
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -85,8 +85,8 @@ sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
     if (defined $self->{' stream'} or defined $self->{' streamfile'} or defined $self->{' streamloc'}) {
-        if ($self->{'Filter'} and $self->{' nofilt'}) {
-            $self->{'Length'} ||= PDF::API2::Basic::PDF::Number->new(length($self->{' stream'}));
+        if ($self->{'Filter'} && $self->{' nofilt'}) {
+            $self->{Length}||= PDF::API2::Basic::PDF::Number->new(length($self->{' stream'}));
         }
         elsif ($self->{'Filter'} or not defined $self->{' stream'}) {
             $self->{'Length'} = PDF::API2::Basic::PDF::Number->new(0) unless defined $self->{'Length'};
@@ -100,10 +100,10 @@ sub outobjdeep {
     }
 
     $fh->print('<< ');
-    foreach my $key (sort {
+    foreach my $key (sort  {
                          $a eq 'Type'    ? -1 : $b eq 'Type'    ? 1 :
                          $a eq 'Subtype' ? -1 : $b eq 'Subtype' ? 1 : $a cmp $b
-                     } keys %$self) {
+                     }keys %$self) {
         next if $key =~ m/^[\s\-]/o;
         next unless $self->{$key};
         $fh->print('/' . PDF::API2::Basic::PDF::Name::string_to_name($key, $pdf) . ' ');
@@ -122,12 +122,14 @@ sub outobjdeep {
         $fh->seek($loc, 0);
     }
 
-    if (not $self->{' nofilt'} and defined $self->{'Filter'} and (defined $self->{' stream'} or defined $self->{' streamfile'})) {
+    if (not $self->{' nofilt'}
+        and (defined $self->{' stream'} or defined $self->{' streamfile'})
+        and defined $self->{'Filter'}) {
+
         my $hasflate = -1;
         for my $i (0 .. scalar(@{$self->{'Filter'}{' val'}}) - 1) {
             my $filter = $self->{'Filter'}{' val'}[$i]->val();
-            # hack to get around LZW patent
-            if ($filter eq 'LZWDecode') {
+            if ($filter eq 'LZWDecode') { # hack to get around LZW patent
                 if ($hasflate < -1) {
                     $hasflate = $i;
                     next;
@@ -226,28 +228,23 @@ sub read_stream {
         unlink ($self->{' streamfile'});
         $self->{' streamfile'} = undef;
     }
-    seek $fh, $self->{' streamloc'}, 0;
+    seek($fh, $self->{' streamloc'}, 0);
     my ($i, $data);
     for ($i = 0; $i < $len; $i += 4096) {
         unless ($i + 4096 > $len) {
-            read $fh, $data, 4096;
+            read($fh, $data, 4096);
         }
         else {
             $last = 1;
-            read $fh, $data, $len - $i;
+            read($fh, $data, $len - $i);
         }
 
         foreach my $filter (@filters) {
             $data = $filter->infilt($data, $last);
         }
-
-        # Maintainer's Note: There are a couple of issues here:
-        # 1) File::Temp should be used for creating temporary files
-        # 2) The length check should be looking at $self->{' stream'}
-        #    rather than $data (which just contains the latest chunk)
         if (not $force_memory and not defined $self->{' streamfile'} and ((length($data) * 2) > $mincache)) {
             open(DICTFH, '>', $tempbase) or next;
-            binmode DICTFH, ':raw';
+            binmode(DICTFH, ':raw');
             $self->{' streamfile'} = $tempbase;
             $tempbase =~ s/-(\d+)$/'-' . ($1 + 1)/oe;        # prepare for next use
             print DICTFH $self->{' stream'};

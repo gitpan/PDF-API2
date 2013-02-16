@@ -35,6 +35,7 @@ lib/PDF/API2/Annotation.pm
 lib/PDF/API2/Basic/PDF/Array.pm
 lib/PDF/API2/Basic/PDF/Bool.pm
 lib/PDF/API2/Basic/PDF/Dict.pm
+lib/PDF/API2/Basic/PDF/Dict.pm.orig
 lib/PDF/API2/Basic/PDF/File.pm
 lib/PDF/API2/Basic/PDF/Filter.pm
 lib/PDF/API2/Basic/PDF/Filter/ASCII85Decode.pm
@@ -150,6 +151,7 @@ t/cmap.t
 t/content.t
 t/cs-webcolor.t
 t/filter-asciihexdecode.t
+t/filter-runlengthdecode.t
 t/font-ttf.t
 t/font-type1.t
 t/gd.t
@@ -167,5 +169,6 @@ t/resources/1x1.jpg
 t/resources/1x1.png
 t/resources/1x1.tif
 t/resources/sample.pdf
+t/string.t
 t/text.t
 t/tiff.t

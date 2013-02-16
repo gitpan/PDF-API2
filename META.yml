@@ -16,4 +16,6 @@ requires:
   Compress::Zlib: 1.0
   Font::TTF: 0
   perl: v5.8.1
-version: 2.020
+resources:
+  repository: https://bitbucket.org/ssimms/pdfapi2
+version: 2.020_01

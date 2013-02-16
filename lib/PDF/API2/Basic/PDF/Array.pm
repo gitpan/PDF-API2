@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Array;
 
-our $VERSION = '2.020'; # VERSION
+our $VERSION = '2.020_01'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -21,20 +21,6 @@ use strict;
 =head1 NAME
 
 PDF::API2::Basic::PDF::Array - Corresponds to a PDF array. Inherits from L<PDF::Objind>
-
-=head1 INSTANCE VARIABLES
-
-This object is not an array but an associative array containing the array of
-elements. Thus, there are special instance variables for an array object, beginning
-with a space
-
-=over
-
-=item var
-
-Contains the actual array of elements
-
-=back
 
 =head1 METHODS
 

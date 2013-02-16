@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Form::BarCode::code3of9;
 
-our $VERSION = '2.020'; # VERSION
+our $VERSION = '2.020_01'; # VERSION
 
 use base 'PDF::API2::Resource::XObject::Form::BarCode';
 

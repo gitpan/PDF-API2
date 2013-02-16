@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::bankgothic;
 
-our $VERSION = '2.020'; # VERSION
+our $VERSION = '2.020_01'; # VERSION
 
 $FONTDATA = {
     'fontname' => 'BankGothicMediumBT',
