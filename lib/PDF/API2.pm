@@ -1,6 +1,6 @@
 package PDF::API2;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use Encode qw(:all);
 use FileHandle;

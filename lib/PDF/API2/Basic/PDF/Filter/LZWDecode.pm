@@ -1,6 +1,6 @@
 package PDF::API2::Basic::PDF::Filter::LZWDecode;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Filter::FlateDecode';
 

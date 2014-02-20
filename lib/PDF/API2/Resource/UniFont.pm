@@ -1,6 +1,6 @@
 package PDF::API2::Resource::UniFont;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use Encode qw(:all);
 

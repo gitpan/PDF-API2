@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Image::GIF;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use base 'PDF::API2::Resource::XObject::Image';
 
@@ -87,7 +87,7 @@ sub deGIF {
     #    print STDERR "ptr=$ptr,tag=$tag,bits=$bits,next=$nextcode\n";
     #    print STDERR "tag to large\n" if($tag>$nextcode);
         $ptr+=$bits;
-        $bits++ if($nextcode == (1<<$bits));
+        $bits++ if $nextcode == 1<<$bits and $bits < 12;
         if($tag==$resetcode) {
             $bits=$ibits;
             $nextcode=$endcode+1;

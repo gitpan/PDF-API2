@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Form::BarCode::code128;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use base 'PDF::API2::Resource::XObject::Form::BarCode';
 
@@ -137,12 +137,14 @@ sub encode_128_string {
                 }
             } else {
                 $c.=shift(@chars) if($c=~/\d/);
-                if($c=~/^\d[^\d]*$/) {
+                if($c=~/^[^\d]*$/ or $c=~/^\d[^\d]*$/) {
                     ($b,$i)=encode_128_char_idx($code,"\xcb");
                     push(@bars,$b);
                     push(@chk,$i);
                     $code='b';
-                    unshift(@chars,substr($c,1,1));
+                }
+                if($c=~/^\d[^\d]*$/) {
+                    unshift(@chars,substr($c,1,1)) if length($c) > 1;
                     $c=substr($c,0,1);
                 }
                 ($b,$i)=encode_128_char_idx($code,$c);

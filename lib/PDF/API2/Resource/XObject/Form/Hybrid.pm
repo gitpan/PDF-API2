@@ -1,6 +1,6 @@
 package PDF::API2::Resource::XObject::Form::Hybrid;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use base qw(PDF::API2::Content PDF::API2::Resource::XObject::Form);
 

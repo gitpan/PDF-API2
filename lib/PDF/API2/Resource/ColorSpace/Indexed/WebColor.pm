@@ -1,6 +1,6 @@
 package PDF::API2::Resource::ColorSpace::Indexed::WebColor;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 use base 'PDF::API2::Resource::ColorSpace::Indexed';
 

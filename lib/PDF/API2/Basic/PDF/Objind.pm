@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Objind;
 
-our $VERSION = '2.020_01'; # VERSION
+our $VERSION = '2.021'; # VERSION
 
 =head1 NAME
 

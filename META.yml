@@ -6,7 +6,7 @@ build_requires: {}
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Dist::Zilla version 5.013, CPAN::Meta::Converter version 2.132620'
 license: lgpl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -18,4 +18,4 @@ requires:
   perl: v5.8.1
 resources:
   repository: https://bitbucket.org/ssimms/pdfapi2
-version: 2.020_01
+version: 2.021
