@@ -14,7 +14,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::File;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 =head1 NAME
 
@@ -141,6 +141,8 @@ is in PDF which contains the location of the previous cross-reference table.
 use strict;
 no strict "refs";
 
+use Scalar::Util qw(blessed);
+
 use vars qw($cr $irreg_char $reg_char $ws_char $delim_char %types);
 
 $ws_char = '[ \t\r\n\f\0]';
@@ -235,9 +237,10 @@ sub open {
     binmode $fh, ':raw';
     $fh->seek(0, 0);            # go to start of file
     $fh->read($buffer, 255);
-    unless ($buffer =~ m/^\%PDF\-1\.\d+\s*$cr/mo) {
+    unless ($buffer =~ m/^\%PDF\-1\.(\d)+\s*$cr/mo) {
         die "$filename not a PDF file version 1.x";
     }
+    $self->{' version'} = $1;
 
     $fh->seek(0, 2);            # go to end of file
     my $end = $fh->tell();
@@ -292,7 +295,7 @@ sub release {
     }
 
     while (my $item = shift @tofree) {
-        if (UNIVERSAL::can($item, 'release')) {
+        if (blessed($item) and $item->can('release')) {
             $item->release(1);
         }
         elsif (ref($item) eq 'ARRAY') {
@@ -1051,10 +1054,15 @@ sub readxrtr {
     $buf =~ s/^xref$cr//i;
 
     my $xlist = {};
-    while ($buf =~ m/^([0-9]+)$ws_char+([0-9]+)$cr(.*?)$/s) {
+    while ($buf =~ m/^$ws_char*([0-9]+)$ws_char+([0-9]+)$ws_char*$cr(.*?)$/s) {
+        my $old_buf = $buf;
         $xmin = $1;
         $xnum = $2;
         $buf  = $3;
+        unless ($old_buf =~ /^[0-9]+ [0-9]+$cr/) {
+            # See PDF 1.7 section 7.5.4: Cross-Reference Table
+            warn q{Malformed xref in PDF file: subsection shall begin with a line containing two numbers separated by a SPACE (20h)};
+        }
         $xdiff = length($buf);
 
         $fh->read($buf, 20 * $xnum - $xdiff + 15, $xdiff);

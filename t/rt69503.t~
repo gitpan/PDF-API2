@@ -1,0 +1,11 @@
+use Test::More;
+
+use strict;
+use warnings;
+
+use PDF::API2;
+
+my $pdf = PDF::API2->new();
+$pdf->page();
+$pdf->preferences(-firstpage => [1, -fit => 1]);
+

@@ -1,7 +1,8 @@
 package PDF::API2;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
+use Carp;
 use Encode qw(:all);
 use FileHandle;
 
@@ -90,29 +91,29 @@ B<Example:>
 =cut
 
 sub new {
-    my $class=shift(@_);
-    my %opt=@_;
-    my $self={};
-    bless($self,$class);
-    $self->{pdf}=PDF::API2::Basic::PDF::File->new();
-    $self->{time}='_'.pdfkey(time());
+    my ($class, %options) = @_;
 
-    $self->{pdf}->{' version'} = 4;
-    $self->{pages} = PDF::API2::Basic::PDF::Pages->new($self->{pdf});
-    $self->{pages}->proc_set(qw( PDF Text ImageB ImageC ImageI ));
-    $self->{pages}->{Resources}||=PDFDict();
-    $self->{pdf}->new_obj($self->{pages}->{Resources}) unless($self->{pages}->{Resources}->is_obj($self->{pdf}));
-    $self->{catalog}=$self->{pdf}->{Root};
-    $self->{fonts}={};
-    $self->{pagestack}=[];
-    $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
-    $self->preferences(%opt);
-    if($opt{-file}) {
-        $self->{' filed'}=$opt{-file};
-        $self->{pdf}->create_file($opt{-file});
+    my $self = {};
+    bless $self, $class;
+    $self->{'pdf'} = PDF::API2::Basic::PDF::File->new();
+
+    $self->{'pdf'}->{' version'} = 4;
+    $self->{'pages'} = PDF::API2::Basic::PDF::Pages->new($self->{'pdf'});
+    $self->{'pages'}->proc_set(qw(PDF Text ImageB ImageC ImageI));
+    $self->{'pages'}->{'Resources'} ||= PDFDict();
+    $self->{'pdf'}->new_obj($self->{'pages'}->{'Resources'}) unless $self->{'pages'}->{'Resources'}->is_obj($self->{'pdf'});
+    $self->{'catalog'} = $self->{'pdf'}->{'Root'};
+    $self->{'fonts'} = {};
+    $self->{'pagestack'} = [];
+    $self->{'forcecompress'} = $^O eq 'os390' ? 0 : 1;
+    $self->preferences(%options);
+    if ($options{'-file'}) {
+        $self->{' filed'} = $options{'-file'};
+        $self->{'pdf'}->create_file($options{'-file'});
     }
-    $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
-    $self->info( 'Producer' => "PDF::API2 $VERSION [$^O]" );
+    $self->{'infoMeta'}=[qw(Author CreationDate ModDate Creator Producer Title Subject Keywords)];
+    $self->info('Producer' => "PDF::API2 $VERSION [$^O]");
+
     return $self;
 }
 
@@ -133,54 +134,34 @@ B<Example:>
 =cut
 
 sub open {
-    my $class=shift(@_);
-    my $file=shift(@_);
-    my %opt=@_;
-    my $filestr;
-    my $self={};
-    bless($self,$class);
-    $self->default('Compression',1);
-    $self->default('subset',1);
-    $self->default('update',1);
-    foreach my $para (keys(%opt)) {
-        $self->default($para,$opt{$para});
-    }
-    die "File '$file' does not exist." unless(-f $file);
-    
-    $self->{content_ref} = \$filestr;
-    my $fh = new FileHandle;
-    CORE::open($fh, "+<", \$filestr) || die "Can't begin scalar IO";
-    binmode($fh,':raw');
+    my ($class, $file, %options) = @_;
+    die "File '$file' does not exist." unless -f $file;
+    die "File '$file' is not readable." unless -r $file;
 
-    my $inf = new FileHandle;
-    CORE::open($inf,$file);
-    binmode($inf,':raw');
-    $inf->seek(0,0);
-    while(!$inf->eof) {
-        $inf->read($in,512);
-        $fh->print($in);
-    }
-    $inf->close;
-    $fh->seek(0,0);
+    my $content;
+    my $scalar_fh = FileHandle->new();
+    CORE::open($scalar_fh, '+<', \$content) or die "Can't begin scalar IO";
+    binmode $scalar_fh, ':raw';
 
-    $self->{pdf}=PDF::API2::Basic::PDF::File->open($fh,1);
-    $self->{pdf}->{' fname'}=$file;
-    $self->{pdf}->{'Root'}->realise;
-    $self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
-    $self->{pdf}->{' version'} = 3;
-    $self->{pdf}->{' apipagecount'} = 0;
-    my @pages=proc_pages($self->{pdf},$self->{pages});
-    $self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
-    $self->{catalog}=$self->{pdf}->{Root};
-    $self->{reopened}=1;
-    $self->{time}='_'.pdfkey(time());
-    $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
-    $self->{fonts}={};
-    $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
+    my $disk_fh = FileHandle->new();
+    CORE::open($disk_fh, '<', $file);
+    binmode $disk_fh, ':raw';
+    $disk_fh->seek(0, 0);
+    my $data;
+    while (not $disk_fh->eof()) {
+        $disk_fh->read($data, 512);
+        $scalar_fh->print($data);
+    }
+    $disk_fh->close();
+    $scalar_fh->seek(0, 0);
+
+    my $self = $class->open_scalar($content, %options);
+    $self->{'pdf'}->{' fname'} = $file;
+
     return $self;
 }
 
-=item $pdf = PDF::API2->openScalar($pdf_string)
+=item $pdf = PDF::API2->open_scalar($pdf_string)
 
 Opens a PDF contained in a string.
 
@@ -191,40 +172,40 @@ B<Example:>
     undef $/;  # Read the whole file at once
     $pdf_string = <$fh>;
 
-    $pdf = PDF::API2->openScalar($pdf_string);
+    $pdf = PDF::API2->open_scalar($pdf_string);
     ...
     $pdf->saveas('our/new.pdf');
 
 =cut
 
-sub openScalar {
-    my $class=shift(@_);
-    my $file=shift(@_);
-    my %opt=@_;
-    my $self={};
-    bless($self,$class);
-    $self->default('Compression',1);
-    $self->default('subset',1);
-    $self->default('update',1);
-    foreach my $para (keys(%opt)) {
-        $self->default($para,$opt{$para});
+# Deprecated (renamed)
+sub openScalar { return open_scalar(@_); }
+
+sub open_scalar {
+    my ($class, $content, %options) = @_;
+
+    my $self = {};
+    bless $self, $class;
+    foreach my $parameter (keys %options) {
+        $self->default($parameter, $options{$parameter});
     }
-    $self->{content_ref} = \$file;
+
+    $self->{'content_ref'} = \$content;
     my $fh;
-    CORE::open($fh, "+<", \$file) || die "Can't begin scalar IO";
-    $self->{pdf}=PDF::API2::Basic::PDF::File->open($fh,1);
-    $self->{pdf}->{'Root'}->realise;
-    $self->{pages}=$self->{pdf}->{'Root'}->{'Pages'}->realise;
-    $self->{pdf}->{' version'} = 3;
-    $self->{pdf}->{' apipagecount'} = 0;
-    my @pages=proc_pages($self->{pdf},$self->{pages});
-    $self->{pagestack}=[sort {$a->{' pnum'} <=> $b->{' pnum'}} @pages];
-    $self->{catalog}=$self->{pdf}->{Root};
-    $self->{reopened}=1;
-    $self->{time}='_'.pdfkey(time());
-    $self->{forcecompress}= ($^O eq 'os390') ? 0 : 1;
-    $self->{fonts}={};
-    $self->{infoMeta}=[qw(  Author CreationDate ModDate Creator Producer Title Subject Keywords  )];
+    CORE::open($fh, '+<', \$content) or die "Can't begin scalar IO";
+
+    $self->{'pdf'} = PDF::API2::Basic::PDF::File->open($fh, 1);
+    $self->{'pdf'}->{'Root'}->realise();
+    $self->{'pages'} = $self->{'pdf'}->{'Root'}->{'Pages'}->realise();
+    $self->{'pdf'}->{' version'} ||= 3;
+    my @pages = proc_pages($self->{'pdf'}, $self->{'pages'});
+    $self->{'pagestack'} = [sort { $a->{' pnum'} <=> $b->{' pnum'} } @pages];
+    $self->{'catalog'} = $self->{'pdf'}->{'Root'};
+    $self->{'reopened'} = 1;
+    $self->{'forcecompress'} = $^O eq 'os390' ? 0 : 1;
+    $self->{'fonts'} = {};
+    $self->{'infoMeta'} = [qw(Author CreationDate ModDate Creator Producer Title Subject Keywords)];
+
     return $self;
 }
 
@@ -403,92 +384,112 @@ B<Example:>
 =cut
 
 sub preferences {
-    my $self=shift @_;
-    my %opt=@_;
-    if($opt{-fullscreen}) {
-        $self->{catalog}->{PageMode}=PDFName('FullScreen');
-    } elsif($opt{-thumbs}) {
-        $self->{catalog}->{PageMode}=PDFName('UseThumbs');
-    } elsif($opt{-outlines}) {
-        $self->{catalog}->{PageMode}=PDFName('UseOutlines');
-    } else {
-        $self->{catalog}->{PageMode}=PDFName('UseNone');
+    my ($self, %options) = @_;
+
+    # Page Mode Options
+    if ($options{'-fullscreen'}) {
+        $self->{'catalog'}->{'PageMode'} = PDFName('FullScreen');
     }
-    if($opt{-singlepage}) {
-        $self->{catalog}->{PageLayout}=PDFName('SinglePage');
-    } elsif($opt{-onecolumn}) {
-        $self->{catalog}->{PageLayout}=PDFName('OneColumn');
-    } elsif($opt{-twocolumnleft}) {
-        $self->{catalog}->{PageLayout}=PDFName('TwoColumnLeft');
-    } elsif($opt{-twocolumnright}) {
-        $self->{catalog}->{PageLayout}=PDFName('TwoColumnRight');
-    } else {
-        $self->{catalog}->{PageLayout}=PDFName('SinglePage');
+    elsif ($options{'-thumbs'}) {
+        $self->{'catalog'}->{'PageMode'} = PDFName('UseThumbs');
+    }
+    elsif ($options{'-outlines'}) {
+        $self->{'catalog'}->{'PageMode'} = PDFName('UseOutlines');
+    }
+    else {
+        $self->{'catalog'}->{'PageMode'} = PDFName('UseNone');
     }
 
-    $self->{catalog}->{ViewerPreferences}||=PDFDict();
-    $self->{catalog}->{ViewerPreferences}->realise;
-
-    if($opt{-hidetoolbar}) {
-        $self->{catalog}->{ViewerPreferences}->{HideToolbar}=PDFBool(1);
+    # Page Layout Options
+    if ($options{'-singlepage'}) {
+        $self->{'catalog'}->{'PageLayout'} = PDFName('SinglePage');
     }
-    if($opt{-hidemenubar}) {
-        $self->{catalog}->{ViewerPreferences}->{HideMenubar}=PDFBool(1);
+    elsif ($options{'-onecolumn'}) {
+        $self->{'catalog'}->{'PageLayout'} = PDFName('OneColumn');
     }
-    if($opt{-hidewindowui}) {
-        $self->{catalog}->{ViewerPreferences}->{HideWindowUI}=PDFBool(1);
+    elsif ($options{'-twocolumnleft'}) {
+        $self->{'catalog'}->{'PageLayout'} = PDFName('TwoColumnLeft');
     }
-    if($opt{-fitwindow}) {
-        $self->{catalog}->{ViewerPreferences}->{FitWindow}=PDFBool(1);
+    elsif ($options{'-twocolumnright'}) {
+        $self->{'catalog'}->{'PageLayout'} = PDFName('TwoColumnRight');
     }
-    if($opt{-centerwindow}) {
-        $self->{catalog}->{ViewerPreferences}->{CenterWindow}=PDFBool(1);
-    }
-    if($opt{-displaytitle}) {
-        $self->{catalog}->{ViewerPreferences}->{DisplayDocTitle}=PDFBool(1);
-    }
-    if($opt{-righttoleft}) {
-        $self->{catalog}->{ViewerPreferences}->{Direction}=PDFName("R2L");
+    else {
+        $self->{'catalog'}->{'PageLayout'} = PDFName('SinglePage');
     }
 
-    if($opt{-afterfullscreenthumbs}) {
-        $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseThumbs');
-    } elsif($opt{-afterfullscreenoutlines}) {
-        $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseOutlines');
-    } else {
-        $self->{catalog}->{ViewerPreferences}->{NonFullScreenPageMode}=PDFName('UseNone');
+    # Viewer Preferences
+    $self->{'catalog'}->{'ViewerPreferences'} ||= PDFDict();
+    $self->{'catalog'}->{'ViewerPreferences'}->realise();
+
+    if ($options{'-hidetoolbar'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'HideToolbar'} = PDFBool(1);
+    }
+    if ($options{'-hidemenubar'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'HideMenubar'} = PDFBool(1);
+    }
+    if ($options{'-hidewindowui'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'HideWindowUI'} = PDFBool(1);
+    }
+    if ($options{'-fitwindow'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'FitWindow'} = PDFBool(1);
+    }
+    if ($options{'-centerwindow'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'CenterWindow'} = PDFBool(1);
+    }
+    if ($options{'-displaytitle'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'DisplayDocTitle'} = PDFBool(1);
+    }
+    if ($options{'-righttoleft'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'Direction'} = PDFName('R2L');
     }
 
-    if($opt{-printscalingnone}) {
-		$self->{catalog}->{ViewerPreferences}->{PrintScaling}=PDFName("None");
+    if ($options{'-afterfullscreenthumbs'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'NonFullScreenPageMode'} = PDFName('UseThumbs');
+    }
+    elsif ($options{'-afterfullscreenoutlines'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'NonFullScreenPageMode'} = PDFName('UseOutlines');
+    }
+    else {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'NonFullScreenPageMode'} = PDFName('UseNone');
     }
 
-    if($opt{-firstpage}) {
-        my ($page,%o)=@{$opt{-firstpage}};
+    if ($options{'-printscalingnone'}) {
+        $self->{'catalog'}->{'ViewerPreferences'}->{'PrintScaling'} = PDFName('None');
+    }
 
-        $o{-fit}=1 if(scalar(keys %o)<1);
+    # Open Action
+    if ($options{'-firstpage'}) {
+        my ($page, %args) = @{$options{-firstpage}};
+        $args{'-fit'} = 1 unless scalar keys %args;
 
-        if(defined $o{-fit}) {
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('Fit'));
-        } elsif(defined $o{-fith}) {
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitH'),PDFNum($o{-fith}));
-        } elsif(defined $o{-fitb}) {
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitB'));
-        } elsif(defined $o{-fitbh}) {
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBH'),PDFNum($o{-fitbh}));
-        } elsif(defined $o{-fitv}) {
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitV'),PDFNum($o{-fitv}));
-        } elsif(defined $o{-fitbv}) {
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitBV'),PDFNum($o{-fitbv}));
-        } elsif(defined $o{-fitr}) {
-            die "insufficient parameters to -fitr => [] " unless(scalar @{$o{-fitr}} == 4);
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('FitR'),map {PDFNum($_)} @{$o{-fitr}});
-        } elsif(defined $o{-xyz}) {
-            die "insufficient parameters to -xyz => [] " unless(scalar @{$o{-xyz}} == 3);
-            $self->{catalog}->{OpenAction}=PDFArray($page,PDFName('XYZ'),map {PDFNum($_)} @{$o{-xyz}});
+        if (defined $args{'-fit'}) {
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('Fit'));
+        }
+        elsif (defined $args{'-fith'}) {
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('FitH'), PDFNum($args{'-fith'}));
+        }
+        elsif (defined $args{'-fitb'}) {
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('FitB'));
+        }
+        elsif (defined $args{'-fitbh'}) {
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('FitBH'), PDFNum($args{'-fitbh'}));
+        }
+        elsif (defined $args{'-fitv'}) {
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('FitV'), PDFNum($args{'-fitv'}));
+        }
+        elsif (defined $args{'-fitbv'}) {
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('FitBV'), PDFNum($args{'-fitbv'}));
+        }
+        elsif (defined $args{'-fitr'}) {
+            croak 'insufficient parameters to -fitr => []' unless scalar @{$args{'-fitr'}} == 4;
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('FitR'), map { PDFNum($_) } @{$args{'-fitr'}});
+        }
+        elsif (defined $args{'-xyz'}) {
+            croak 'insufficient parameters to -xyz => []' unless scalar @{$args{'-xyz'}} == 3;
+            $self->{'catalog'}->{'OpenAction'} = PDFArray(PDFNum($page), PDFName('XYZ'), map { PDFNum($_) } @{$args{'-xyz'}});
         }
     }
-    $self->{pdf}->out_obj($self->{catalog});
+    $self->{'pdf'}->out_obj($self->{'catalog'});
 
     return $self;
 }
@@ -522,14 +523,33 @@ enables importing of annotations (B<*EXPERIMENTAL*>).
 =cut
 
 sub default {
-    my ($self,$parameter,$var)=@_;
-    $parameter=~s/[^a-zA-Z\d]//g;
-    $parameter=lc($parameter);
-    my $temp=$self->{$parameter};
-    if(defined $var) {
-        $self->{$parameter}=$var;
+    my ($self, $parameter, $value) = @_;
+
+    # Parameter names may consist of lowercase letters, numbers, and underscores
+    $parameter = lc $parameter;
+    $parameter =~ s/[^a-z\d_]//g;
+
+    my $previous_value = $self->{$parameter};
+    if (defined $value) {
+        $self->{$parameter} = $value;
     }
-    return($temp);
+    return $previous_value;
+}
+
+=item $version = $pdf->version([$new_version])
+
+Get/set the PDF version (e.g. 1.4)
+
+=cut
+
+sub version {
+    my $self = shift();
+    if (scalar @_) {
+        my $version = shift();
+        croak "Invalid version $version" unless $version =~ /^(?:1\.)?([0-9]+)$/;
+        $self->{'pdf'}->{' version'} = $1;
+    }
+    return '1.' . $self->{'pdf'}->{' version'};
 }
 
 =item $bool = $pdf->isEncrypted()
@@ -832,34 +852,34 @@ sub finishobjects {
 }
 
 sub proc_pages {
-    my ($pdf, $pgs) = @_;
-    my ($pg, $pgref, @pglist);
+    my ($pdf, $object) = @_;
 
-    if(defined($pgs->{Resources})) {
+    if (defined $object->{'Resources'}) {
         eval {
-            $pgs->{Resources}->realise;
+            $object->{'Resources'}->realise();
         };
     }
-    foreach $pg ($pgs->{'Kids'}->elementsof) {
-        $pg->realise;
-        if ($pg->{'Type'}->val =~ m/^Pages$/o) 
-        {
-            my @morepages = proc_pages($pdf, $pg);
-            push(@pglist, @morepages);
-        } 
-        else 
-        {
+
+    my @pages;
+    $pdf->{' apipagecount'} ||= 0;
+    foreach my $page ($object->{'Kids'}->elementsof()) {
+        $page->realise();
+        if ($page->{'Type'}->val() eq 'Pages') {
+            push @pages, proc_pages($pdf, $page);
+        }
+        else {
             $pdf->{' apipagecount'}++;
-            $pg->{' pnum'} = $pdf->{' apipagecount'};
-            if(defined($pg->{Resources})) {
+            $page->{' pnum'} = $pdf->{' apipagecount'};
+            if (defined $page->{'Resources'}) {
                 eval {
-                    $pg->{Resources}->realise;
+                    $page->{'Resources'}->realise();
                 };
             }
-            push (@pglist, $pg);
+            push @pages, $page;
         }
     }
-    return(@pglist);
+
+    return @pages;
 }
 
 =item $pdf->update()
@@ -881,7 +901,7 @@ sub update {
 
 =item $pdf->saveas($file)
 
-Saves the document to file.
+Save the document to $file and remove the object structure from memory.
 
 B<Example:>
 
@@ -921,7 +941,7 @@ sub save {
 
 =item $string = $pdf->stringify()
 
-Returns the document as a string and destroys the object.
+Return the document as a string and remove the object structure from memory.
 
 B<Example:>
 
@@ -961,7 +981,13 @@ sub release { $_[0]->end; return(undef);}
 
 =item $pdf->end()
 
-Destroys the document.
+Remove the object structure from memory.  PDF::API2 contains circular
+references, so this call is necessary in long-running processes to
+keep from running out of memory.
+
+This will be called automatically when you save or stringify a PDF.
+You should only need to call it explicitly if you are reading PDF
+files and not writing them.
 
 =cut
 
@@ -1240,7 +1266,9 @@ sub importPageIntoForm {
     my $s_pdf=shift @_;
     my $s_idx=shift @_||0;
 
-	UNIVERSAL::isa($s_pdf, 'PDF::API2') || die "Invalid usage: 1st argument must be PDF::API2 instance, not: ".ref($s_pdf);
+    unless (ref($s_pdf) and $s_pdf->isa('PDF::API2')) {
+        die "Invalid usage: 1st argument must be PDF::API2 instance, not: " . ref($s_pdf);
+    }
 
     my ($s_page,$xo);
 
@@ -1311,7 +1339,7 @@ sub importPageIntoForm {
     return($xo);
 }
 
-=item $page = $pdf->importpage($source_pdf, $source_page_number, $target_page_number)
+=item $page = $pdf->import_page($source_pdf, $source_page_number, $target_page_number)
 
 Imports a page from $source_pdf and adds it to the specified position
 in $pdf.
@@ -1329,7 +1357,7 @@ B<Example:>
     $old = PDF::API2->open('our/old.pdf');
 
     # Add page 2 from the old PDF as page 1 of the new PDF
-    $page = $pdf->importpage($old, 2);
+    $page = $pdf->import_page($old, 2);
 
     $pdf->saveas('our/new.pdf');
 
@@ -1337,14 +1365,19 @@ B<Note:> You can only import a page from an existing PDF file.
 
 =cut
 
-sub importpage {
+# Deprecated (renamed)
+sub importpage { import_page(@_); }
+
+sub import_page {
     my $self=shift @_;
     my $s_pdf=shift @_;
     my $s_idx=shift @_||0;
     my $t_idx=shift @_||0;
     my ($s_page,$t_page);
 
-	UNIVERSAL::isa($s_pdf, 'PDF::API2') || die "Invalid usage: 1st argument must be PDF::API2 instance, not: ".ref($s_pdf);
+    unless (ref($s_pdf) and $s_pdf->isa('PDF::API2')) {
+        die "Invalid usage: 1st argument must be PDF::API2 instance, not: " . ref($s_pdf);
+    }
 	
     if(ref($s_idx) eq 'PDF::API2::Page') {
         $s_page=$s_idx;

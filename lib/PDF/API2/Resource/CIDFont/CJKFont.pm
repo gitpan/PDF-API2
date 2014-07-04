@@ -1,6 +1,6 @@
 package PDF::API2::Resource::CIDFont::CJKFont;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Resource::CIDFont';
 
@@ -16,7 +16,7 @@ our $subs;
 
 =head1 NAME
 
-PDF::API2::Resource::CIDFont::CJKFont
+PDF::API2::Resource::CIDFont::CJKFont - Base class for CJK fonts
 
 =head1 METHODS
 
@@ -184,8 +184,6 @@ sub glyphByCId
 sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
-
     my $notdefbefore=1;
 
     my $wx=PDFArray();
@@ -336,27 +334,9 @@ BEGIN {
     };
 
 }
-1;
-
-__END__
 
 =back
 
-=head1 AUTHOR
-
-Alfred Reibenschuh
-
 =cut
 
-
-
-            ------- Chinese -------
-    Traditional                 Simplified                  Japanese                Korean
-Acrobat 6:
-    AdobeMingStd-Light-Acro     AdobeSongStd-Light-Acro     KozGoPro-Medium-Acro    AdobeMyungjoStd-Medium-Acro
-                                                            KozMinPro-Regular-Acro
-Acrobat 5:
-    MSungStd-Light-Acro         STSongStd-Light-Acro        KozMinPro-Regular-Acro  HYSMyeongJoStd-Medium-Acro
-Acrobat 4:
-    MSung-Light                 STSong-Light                HeiseiKakuGo-W5         HYSMyeongJo-Medium
-    MHei-Medium                                             HeiseiMin-W3            HYGoThic-Medium
+1;

@@ -1,6 +1,6 @@
 package PDF::API2::NamedDestination;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Dict';
 
@@ -13,7 +13,7 @@ no warnings qw[ recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::NamedDestination
+PDF::API2::NamedDestination - Add named destination shortcuts to a PDF
 
 =head1 METHODS
 
@@ -266,14 +266,8 @@ sub dest
     return($self);
 }
 
-1;
-
-__END__
-
 =back
 
-=head1 AUTHOR
-
-Alfred Reibenschuh
-
 =cut
+
+1;

@@ -12,7 +12,7 @@
 #=======================================================================
 package PDF::API2::Basic::PDF::Dict;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Objind';
 
@@ -22,6 +22,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 our $mincache;
 our $tempbase;
 
+use PDF::API2::Basic::PDF::Array;
 use PDF::API2::Basic::PDF::Filter;
 use PDF::API2::Basic::PDF::Name;
 
@@ -70,6 +71,48 @@ sub new {
     $self->{' realised'} = 1;
     return $self;
 }
+
+=head2 $type = $d->type($type)
+
+Get/Set the standard Type key.  It can be passed, and will return, a text value rather than a Name object.
+
+=cut
+
+sub type {
+    my $self = shift();
+    if (scalar @_) {
+        my $type = shift();
+        $self->{'Type'} = ref($type) ? $type : PDF::API2::Basic::PDF::Name->new($type);
+    }
+    return unless exists $self->{'Type'};
+    return $self->{'Type'}->val();
+}
+
+=head2 @filters = $d->filter(@filters)
+
+Get/Set one or more filters being used by the optional stream attached to the dictionary.
+
+=cut
+
+sub filter {
+    my ($self, @filters) = @_;
+
+    # Developer's Note: the PDF specification allows Filter to be
+    # either a name or an array, but other parts of this codebase
+    # expect an array.  If these are updated uncomment the
+    # commented-out lines in order to accept both types.
+
+    # if (scalar @filters == 1) {
+    #     $self->{'Filter'} = ref($filters[0]) ? $filters[0] : PDF::API2::Basic::PDF::Name->new($filters[0]);
+    # }
+    # elsif (scalar @filters) {
+        @filters = map { ref($_) ? $_ : PDF::API2::Basic::PDF::Name->new($_) } @filters;
+        $self->{'Filter'} = PDF::API2::Basic::PDF::Array->new(@filters);
+    # }
+}
+
+# Undocumented alias, which may be removed in a future release
+sub filters { return filter(@_); }
 
 =head2 $d->outobjdeep($fh)
 

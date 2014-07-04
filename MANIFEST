@@ -6,8 +6,9 @@ META.yml
 Makefile.PL
 PATENTS
 README
+barcode.pl~
+contrib/combine_pdfs.pl
 contrib/pdf-deoptimize.pl
-contrib/pdf-merge.pl
 contrib/pdf-optimize.pl
 contrib/text2pdf.pl
 dist.ini
@@ -161,6 +162,7 @@ t/outline.t
 t/page.t
 t/pdf.t
 t/png.t
+t/pod.t
 t/release-pod-syntax.t
 t/resources/1x1-lzw.tif
 t/resources/1x1.gif
@@ -168,6 +170,7 @@ t/resources/1x1.jpg
 t/resources/1x1.png
 t/resources/1x1.tif
 t/resources/sample.pdf
+t/rt69503.t~
 t/string.t
 t/text.t
 t/tiff.t

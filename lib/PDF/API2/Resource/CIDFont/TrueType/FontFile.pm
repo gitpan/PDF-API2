@@ -1,6 +1,6 @@
 package PDF::API2::Resource::CIDFont::TrueType::FontFile;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Dict';
 
@@ -645,8 +645,6 @@ sub glyphNum { return ( $_[0]->font->{'maxp'}->read->{'numGlyphs'} ); }
 
 sub outobjdeep {
     my ($self, $fh, $pdf, %opts) = @_;
-
-    return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
 
     my $f = $self->font;
 

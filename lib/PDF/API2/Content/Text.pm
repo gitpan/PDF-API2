@@ -1,6 +1,6 @@
 package PDF::API2::Content::Text;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use warnings;
 use strict;

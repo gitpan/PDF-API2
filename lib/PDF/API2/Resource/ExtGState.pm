@@ -1,6 +1,6 @@
 package PDF::API2::Resource::ExtGState;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Resource';
 
@@ -11,7 +11,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::Resource::ExtGState
+PDF::API2::Resource::ExtGState - Graphics state dictionary support
 
 =head1 METHODS
 
@@ -367,14 +367,8 @@ sub outobjdeep {
     $self->SUPER::outobjdeep(@opts);
 }
 
-1;
-
-__END__
-
 =back
 
-=head1 AUTHOR
-
-alfred reibenschuh
-
 =cut
+
+1;

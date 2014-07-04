@@ -1,6 +1,6 @@
 package PDF::API2::Resource::BaseFont;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Resource';
 
@@ -13,7 +13,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::Resource::BaseFont
+PDF::API2::Resource::BaseFont - Base class for font resources
 
 =head1 METHODS
 
@@ -118,7 +118,7 @@ sub tounicodemap {
     $cmap.=qq|   /Supplement 0\n|;
     $cmap.=qq|>> def\n|;
     $cmap.=sprintf(qq|/CMapName /pdfapi2-%s+0 def\n|,$self->name);
-    if(UNIVERSAL::can($self,'uniByCId') && UNIVERSAL::can($self,'glyphNum')) {
+    if($self->can('uniByCId') and $self->can('glyphNum')) {
         # this is a type0 font
         $cmap.=sprintf(qq|1 begincodespacerange <0000> <%04X> endcodespacerange\n|,$self->glyphNum-1);
         for(my $j=0;$j<$self->glyphNum;$j++) {
@@ -786,14 +786,8 @@ sub text
 
 sub isvirtual { return(0); }
 
-1;
-
-__END__
-
 =back
 
-=head1 AUTHOR
-
-Alfred Reibenschuh.
-
 =cut
+
+1;

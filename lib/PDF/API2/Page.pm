@@ -1,6 +1,6 @@
 package PDF::API2::Page;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Pages';
 
@@ -17,7 +17,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::Page
+PDF::API2::Page - Methods to interact with individual pages
 
 =head1 METHODS
 
@@ -229,20 +229,14 @@ Rotates the page by the given degrees, which must be a multiple of 90.
 =cut
 
 sub rotate {
-    my ($self,$deg) = @_;
-    $deg=floor($deg/90);
-    while($deg>4) {
-        $deg-=4;
-    }
-    while($deg<0) {
-        $deg+=4;
-    }
-    if($deg==0) {
-        delete $self->{Rotate};
-    } else {
-        $self->{Rotate}=PDFNum($deg*90);
-    }
-    return($self);
+    my ($self, $degrees) = @_;
+
+    # Ignore rotation of 360 or more (in either direction)
+    $degrees = $degrees % 360;
+
+    $self->{'Rotate'} = PDFNum($degrees);
+
+    return $self;
 }
 
 =item $gfx = $page->gfx $prepend
@@ -410,14 +404,8 @@ sub outobjdeep {
     $self->SUPER::outobjdeep(@opts);
 }
 
-1;
-
-__END__
-
 =back
 
-=head1 AUTHOR
-
-Alfred Reibenschuh
-
 =cut
+
+1;

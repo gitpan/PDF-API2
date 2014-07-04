@@ -1,6 +1,6 @@
 package PDF::API2::Resource::ColorSpace::Indexed::ACTFile;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Resource::ColorSpace::Indexed';
 
@@ -11,7 +11,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::Resource::ColorSpace::Indexed::ACTFile
+PDF::API2::Resource::ColorSpace::Indexed::ACTFile - Adobe Color Table support
 
 =head1 METHODS
 
@@ -57,5 +57,9 @@ sub new {
 
     return($self);
 }
+
+=back
+
+=cut
 
 1;

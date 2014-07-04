@@ -1,6 +1,6 @@
 package PDF::API2::Resource::CIDFont::TrueType;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Resource::CIDFont';
 
@@ -12,7 +12,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::Resource::CIDFont::TrueType
+PDF::API2::Resource::CIDFont::TrueType - TrueType font support
 
 =head1 METHODS
 
@@ -151,8 +151,6 @@ sub outobjdeep
 {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
-
     my $notdefbefore=1;
 
     my $wx=PDFArray();
@@ -196,15 +194,8 @@ sub outobjdeep
     $self->SUPER::outobjdeep($fh, $pdf, %opts);
 }
 
-
-1;
-
-__END__
-
 =back
 
-=head1 AUTHOR
-
-Alfred Reibenschuh
-
 =cut
+
+1;

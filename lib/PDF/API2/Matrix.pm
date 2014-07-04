@@ -10,7 +10,7 @@
 #=======================================================================
 package PDF::API2::Matrix;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 sub new {
     my $type = shift;

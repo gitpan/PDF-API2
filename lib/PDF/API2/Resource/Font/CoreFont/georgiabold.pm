@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Font::CoreFont::georgiabold;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 $FONTDATA = {
     'fontname' => 'Georgia,Bold',

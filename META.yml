@@ -18,4 +18,4 @@ requires:
   perl: v5.8.1
 resources:
   repository: https://bitbucket.org/ssimms/pdfapi2
-version: 2.021
+version: 2.022

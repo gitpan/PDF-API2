@@ -1,6 +1,6 @@
 package PDF::API2::Resource::CIDFont;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 use base 'PDF::API2::Resource::BaseFont';
 
@@ -13,7 +13,7 @@ no warnings qw[ deprecated recursion uninitialized ];
 
 =head1 NAME
 
-PDF::API2::Resource::CIDFont
+PDF::API2::Resource::CIDFont - Base class for CID fonts
 
 =head1 METHODS
 
@@ -161,7 +161,7 @@ sub cidsByStr
     {
         $text=$self->cidsByUtf(decode($self->data->{encode},$text));
     } 
-    elsif(!is_utf8($text) && UNIVERSAL::can($self,'issymbol') && $self->issymbol && $self->data->{decode} eq 'ident') 
+    elsif(!is_utf8($text) && $self->can('issymbol') && $self->issymbol && $self->data->{decode} eq 'ident') 
     {
         $text=pack('U*',(map { $_+0xf000 } unpack('C*',$text)));
         $text=$self->cidsByUtf($text);
@@ -227,7 +227,7 @@ sub text
 sub text_cid 
 {
     my ($self,$text,$size)=@_;
-    if(UNIVERSAL::can($self,'fontfile'))
+    if($self->can('fontfile'))
     {
         foreach my $g (unpack('n*',$text)) 
         {
@@ -248,7 +248,7 @@ sub text_cid
 sub text_cid_kern 
 {
     my ($self,$text,$size,$ident)=@_;
-    if(UNIVERSAL::can($self,'fontfile'))
+    if($self->can('fontfile'))
     {
         foreach my $g (unpack('n*',$text)) 
         {
@@ -355,21 +355,11 @@ sub outobjdeep
 {
     my ($self, $fh, $pdf, %opts) = @_;
 
-    return $self->SUPER::outobjdeep($fh, $pdf) if defined $opts{'passthru'};
-
     $self->SUPER::outobjdeep($fh, $pdf, %opts);
 }
 
-
-1;
-
-__END__
-
 =back
-
-=head1 AUTHOR
-
-alfred reibenschuh
 
 =cut
 
+1;

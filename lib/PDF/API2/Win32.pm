@@ -1,6 +1,6 @@
 package PDF::API2::Win32;
 
-our $VERSION = '2.021'; # VERSION
+our $VERSION = '2.022'; # VERSION
 
 no warnings qw[ deprecated recursion uninitialized ];
 
