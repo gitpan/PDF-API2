@@ -1,6 +1,6 @@
 package PDF::API2::UniWrap;
 
-our $VERSION = '2.022'; # VERSION
+our $VERSION = '2.023'; # VERSION
 
 # Implements UAX#14: Line Breaking Properties
 # David Nesting <david@fastolfe.net>

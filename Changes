@@ -1,3 +1,11 @@
+2.023     2014-09-12
+
+    - The fix for [RT #69503] broke a previously-working case where a
+      page object could be passed (and was expected).  The -firstpage
+      option now accepts a page object or a page number.  Thanks to
+      Marco Pessotto for the bug report and test.
+
+
 2.022     2014-07-04
 
     - Added $pdf->version() get/set method.  When opening an existing

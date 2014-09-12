@@ -25,7 +25,7 @@ my %WriteMakefileArgs = (
     "Font::TTF" => 0
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "2.022",
+  "VERSION" => "2.023",
   "test" => {
     "TESTS" => "t/*.t"
   }

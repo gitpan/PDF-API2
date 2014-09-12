@@ -1,6 +1,6 @@
 package PDF::API2::Annotation;
 
-our $VERSION = '2.022'; # VERSION
+our $VERSION = '2.023'; # VERSION
 
 use base 'PDF::API2::Basic::PDF::Dict';
 

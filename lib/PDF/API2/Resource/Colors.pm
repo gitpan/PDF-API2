@@ -1,6 +1,6 @@
 package PDF::API2::Resource::Colors;
 
-our $VERSION = '2.022'; # VERSION
+our $VERSION = '2.023'; # VERSION
 
 use strict;
 use warnings;
